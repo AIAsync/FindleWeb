@@ -1,0 +1,375 @@
+/* =====================================================
+   LANDING PAGE — Google-style centered search
+   ===================================================== */
+
+body.landing-page {
+    overflow: auto;
+    background: #ffffff;
+}
+
+.landing-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Navigation */
+.landing-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    position: relative;
+    z-index: 10;
+}
+
+.landing-nav-left {
+    flex: 1;
+}
+
+.landing-nav-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.landing-auth-btn {
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    padding: 10px 22px;
+    border-radius: 24px;
+    transition: all 0.25s ease;
+    font-family: 'Outfit', sans-serif;
+}
+
+.landing-signin-btn {
+    color: var(--text-main);
+    background: transparent;
+    border: 1px solid #e2e8f0;
+}
+
+.landing-signin-btn:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.landing-signup-btn {
+    color: #ffffff;
+    background: var(--primary);
+    border: 1px solid var(--primary);
+}
+
+.landing-signup-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+}
+
+/* Profile Button (Logged In) */
+.landing-profile {
+    position: relative;
+    cursor: pointer;
+}
+
+.landing-profile .avatar-small {
+    width: 40px;
+    height: 40px;
+    background: var(--primary);
+    color: #ffffff;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.landing-profile .avatar-small:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.2);
+}
+
+/* Profile Dropdown on Landing Page — reuses .profile-dropdown from style.css,
+   but position it relative to the landing-profile button */
+.landing-profile-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+}
+
+/* Center Content */
+.landing-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 0 24px;
+    margin-top: -140px;
+    /* Move higher up */
+}
+
+.landing-logo-section {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.landing-logo-img {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease;
+}
+
+.landing-logo-img:hover {
+    transform: scale(1.05);
+}
+
+.landing-title {
+    font-size: 2.8rem;
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+}
+
+/* Search Input Wrapper — uses same classes as base.html topbar,
+   just wider on the landing page */
+.landing-search-wrapper {
+    width: 100%;
+    max-width: 720px;
+    margin-bottom: 28px;
+    position: relative;
+}
+
+.landing-search-input-wrapper {
+    border-radius: 28px !important;
+    padding: 8px 16px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.landing-search-input-wrapper:hover,
+.landing-search-input-wrapper:focus-within {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Dropdown positioned within landing search wrapper */
+.landing-search-wrapper .search-options-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 200;
+}
+
+/* Suggestion Chips */
+.landing-suggestions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 720px;
+}
+
+.landing-suggestion-chip {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 8px 18px;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 400;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.landing-suggestion-chip:hover {
+    background: #eef2ff;
+    border-color: #c7d2fe;
+    color: var(--text-main);
+    transform: translateY(-1px);
+}
+
+.landing-suggestion-chip i {
+    font-size: 0.85rem;
+    color: var(--primary);
+    opacity: 0.7;
+}
+
+/* Footer */
+.landing-footer {
+    padding: 20px 24px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.landing-footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+}
+
+.landing-footer-link {
+    text-decoration: none;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    font-weight: 400;
+    transition: color 0.2s ease;
+}
+
+.landing-footer-link:hover {
+    color: var(--text-main);
+}
+
+/* =====================================================
+   Mobile Responsive
+   ===================================================== */
+@media (max-width: 768px) {
+    .landing-center {
+        margin-top: -40px;
+    }
+
+    .landing-title {
+        font-size: 2rem;
+    }
+
+    .landing-logo-img {
+        width: 50px;
+        height: 50px;
+    }
+
+    .landing-search-wrapper {
+        max-width: 100%;
+    }
+
+    .landing-suggestions {
+        gap: 8px;
+    }
+
+    .landing-suggestion-chip {
+        font-size: 0.82rem;
+        padding: 7px 14px;
+    }
+
+    .landing-footer-links {
+        gap: 20px;
+    }
+
+    .landing-auth-btn {
+        font-size: 0.88rem;
+        padding: 8px 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .landing-title {
+        font-size: 1.7rem;
+    }
+
+    .landing-suggestions {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
+/* =====================================================
+   DARK MODE — Landing Page
+   ===================================================== */
+body.dark-mode.landing-page {
+    background: #0f172a;
+}
+
+body.dark-mode .landing-container {
+    background: #0f172a;
+}
+
+body.dark-mode .landing-title {
+    color: #f1f5f9;
+}
+
+/* Search wrapper on landing */
+body.dark-mode .landing-search-input-wrapper {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.dark-mode .landing-search-input-wrapper:hover,
+body.dark-mode .landing-search-input-wrapper:focus-within {
+    background: #0f172a !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+    border-color: #475569 !important;
+}
+
+/* Landing logo shadow */
+body.dark-mode .landing-logo-img {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Suggestion Chips */
+body.dark-mode .landing-suggestion-chip {
+    background: #1e293b;
+    border-color: #334155;
+    color: #94a3b8;
+}
+
+body.dark-mode .landing-suggestion-chip:hover {
+    background: #334155;
+    border-color: #475569;
+    color: #f1f5f9;
+}
+
+body.dark-mode .landing-suggestion-chip i {
+    color: #94a3b8;
+    opacity: 1;
+}
+
+/* Auth Buttons on Landing */
+body.dark-mode .landing-signin-btn {
+    color: #f1f5f9;
+    border-color: #334155;
+}
+
+body.dark-mode .landing-signin-btn:hover {
+    background: #1e293b;
+    border-color: #475569;
+}
+
+body.dark-mode .landing-signup-btn {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #f1f5f9;
+}
+
+body.dark-mode .landing-signup-btn:hover {
+    background: #e2e8f0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Profile avatar on landing */
+body.dark-mode .landing-profile .avatar-small {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+/* Footer */
+body.dark-mode .landing-footer {
+    border-top-color: #1e293b;
+}
+
+body.dark-mode .landing-footer-link {
+    color: #64748b;
+}
+
+body.dark-mode .landing-footer-link:hover {
+    color: #f1f5f9;
+}

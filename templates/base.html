@@ -1,0 +1,508 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Findle - AI Search</title>
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/alerts.css' %}">
+    <link rel="stylesheet" href="{% static 'css/monitoring.css' %}">
+    <link rel="stylesheet" href="{% static 'css/mobile_responsive.css' %}">
+</head>
+
+<body>
+    <div class="app-container">
+        <main class="main-content">
+            <header class="topbar">
+                <div class="topbar-brand">
+                    <img src="{% static 'images/findle-logo-new.png' %}" alt="Findle"
+                        style="width: 70px; height: auto;">
+                    <span>Findle AI</span>
+                </div>
+                <div class="topbar-search-container">
+                    <div class="search-input-wrapper">
+                        <button class="search-plus-btn" id="search-plus-btn" type="button">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                        <input type="hidden" id="conversation-id" value="">
+                        <textarea id="user-input" placeholder="Describe anything..." class="topbar-search-input"
+                            rows="1">{{ initial_query|default:'' }}</textarea>
+                        <button class="search-icon-btn auth-required" id="alert-btn" type="button"
+                            style="margin-right: 8px;" title="Save">
+                            <i class="fa-regular fa-bell"></i>
+                        </button>
+                        <button class="search-icon-btn" id="send-btn" type="button">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                        <div id="search-tags" class="search-tags"></div>
+                    </div>
+                    <div class="search-options-dropdown" id="search-dropdown">
+                        <div class="dropdown-option auth-required" id="btn-image-search">
+                            <div class="option-icon image-icon"><i class="fa-solid fa-camera"></i></div>
+                            <span>Image search</span>
+                        </div>
+                        <hr style="margin: 4px 0; border: none; border-top: 1px solid rgba(0,0,0,0.05);">
+                        <div class="dropdown-option auth-required" id="btn-agent-mode">
+                            <div class="option-icon agent-icon"><i class="fa-solid fa-robot"></i></div>
+                            <span>Agent mode</span>
+                        </div>
+                        <div class="dropdown-option auth-required" id="btn-discount">
+                            <div class="option-icon discount-icon"><i class="fa-solid fa-tags"></i></div>
+                            <span>Discount</span>
+                        </div>
+                        <div class="dropdown-option" id="btn-filter">
+                            <div class="option-icon filter-icon"><i class="fa-solid fa-filter"></i></div>
+                            <span>Filter</span>
+                        </div>
+                        <input type="file" id="image-upload-input" accept="image/*" style="display: none;">
+                    </div>
+                </div>
+                <div class="right-controls mobile-hidden">
+                    <button class="icon-btn auth-required" id="btn-monitoring" title="Monitoring">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </button>
+                    <!-- Monitoring Popup -->
+                    <div class="monitoring-popup" id="monitoring-popup">
+                        <div class="monitoring-header">
+                            <h3><i class="fa-solid fa-chart-line"></i> Monitoring</h3>
+                            <i class="fa-solid fa-xmark monitoring-close" id="monitoring-close"></i>
+                        </div>
+                        <div class="monitoring-content">
+                            <div class="mon-stat-grid">
+                                <div class="mon-stat-card">
+                                    <span class="mon-stat-label">Total Found</span>
+                                    <span class="mon-stat-value" id="mon-total">0</span>
+                                </div>
+                                <div class="mon-stat-card">
+                                    <span class="mon-stat-label">Discounted</span>
+                                    <span class="mon-stat-value" id="mon-discounted">0</span>
+                                </div>
+                            </div>
+                            <div class="mon-chart-section">
+                                <span class="mon-progress-header">
+                                    <span>Price Drops</span>
+                                    <span id="label-drops">0%</span>
+                                </span>
+                                <div class="mon-progress-bar-bg">
+                                    <div class="mon-progress-bar bar-green" id="bar-drops" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="mon-chart-section">
+                                <span class="mon-progress-header">
+                                    <span>Price Increases</span>
+                                    <span id="label-increases">0%</span>
+                                </span>
+                                <div class="mon-progress-bar-bg">
+                                    <div class="mon-progress-bar bar-red" id="bar-increases" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="mon-chart-section">
+                                <span class="mon-progress-header">
+                                    <span>Stable Price</span>
+                                    <span id="label-stable">0%</span>
+                                </span>
+                                <div class="mon-progress-bar-bg">
+                                    <div class="mon-progress-bar bar-gray" id="bar-stable" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="mon-empty-state" id="mon-empty-state" style="display: none;">
+                                No data available. Search for something first.
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if user.is_authenticated %}
+                    <div class="topbar-profile" id="topbar-profile" title="Profile">
+                        <div class="avatar-small">{{ user.username|first|upper }}</div>
+                    </div>
+                    <div class="profile-dropdown" id="profile-dropdown">
+                        <div class="profile-header">
+                            <div class="avatar-large">{{ user.username|first|upper }}</div>
+                            <div class="profile-info">
+                                <span class="profile-username">{{ user.username }}</span>
+                                <span class="profile-email">{{ user.email }}</span>
+                            </div>
+                        </div>
+                        <hr>
+                        <a href="#" class="dropdown-item btn-settings"><i class="fa-solid fa-gear"></i> Settings</a>
+                        <a href="#" class="dropdown-item"><i class="fa-solid fa-circle-question"></i> Help</a>
+                        <a href="#" class="dropdown-item"><i class="fa-solid fa-file-contract"></i> Terms of Service</a>
+                        <hr>
+                        <a href="{% url 'logout' %}" class="dropdown-item logout"><i
+                                class="fa-solid fa-right-from-bracket"></i> Logout</a>
+                    </div>
+                    {% else %}
+                    <a href="{% url 'login' %}" class="topbar-auth-btn topbar-signin-btn">Sign in</a>
+                    <a href="{% url 'register' %}" class="topbar-auth-btn topbar-signup-btn">Sign up</a>
+                    {% endif %}
+                </div>
+            </header>
+            <div class="topbar-search-tabs-container">
+                <div class="topbar-search-tabs">
+                    <a href="#" class="search-tab active" id="tab-all">
+                        <i class="fa-solid fa-magnifying-glass"></i> All
+                    </a>
+                    <a href="#" class="search-tab" id="tab-product">
+                        <i class="fa-solid fa-box"></i> Products
+                    </a>
+                    <a href="#" class="search-tab" id="tab-service">
+                        <i class="fa-solid fa-hand-holding-heart"></i> Services
+                    </a>
+                    <a href="#" class="search-tab" id="tab-news">
+                        <i class="fa-solid fa-newspaper"></i> News
+                    </a>
+                    <a href="#" class="search-tab" id="tab-fast-answer">
+                        <i class="fa-solid fa-bolt"></i> Quick answer
+                    </a>
+                    <a href="#" class="search-tab auth-required" id="tab-alert">
+                        <i class="fa-solid fa-bell"></i> Alerts
+                    </a>
+                </div>
+            </div>
+            <div class="workbench-panel" id="panel-monitoring">
+                <div class="workbench-header">
+                    <h3><i class="fa-solid fa-chart-line"></i> Monitoring</h3>
+                    <div class="workbench-actions">
+                        <button class="maximize-btn" title="Maximize"><i class="fa-regular fa-square"></i></button>
+                        <button class="close-workbench-btn" title="Close"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                </div>
+                <div class="workbench-content">
+                    <div class="empty-state">
+                        <p>System monitoring data will appear here.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="workbench-panel" id="panel-notifications">
+                <div class="workbench-header">
+                    <h3><i class="fa-solid fa-bell"></i> Notifications</h3>
+                    <div class="workbench-actions">
+                        <button class="maximize-btn" title="Maximize"><i class="fa-regular fa-square"></i></button>
+                        <button class="close-workbench-btn" title="Close"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                </div>
+                <div class="workbench-content">
+                    <div class="notification-item unread">
+                        <div class="notif-icon"><i class="fa-solid fa-circle-info"></i></div>
+                        <div class="notif-text">
+                            <strong>System Update</strong>
+                            <p>Findle AI has been updated to version 2.1.0</p>
+                            <span class="time">Just now</span>
+                        </div>
+                    </div>
+                    <div class="notification-item">
+                        <div class="notif-icon"><i class="fa-solid fa-robot"></i></div>
+                        <div class="notif-text">
+                            <strong>Model Optimized</strong>
+                            <p>Response latency reduced by 15%.</p>
+                            <span class="time">2 hours ago</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-area">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-box" id="rename-modal" style="display: none;">
+            <h3>Rename Chat</h3>
+            <input type="text" id="rename-input" placeholder="New chat title...">
+            <div class="modal-actions">
+                <button class="btn-cancel" id="rename-cancel">Cancel</button>
+                <button class="btn-confirm" id="rename-confirm">Save</button>
+            </div>
+        </div>
+        <div class="modal-box" id="delete-modal" style="display: none;">
+            <h3>Delete Chat?</h3>
+            <p>This will permanently delete this conversation.</p>
+            <div class="modal-actions">
+                <button class="btn-cancel" id="delete-cancel">Cancel</button>
+                <button class="btn-danger" id="delete-confirm">Delete</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="alert-modal-overlay" id="alert-delete-modal">
+        <div class="alert-modal-box">
+            <div class="alert-modal-icon">
+                <i class="fa-solid fa-trash-can"></i>
+            </div>
+            <div class="alert-modal-title">Delete this alert?</div>
+            <div class="alert-modal-text">
+            </div>
+            <div class="alert-modal-actions">
+                <button class="alert-modal-btn alert-modal-btn-cancel" id="alert-modal-cancel">Cancel</button>
+                <button class="alert-modal-btn alert-modal-btn-confirm" id="alert-modal-confirm">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="auth-modal-overlay">
+        <div class="modal-box auth-modal">
+            <div style="margin-bottom: 20px;">
+                <i class="fa-solid fa-lock" style="font-size: 3rem; color: #0f172a;"></i>
+            </div>
+            <h3>Login Required</h3>
+            <p>Please sign in or create an account to use this feature.</p>
+            <div class="modal-actions" style="flex-direction: column; gap: 10px;">
+                <a href="{% url 'login' %}" class="btn-confirm"
+                    style="text-decoration: none; width: 100%; display: block; padding: 12px;">Sign In</a>
+                <a href="{% url 'register' %}" class="btn-cancel"
+                    style="text-decoration: none; width: 100%; display: block; padding: 12px; border: 1px solid #ccc;">Create
+                    Account</a>
+                <button class="btn-cancel" id="auth-modal-close" style="margin-top: 10px;">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="settings-modal-overlay">
+        <div class="modal-box settings-modal">
+            <button id="settings-close-top" class="settings-close-top">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="settings-container">
+                <div class="settings-sidebar">
+                    <div class="settings-nav-item active" data-target="general">
+                        <i class="fa-solid fa-sliders"></i> General
+                    </div>
+                    <div class="settings-nav-item" data-target="appearance">
+                        <i class="fa-solid fa-palette"></i> Appearance
+                    </div>
+                    <div class="settings-nav-item" data-target="search">
+                        <i class="fa-solid fa-magnifying-glass"></i> Search
+                    </div>
+                    <div class="settings-nav-item" data-target="notifications">
+                        <i class="fa-regular fa-bell"></i> Notifications
+                    </div>
+                    <div class="settings-nav-item" data-target="account">
+                        <i class="fa-solid fa-user"></i> Account
+                    </div>
+                </div>
+                <div class="settings-content">
+                    <!-- General Section -->
+                    <div class="settings-section active" id="section-general">
+                        <h3>General</h3>
+                        <p class="section-desc">Manage general application settings.</p>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">Language</div>
+                                <div class="setting-hint">Select your preferred language.</div>
+                            </div>
+                            <div class="setting-control">
+                                <select class="settings-select" id="language-select">
+                                    <option value="en">English</option>
+                                    <option value="uz">O'zbek</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Appearance Section -->
+                    <div class="settings-section" id="section-appearance">
+                        <h3>Appearance</h3>
+                        <p class="section-desc">Customize how Findle AI looks on your device.</p>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">Dark Mode</div>
+                                <div class="setting-hint">Adjust the theme to reduce eye strain.</div>
+                            </div>
+                            <div class="setting-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="dark-mode-toggle">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">Accent Color</div>
+                                <div class="setting-hint">Choose a Highlight color for the interface.</div>
+                            </div>
+                            <div class="setting-control">
+                                <div class="color-presets">
+                                    <div class="color-dot active" style="background: #0f172a;" data-color="#0f172a">
+                                    </div>
+                                    <div class="color-dot" style="background: #3b82f6;" data-color="#3b82f6"></div>
+                                    <div class="color-dot" style="background: #10b981;" data-color="#10b981"></div>
+                                    <div class="color-dot" style="background: #f59e0b;" data-color="#f59e0b"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Search Section -->
+                    <div class="settings-section" id="section-search">
+                        <h3>Search Settings</h3>
+                        <p class="section-desc">Configure your search preferences.</p>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">Safe Search</div>
+                                <div class="setting-hint">Filter out explicit content from results.</div>
+                            </div>
+                            <div class="setting-control">
+                                <select class="settings-select">
+                                    <option>Strict</option>
+                                    <option selected>Moderate</option>
+                                    <option>Off</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">Region</div>
+                                <div class="setting-hint">Localize your search results.</div>
+                            </div>
+                            <div class="setting-control">
+                                <select class="settings-select">
+                                    <option>Uzbekistan</option>
+                                    <option>United States</option>
+                                    <option>Global</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notifications Section -->
+                    <div class="settings-section" id="section-notifications">
+                        <h3>Social Media Alerts</h3>
+                        <p class="section-desc">Receive alerts on your favorite platforms.</p>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label"><i class="fa-brands fa-telegram" style="color: #24A1DE;"></i>
+                                    Telegram</div>
+                                <div class="setting-hint">Get alerts via Telegram bot.</div>
+                            </div>
+                            <div class="setting-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="toggle-telegram">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label"><i class="fa-brands fa-whatsapp" style="color: #25D366;"></i>
+                                    WhatsApp</div>
+                                <div class="setting-hint">Get alerts via WhatsApp message.</div>
+                            </div>
+                            <div class="setting-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="toggle-whatsapp">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label"><i class="fa-brands fa-discord" style="color: #5865F2;"></i>
+                                    Discord</div>
+                                <div class="setting-hint">Get alerts via Discord webhook.</div>
+                            </div>
+                            <div class="setting-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="toggle-discord">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label"><i class="fa-regular fa-envelope"></i> Email</div>
+                                <div class="setting-hint">Get alerts via Email.</div>
+                            </div>
+                            <div class="setting-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="toggle-email">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Account Section -->
+                    <div class="settings-section" id="section-account">
+                        <h3>Account info</h3>
+                        <p class="section-desc">Manage your personal information.</p>
+
+                        <div class="account-form">
+                            <div class="form-group">
+                                <label>Username</label>
+                                <input type="text" value="{{ user.username }}" id="settings-username">
+                            </div>
+                            <div class="form-group">
+                                <label>Email Address</label>
+                                <input type="email" value="{{ user.email }}" id="settings-email">
+                            </div>
+                            <button class="btn-confirm" style="width: 100%; margin-top: 10px;">Update Profile</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        window.isAuthenticated = {% if user.is_authenticated %}true{% else %} false{% endif %};
+    </script>
+
+    <script src="{% static 'js/ai_interaction.js' %}"></script>
+    <script src="{% static 'js/workbench.js' %}"></script>
+    <script src="{% static 'js/search_bar.js' %}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const profileBtn = document.getElementById('topbar-profile');
+            const profileDropdown = document.getElementById('profile-dropdown');
+
+            if (profileBtn && profileDropdown) {
+                profileBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    profileDropdown.classList.toggle('show');
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!profileDropdown.contains(e.target) && !profileBtn.contains(e.target)) {
+                        profileDropdown.classList.remove('show');
+                    }
+                });
+            }
+
+            // Auto-search if initial query is provided
+            const userInput = document.getElementById('user-input');
+            const initialQuery = userInput ? userInput.value.trim() : '';
+            if (initialQuery) {
+                // Trigger search after a short delay
+                setTimeout(() => {
+                    const sendBtn = document.getElementById('send-btn');
+                    if (sendBtn) {
+                        sendBtn.dataset.isAutoTrigger = 'true';
+                        sendBtn.click();
+                        // Reset flag after click
+                        delete sendBtn.dataset.isAutoTrigger;
+                    }
+                }, 300);
+            }
+        });
+    </script>
+</body>
+
+</html>

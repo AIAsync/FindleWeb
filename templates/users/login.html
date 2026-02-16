@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Findle - Login</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="auth-container">
+        <div class="auth-box">
+            <h2>Welcome Back</h2>
+            <form method="post" class="auth-form">
+                {% csrf_token %}
+                <input type="text" name="username" placeholder="Username" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <button type="submit">Login</button>
+            </form>
+
+            <div style="margin: 1.5rem 0; display: flex; align-items: center; gap: 1rem;">
+                <div style="flex: 1; height: 1px; background: rgba(255, 255, 255, 0.1);"></div>
+                <span style="color: var(--text-muted); font-size: 0.9rem;">or</span>
+                <div style="flex: 1; height: 1px; background: rgba(255, 255, 255, 0.1);"></div>
+            </div>
+
+            <a href="/accounts/google/login/?process=login" class="google-login-btn">
+                <i class="fab fa-google"></i> Continue with Google
+            </a>
+
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                Don't have an account? <a href="{% url 'register' %}" style="color: var(--primary);">Register</a>
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>

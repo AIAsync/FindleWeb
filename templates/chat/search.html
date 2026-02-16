@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="modal-overlay" id="filter-modal-overlay">
+    <div class="modal-box filter-modal">
+        <h3>Filtering</h3>
+        <div class="filter-grid">
+            <div class="filter-group">
+                <label>Price ($)</label>
+                <div class="range-inputs">
+                    <input type="number" id="filter-price-min" placeholder="Min">
+                    <input type="number" id="filter-price-max" placeholder="Max">
+                </div>
+            </div>
+            <div class="filter-group">
+                <label>Color</label>
+                <input type="text" id="filter-color" placeholder="For example: Black">
+            </div>
+            <div class="filter-group">
+                <label>Region</label>
+                <input type="text" id="filter-region" placeholder="For example: California">
+            </div>
+            <div class="filter-group">
+                <label>Rating</label>
+                <select id="filter-rating">
+                    <option value="">All</option>
+                    <option value="4.5">4.5+</option>
+                    <option value="4.0">4.0+</option>
+                    <option value="3.5">3.5+</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Relevance</label>
+                <select id="filter-sort">
+                    <option value="relevance">Recommended</option>
+                    <option value="price_asc">Cheapest</option>
+                    <option value="price_desc">Most expensive</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" id="filter-cancel">Cancel</button>
+            <button class="btn-confirm" id="filter-confirm">OK</button>
+        </div>
+    </div>
+</div>
+
+<div class="chat-container" id="chat-container">
+</div>
+{% endblock %}

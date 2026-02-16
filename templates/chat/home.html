@@ -1,0 +1,798 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Findle - AI Search</title>
+    <meta name="description"
+        content="Findle AI - Search, compare and find the best products and services in one place.">
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/landing.css' %}">
+    <link rel="stylesheet" href="{% static 'css/mobile_responsive.css' %}">
+</head>
+
+<body class="landing-page">
+    <script>
+        // Apply saved theme immediately
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+    </script>
+    <div class="landing-container">
+        <!-- Top Navigation -->
+        <nav class="landing-nav">
+            <div class="landing-nav-left"></div>
+            <div class="landing-nav-right">
+                {% if user.is_authenticated %}
+                <div class="landing-profile" id="landing-profile">
+                    <div class="avatar-small">{{ user.username|first|upper }}</div>
+                    <div class="profile-dropdown landing-profile-dropdown" id="landing-profile-dropdown">
+                        <div class="profile-header">
+                            <div class="avatar-large">{{ user.username|first|upper }}</div>
+                            <div class="profile-info">
+                                <span class="profile-username">{{ user.username }}</span>
+                                <span class="profile-email">{{ user.email }}</span>
+                            </div>
+                        </div>
+                        <hr>
+                        <a href="#" class="dropdown-item btn-settings"><i class="fa-solid fa-gear"></i> Settings</a>
+                        <a href="#" class="dropdown-item"><i class="fa-solid fa-circle-question"></i> Help</a>
+                        <a href="#" class="dropdown-item"><i class="fa-solid fa-file-contract"></i> Terms of Service</a>
+                        <hr>
+                        <a href="{% url 'logout' %}" class="dropdown-item logout"><i
+                                class="fa-solid fa-right-from-bracket"></i> Logout</a>
+                    </div>
+                </div>
+                {% else %}
+                <a href="{% url 'login' %}" class="landing-auth-btn landing-signin-btn">Sign in</a>
+                <a href="{% url 'register' %}" class="landing-auth-btn landing-signup-btn">Sign up</a>
+                {% endif %}
+            </div>
+        </nav>
+
+        <!-- Center Content -->
+        <div class="landing-center">
+            <div class="landing-logo-section">
+                <img src="{% static 'images/findle-logo-new.png' %}" alt="Findle" class="landing-logo-img">
+                <h1 class="landing-title">Findle AI</h1>
+            </div>
+
+            <div class="landing-search-wrapper">
+                <div class="search-input-wrapper landing-search-input-wrapper">
+                    <button class="search-plus-btn" id="landing-plus-btn" type="button">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                    <textarea id="landing-search-input" placeholder="Describe anything..." class="topbar-search-input"
+                        rows="1" autofocus></textarea>
+                    <button class="search-icon-btn" id="landing-search-btn" type="button">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                    <div id="landing-search-tags" class="search-tags"></div>
+                </div>
+                <!-- Plus Dropdown (same as search page) -->
+                <div class="search-options-dropdown" id="landing-search-dropdown">
+                    <div class="dropdown-option auth-required" id="landing-btn-image-search">
+                        <div class="option-icon image-icon"><i class="fa-solid fa-camera"></i></div>
+                        <span>Image search</span>
+                    </div>
+                    <hr style="margin: 4px 0; border: none; border-top: 1px solid rgba(0,0,0,0.05);">
+                    <div class="dropdown-option auth-required" id="landing-btn-agent-mode">
+                        <div class="option-icon agent-icon"><i class="fa-solid fa-robot"></i></div>
+                        <span>Agent mode</span>
+                    </div>
+                    <div class="dropdown-option auth-required" id="landing-btn-discount">
+                        <div class="option-icon discount-icon"><i class="fa-solid fa-tags"></i></div>
+                        <span>Discount</span>
+                    </div>
+                    <div class="dropdown-option" id="landing-btn-filter">
+                        <div class="option-icon filter-icon"><i class="fa-solid fa-filter"></i></div>
+                        <span>Filter</span>
+                    </div>
+                    <input type="file" id="landing-image-upload-input" accept="image/*" style="display: none;">
+                </div>
+            </div>
+
+            <div class="landing-suggestions">
+                <button class="landing-suggestion-chip"
+                    onclick="document.getElementById('landing-search-input').value = this.textContent.trim(); document.getElementById('landing-search-btn').click();">
+                    <i class="fa-solid fa-mobile-screen-button"></i> Cheapest iPhone 17 Pro in USA
+                </button>
+                <button class="landing-suggestion-chip"
+                    onclick="document.getElementById('landing-search-input').value = this.textContent.trim(); document.getElementById('landing-search-btn').click();">
+                    <i class="fa-solid fa-screwdriver-wrench"></i> Top-rated, cheap plumber services in New York
+                </button>
+                <button class="landing-suggestion-chip"
+                    onclick="document.getElementById('landing-search-input').value = this.textContent.trim(); document.getElementById('landing-search-btn').click();">
+                    <i class="fa-solid fa-robot"></i> Which is the cheapest, highest quality AI chatbot?
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="landing-footer">
+            <div class="landing-footer-links">
+                <a href="#" class="landing-footer-link">Help</a>
+                <a href="#" class="landing-footer-link">Terms of Service</a>
+                <a href="#" class="landing-footer-link">About Findle AI</a>
+                <a href="#" class="landing-footer-link">Subscription</a>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Filter Modal -->
+    <div class="modal-overlay" id="landing-filter-modal-overlay">
+        <div class="modal-box filter-modal">
+            <h3>Filtering</h3>
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label>Price ($)</label>
+                    <div class="range-inputs">
+                        <input type="number" id="landing-filter-price-min" placeholder="Min">
+                        <input type="number" id="landing-filter-price-max" placeholder="Max">
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label>Color</label>
+                    <input type="text" id="landing-filter-color" placeholder="For example: Black">
+                </div>
+                <div class="filter-group">
+                    <label>Region</label>
+                    <input type="text" id="landing-filter-region" placeholder="For exa mple: California">
+                </div>
+                <div class="filter-group">
+                    <label>Rating</label>
+                    <select id="landing-filter-rating">
+                        <option value="">All</option>
+                        <option value="4.5">4.5+</option>
+                        <option value="4.0">4.0+</option>
+                        <option value="3.5">3.5+</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Relevance</label>
+                    <select id="landing-filter-sort">
+                        <option value="relevance">Recommended</option>
+                        <option value="price_asc">Cheapest</option>
+                        <option value="price_desc">Most expensive</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" id="landing-filter-cancel">Cancel</button>
+                <button class="btn-confirm" id="landing-filter-confirm">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div class="modal-overlay" id="auth-modal-overlay">
+        <div class="modal-box auth-modal">
+            <div style="margin-bottom: 20px;">
+                <i class="fa-solid fa-lock" style="font-size: 3rem; color: #0f172a;"></i>
+            </div>
+            <h3>Login Required</h3>
+            <p>Please sign in or create an account to use this feature.</p>
+            <div class="modal-actions" style="flex-direction: column; gap: 10px;">
+                <a href="{% url 'login' %}" class="btn-confirm"
+                    style="text-decoration: none; width: 100%; display: block; padding: 12px;">Sign In</a>
+                <a href="{% url 'register' %}" class="btn-cancel"
+                    style="text-decoration: none; width: 100%; display: block; padding: 12px; border: 1px solid #ccc;">Create
+                    Account</a>
+                <button class="btn-cancel" id="auth-modal-close" style="margin-top: 10px;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settings-modal-overlay">
+        <div class="modal-box settings-modal">
+            <div class="settings-container">
+                <div class="settings-sidebar">
+                    <div class="settings-nav-item active" data-target="general">
+                        <i class="fa-solid fa-sliders"></i> General
+                    </div>
+                    <div class="settings-nav-item" data-target="appearance">
+                        <i class="fa-solid fa-palette"></i> Appearance
+                    </div>
+                    <div class="settings-nav-item" data-target="search">
+                        <i class="fa-solid fa-magnifying-glass"></i> Search
+                    </div>
+                    <div class="settings-nav-item" data-target="notifications">
+                        <i class="fa-regular fa-bell"></i> Notifications
+                    </div>
+                    <div class="settings-nav-item" data-target="account">
+                        <i class="fa-solid fa-user"></i> Account
+                    </div>
+                </div>
+                <div class="settings-content">
+                    <!-- General Section -->
+                    <div class="settings-section active" id="section-general">
+                        <h3>General</h3>
+                        <p class="section-desc">Manage general application settings.</p>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">Language</div>
+                                <div class="setting-hint">Select your preferred language.</div>
+                            </div>
+                            <div class="setting-control">
+                                <select class="settings-select" id="language-select">
+                                    <option value="en">English</option>
+                                    <option value="uz">O'zbek</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Appearance Section -->
+                    <div class="settings-section" id="section-appearance">
+                        <h3>Appearance</h3>
+                        <p class="section-desc">Customize how Findle AI looks on your device.</p>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">Dark Mode</div>
+                                <div class="setting-hint">Adjust the theme to reduce eye strain.</div>
+                            </div>
+                            <div class="setting-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="dark-mode-toggle">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">Accent Color</div>
+                                <div class="setting-hint">Choose a Highlight color for the interface.</div>
+                            </div>
+                            <div class="setting-control">
+                                <div class="color-presets">
+                                    <div class="color-dot active" style="background: #0f172a;" data-color="#0f172a">
+                                    </div>
+                                    <div class="color-dot" style="background: #3b82f6;" data-color="#3b82f6"></div>
+                                    <div class="color-dot" style="background: #10b981;" data-color="#10b981"></div>
+                                    <div class="color-dot" style="background: #f59e0b;" data-color="#f59e0b"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Search Section -->
+                    <div class="settings-section" id="section-search">
+                        <h3>Search Settings</h3>
+                        <p class="section-desc">Configure your search preferences.</p>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">Safe Search</div>
+                                <div class="setting-hint">Filter out explicit content from results.</div>
+                            </div>
+                            <div class="setting-control">
+                                <select class="settings-select">
+                                    <option>Strict</option>
+                                    <option selected>Moderate</option>
+                                    <option>Off</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label">Region</div>
+                                <div class="setting-hint">Localize your search results.</div>
+                            </div>
+                            <div class="setting-control">
+                                <select class="settings-select">
+                                    <option>Uzbekistan</option>
+                                    <option>United States</option>
+                                    <option>Global</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notifications Section -->
+                    <div class="settings-section" id="section-notifications">
+                        <h3>Social Media Alerts</h3>
+                        <p class="section-desc">Receive alerts on your favorite platforms.</p>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label"><i class="fa-brands fa-telegram" style="color: #24A1DE;"></i>
+                                    Telegram</div>
+                                <div class="setting-hint">Get alerts via Telegram bot.</div>
+                            </div>
+                            <div class="setting-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="toggle-telegram">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label"><i class="fa-brands fa-whatsapp" style="color: #25D366;"></i>
+                                    WhatsApp</div>
+                                <div class="setting-hint">Get alerts via WhatsApp message.</div>
+                            </div>
+                            <div class="setting-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="toggle-whatsapp">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label"><i class="fa-brands fa-discord" style="color: #5865F2;"></i>
+                                    Discord</div>
+                                <div class="setting-hint">Get alerts via Discord webhook.</div>
+                            </div>
+                            <div class="setting-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="toggle-discord">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-label"><i class="fa-regular fa-envelope"></i> Email</div>
+                                <div class="setting-hint">Get alerts via Email.</div>
+                            </div>
+                            <div class="setting-control">
+                                <label class="switch">
+                                    <input type="checkbox" id="toggle-email">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Account Section -->
+                    <div class="settings-section" id="section-account">
+                        <h3>Account info</h3>
+                        <p class="section-desc">Manage your personal information.</p>
+
+                        <div class="account-form">
+                            <div class="form-group">
+                                <label>Username</label>
+                                <input type="text" value="{{ user.username }}" id="settings-username">
+                            </div>
+                            <div class="form-group">
+                                <label>Email Address</label>
+                                <input type="email" value="{{ user.email }}" id="settings-email">
+                            </div>
+                            <button class="btn-confirm" style="width: 100%; margin-top: 10px;">Update Profile</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="settings-footer">
+                <button class="btn-cancel" id="settings-close">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.isAuthenticated = {% if user.is_authenticated %}true{% else %} false{% endif %};
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('landing-search-input');
+            const searchBtn = document.getElementById('landing-search-btn');
+
+            // Auto-resize textarea
+            if (searchInput) {
+                searchInput.addEventListener('input', function () {
+                    this.style.height = 'auto';
+                    this.style.height = (this.scrollHeight) + 'px';
+                });
+            }
+
+            function performSearch() {
+                const query = searchInput.value.trim();
+                if (!query) return;
+
+                // Collect active tags/options
+                const tags = document.querySelectorAll('#landing-search-tags .search-tag');
+                let params = new URLSearchParams();
+                params.set('q', query);
+
+                tags.forEach(tag => {
+                    const id = tag.dataset.id;
+                    if (id === 'landing-btn-agent-mode') params.set('agent_mode', '1');
+                    if (id === 'landing-btn-discount') params.set('discount', '1');
+                    if (id === 'landing-btn-filter') params.set('filter', '1');
+                });
+
+                window.location.href = `/?${params.toString()}`;
+            }
+
+            if (searchBtn) {
+                searchBtn.addEventListener('click', performSearch);
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        performSearch();
+                    }
+                });
+            }
+
+            // Profile dropdown
+            const profileBtn = document.getElementById('landing-profile');
+            const profileDropdown = document.getElementById('landing-profile-dropdown');
+
+            if (profileBtn && profileDropdown) {
+                profileBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    profileDropdown.classList.toggle('show');
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!profileDropdown.contains(e.target) && !profileBtn.contains(e.target)) {
+                        profileDropdown.classList.remove('show');
+                    }
+                });
+            }
+
+            // ===== Plus Button Dropdown =====
+            const plusBtn = document.getElementById('landing-plus-btn');
+            const plusDropdown = document.getElementById('landing-search-dropdown');
+
+            if (plusBtn && plusDropdown) {
+                plusBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    plusDropdown.classList.toggle('show');
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!plusDropdown.contains(e.target) && !plusBtn.contains(e.target)) {
+                        plusDropdown.classList.remove('show');
+                    }
+                });
+
+                // Dropdown options & tags
+                const options = plusDropdown.querySelectorAll('.dropdown-option');
+                const searchTagsContainer = document.getElementById('landing-search-tags');
+                const fileInput = document.getElementById('landing-image-upload-input');
+
+                // Create tag
+                const createTag = (text, id) => {
+                    const tag = document.createElement('div');
+                    tag.className = 'search-tag';
+                    tag.dataset.id = id;
+                    tag.innerHTML = `
+                        <span>${text}</span>
+                        <i class="fa-solid fa-xmark"></i>
+                    `;
+
+                    const removeTag = (e) => {
+                        e.stopPropagation();
+                        tag.remove();
+                        const option = document.getElementById(id);
+                        if (option) {
+                            option.classList.remove('active');
+                            const icon = option.querySelector('.remove-icon');
+                            if (icon) icon.remove();
+                        }
+                        if (id === 'landing-btn-image-search' && fileInput) {
+                            fileInput.value = '';
+                        }
+                    };
+
+                    tag.addEventListener('click', removeTag);
+                    return tag;
+                };
+
+                // File input
+                if (fileInput) {
+                    fileInput.addEventListener('change', (e) => {
+                        if (fileInput.files && fileInput.files[0]) {
+                            const fileName = fileInput.files[0].name;
+                            const id = 'landing-btn-image-search';
+                            const option = document.getElementById(id);
+
+                            let existingTag = searchTagsContainer.querySelector(`.search-tag[data-id="${id}"]`);
+                            if (existingTag) existingTag.remove();
+
+                            const tag = createTag(`Img: ${fileName}`, id);
+                            searchTagsContainer.appendChild(tag);
+
+                            if (option) option.classList.add('active');
+                        }
+                    });
+                }
+
+                // Filter modal elements
+                const filterModalOverlay = document.getElementById('landing-filter-modal-overlay');
+                const filterCancel = document.getElementById('landing-filter-cancel');
+                const filterConfirm = document.getElementById('landing-filter-confirm');
+                const btnFilter = document.getElementById('landing-btn-filter');
+
+                options.forEach(option => {
+                    option.addEventListener('click', (e) => {
+                        e.stopPropagation();
+
+                        const id = option.id;
+
+                        // Image search special case
+                        if (id === 'landing-btn-image-search') {
+                            let existingTag = null;
+                            if (searchTagsContainer) {
+                                existingTag = searchTagsContainer.querySelector(`.search-tag[data-id="${id}"]`);
+                            }
+
+                            if (existingTag) {
+                                existingTag.remove();
+                                option.classList.remove('active');
+                                if (fileInput) fileInput.value = '';
+                            } else {
+                                if (fileInput) fileInput.click();
+                            }
+                            return;
+                        }
+
+                        // Filter special case — open modal
+                        if (id === 'landing-btn-filter') {
+                            if (option.classList.contains('active')) {
+                                // Already active — remove tag & deactivate
+                                let existingTag = searchTagsContainer.querySelector(`.search-tag[data-id="${id}"]`);
+                                if (existingTag) existingTag.remove();
+                                option.classList.remove('active');
+                                // Clear filter fields
+                                document.getElementById('landing-filter-price-min').value = '';
+                                document.getElementById('landing-filter-price-max').value = '';
+                                document.getElementById('landing-filter-color').value = '';
+                                document.getElementById('landing-filter-region').value = '';
+                                document.getElementById('landing-filter-rating').value = '';
+                                document.getElementById('landing-filter-sort').value = 'relevance';
+                            } else {
+                                // Open filter modal
+                                if (filterModalOverlay) filterModalOverlay.classList.add('active');
+                                plusDropdown.classList.remove('show');
+                            }
+                            return;
+                        }
+
+                        const text = option.querySelector('span').innerText;
+
+                        let existingTag = null;
+                        if (searchTagsContainer) {
+                            existingTag = searchTagsContainer.querySelector(`.search-tag[data-id="${id}"]`);
+                        }
+
+                        if (existingTag) {
+                            existingTag.remove();
+                            option.classList.remove('active');
+                            // Remove X icon if present (for consistency with search_bar logic)
+                            const icon = option.querySelector('.remove-icon');
+                            if (icon) icon.remove();
+                        } else if (searchTagsContainer) {
+                            const tag = createTag(text, id);
+                            searchTagsContainer.appendChild(tag);
+                            option.classList.add('active');
+
+                            // Add X icon to the button itself for visual indication (like in search_bar)
+                            const xIcon = document.createElement('i');
+                            xIcon.className = 'fa-solid fa-xmark remove-icon';
+                            xIcon.style.marginLeft = '8px';
+                            xIcon.style.fontSize = '0.8rem';
+                            option.appendChild(xIcon);
+                        }
+
+                        // Close dropdown after selection
+                        plusDropdown.classList.remove('show');
+                    });
+                });
+
+                // Filter modal cancel
+                if (filterCancel) {
+                    filterCancel.addEventListener('click', () => {
+                        filterModalOverlay.classList.remove('active');
+                    });
+                }
+
+                // Filter modal confirm
+                if (filterConfirm) {
+                    filterConfirm.addEventListener('click', () => {
+                        // Add filter tag
+                        if (btnFilter && !btnFilter.classList.contains('active')) {
+                            const tag = createTag('Filter', 'landing-btn-filter');
+                            searchTagsContainer.appendChild(tag);
+                            btnFilter.classList.add('active');
+                        }
+                        filterModalOverlay.classList.remove('active');
+                    });
+                }
+
+                // Close filter on overlay click
+                if (filterModalOverlay) {
+                    filterModalOverlay.addEventListener('click', (e) => {
+                        if (e.target === filterModalOverlay) {
+                            filterModalOverlay.classList.remove('active');
+                        }
+                    });
+                }
+            }
+
+            // ===== Auth Interceptor =====
+            document.addEventListener('click', (e) => {
+                const target = e.target.closest('.auth-required');
+                if (target) {
+                    if (window.isAuthenticated === false) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+
+                        const authModal = document.getElementById('auth-modal-overlay');
+                        if (authModal) {
+                            authModal.classList.add('active');
+                        }
+                    }
+                }
+            }, true);
+
+            // Auth Modal Controls
+            const authModalClose = document.getElementById('auth-modal-close');
+            const authModalOverlay = document.getElementById('auth-modal-overlay');
+
+            if (authModalClose) {
+                authModalClose.addEventListener('click', () => {
+                    if (authModalOverlay) authModalOverlay.classList.remove('active');
+                });
+            }
+
+            if (authModalOverlay) {
+                authModalOverlay.addEventListener('click', (e) => {
+                    if (e.target === authModalOverlay) {
+                        authModalOverlay.classList.remove('active');
+                    }
+                });
+            }
+
+            // ===== Settings Modal =====
+            const settingsModalOverlay = document.getElementById('settings-modal-overlay');
+            const settingsClose = document.getElementById('settings-close');
+            const settingsTriggers = document.querySelectorAll('.btn-settings');
+            const settingsNavItems = document.querySelectorAll('.settings-nav-item');
+            const settingsSections = document.querySelectorAll('.settings-section');
+            const darkModeToggle = document.getElementById('dark-mode-toggle');
+
+            // Open Settings
+            settingsTriggers.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (settingsModalOverlay) settingsModalOverlay.classList.add('active');
+
+                    // Close profile dropdown
+                    if (profileDropdown) profileDropdown.classList.remove('show');
+                });
+            });
+
+            // Close Settings
+            if (settingsClose) {
+                settingsClose.addEventListener('click', () => {
+                    settingsModalOverlay.classList.remove('active');
+                });
+            }
+
+            if (settingsModalOverlay) {
+                settingsModalOverlay.addEventListener('click', (e) => {
+                    if (e.target === settingsModalOverlay) {
+                        settingsModalOverlay.classList.remove('active');
+                    }
+                });
+            }
+
+            // Navigation Switching
+            settingsNavItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const target = item.dataset.target;
+
+                    settingsNavItems.forEach(nav => nav.classList.remove('active'));
+                    item.classList.add('active');
+
+                    settingsSections.forEach(section => {
+                        section.classList.remove('active');
+                        if (section.id === `section-${target}`) {
+                            section.classList.add('active');
+                        }
+                    });
+                });
+            });
+
+            // Dark Mode Toggle
+            if (darkModeToggle) {
+                if (localStorage.getItem('theme') === 'dark') {
+                    document.body.classList.add('dark-mode');
+                    darkModeToggle.checked = true;
+                }
+
+                darkModeToggle.addEventListener('change', () => {
+                    if (darkModeToggle.checked) {
+                        document.body.classList.add('dark-mode');
+                        localStorage.setItem('theme', 'dark');
+                    } else {
+                        document.body.classList.remove('dark-mode');
+                        localStorage.setItem('theme', 'light');
+                    }
+                });
+            }
+
+            // Color Presets
+            const colorDots = document.querySelectorAll('.color-dot');
+            colorDots.forEach(dot => {
+                dot.addEventListener('click', () => {
+                    const color = dot.dataset.color;
+                    document.documentElement.style.setProperty('--primary', color);
+
+                    colorDots.forEach(d => d.classList.remove('active'));
+                    dot.classList.add('active');
+
+                    localStorage.setItem('accentColor', color);
+                });
+            });
+
+            // Load initial accent color
+            const savedColor = localStorage.getItem('accentColor');
+            if (savedColor) {
+                document.documentElement.style.setProperty('--primary', savedColor);
+                colorDots.forEach(dot => {
+                    if (dot.dataset.color === savedColor) {
+                        colorDots.forEach(d => d.classList.remove('active'));
+                        dot.classList.add('active');
+                    }
+                });
+            }
+
+            // Language Switcher Logic
+            const languageSelect = document.getElementById('language-select');
+            if (languageSelect) {
+                const savedLang = localStorage.getItem('language') || 'en';
+                languageSelect.value = savedLang;
+                languageSelect.addEventListener('change', () => {
+                    const selectedLang = languageSelect.value;
+                    localStorage.setItem('language', selectedLang);
+                });
+            }
+
+            // Social Media Alerts Logic
+            const socialToggles = [
+                { id: 'toggle-telegram', key: 'alert_telegram' },
+                { id: 'toggle-whatsapp', key: 'alert_whatsapp' },
+                { id: 'toggle-discord', key: 'alert_discord' },
+                { id: 'toggle-email', key: 'alert_email' }
+            ];
+
+            socialToggles.forEach(toggle => {
+                const el = document.getElementById(toggle.id);
+                if (el) {
+                    el.checked = localStorage.getItem(toggle.key) === 'true';
+                    el.addEventListener('change', () => {
+                        localStorage.setItem(toggle.key, el.checked);
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
