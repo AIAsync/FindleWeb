@@ -31,7 +31,7 @@ DEBUG = not IS_PRODUCTION
 
 # Allowed hosts based on environment
 if IS_PRODUCTION:
-    ALLOWED_HOSTS = ['app.findle.uz', '89.116.25.105']
+    ALLOWED_HOSTS = ['findle.uz', '207.231.109.220']
 else:
     ALLOWED_HOSTS = ['192.168.43.225', 'localhost', '127.0.0.1']
 
