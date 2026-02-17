@@ -1165,7 +1165,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Show feedback
             const feedback = document.createElement('div');
             feedback.className = 'alert-feedback-toast';
-            feedback.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Sent to ${platformNames}`;
+            feedback.innerHTML = `<i class="fa-solid fa-paper-plane"></i>Alert turned on for ${platformNames}`;
             feedback.style.cssText = `
                 position: fixed;
                 bottom: 20px;

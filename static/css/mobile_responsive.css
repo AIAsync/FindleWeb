@@ -308,4 +308,109 @@
         display: flex !important;
         /* Remove negative margin or extra overrides if needed */
     }
+
+    /* =====================================================
+       DARK MODE — Mobile Overrides
+       ===================================================== */
+    body.dark-mode {
+        background-color: #0f172a;
+    }
+
+    /* Topbar & Search Interface */
+    body.dark-mode .topbar {
+        background: #0f172a !important;
+        border-bottom: 1px solid #1e293b !important;
+    }
+
+    body.dark-mode .search-input-wrapper {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+    }
+
+    body.dark-mode .topbar-search-tabs-container {
+        background: #0f172a !important;
+        border-bottom: 1px solid #1e293b !important;
+    }
+
+    /* Product Cards */
+    body.dark-mode .product-card {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+    }
+
+    body.dark-mode .product-img {
+        background: #0f172a !important;
+    }
+
+    body.dark-mode .product-info {
+        background: #1e293b !important;
+    }
+
+    /* Mobile Popover & Navigation */
+    body.dark-mode .mobile-actions-popover {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6) !important;
+    }
+
+    body.dark-mode .popover-item {
+        color: #f1f5f9 !important;
+    }
+
+    body.dark-mode .popover-item i {
+        color: #94a3b8 !important;
+    }
+
+    body.dark-mode .popover-item:active {
+        background: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    /* Tags / Toggles */
+    body.dark-mode .active-tag {
+        background: rgba(148, 163, 184, 0.15) !important;
+        border-color: rgba(148, 163, 184, 0.3) !important;
+        color: #f1f5f9 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+    }
+
+    body.dark-mode .active-tag i {
+        color: #94a3b8 !important;
+    }
+
+    /* Plus Button Active State */
+    body.dark-mode .mobile-plus-btn.active {
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
+    }
+
+    /* Alerts Page Detail */
+    body.dark-mode .mobile-sticky-header {
+        background: #0f172a !important;
+        border-bottom-color: #1e293b !important;
+    }
+
+    body.dark-mode .mobile-back-btn {
+        color: #f1f5f9 !important;
+    }
+
+    body.dark-mode .alert-detail-view {
+        background: #0f172a !important;
+    }
+
+    /* Search Buttons Visibility */
+    body.dark-mode .search-plus-btn,
+    body.dark-mode .search-icon-btn {
+        color: #94a3b8 !important;
+    }
+
+    body.dark-mode .search-plus-btn:active,
+    body.dark-mode .search-icon-btn:active {
+        background: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    /* Tag Refinements */
+    body.dark-mode .active-tag i.fa-xmark {
+        color: #f1f5f9 !important;
+        opacity: 0.8;
+    }
 }

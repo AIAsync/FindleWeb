@@ -228,6 +228,14 @@
     opacity: 1 !important;
 }
 
+.mobile-sticky-header {
+    display: none;
+}
+
+.mobile-back-btn {
+    display: none;
+}
+
 /* ===================== DETAIL VIEW ===================== */
 .alert-detail-view {
     flex: 1;

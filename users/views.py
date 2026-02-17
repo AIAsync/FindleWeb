@@ -7,6 +7,8 @@ def register(request):
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
+            # Specify the backend since we have multiple backends configured
+            user.backend = 'django.contrib.auth.backends.ModelBackend'
             login(request, user)
             return redirect('home')
     else:
