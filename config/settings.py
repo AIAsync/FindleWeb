@@ -13,6 +13,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -27,13 +31,9 @@ IS_PRODUCTION = os.environ.get('DJANGO_ENV') == 'production'
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-+@!1-_#4aq7v8co%f40&7a_xgu%7*520_x*$7ea**d%r2pg963')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = not IS_PRODUCTION
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-# Allowed hosts based on environment
-if IS_PRODUCTION:
-    ALLOWED_HOSTS = ['findle.uz', '207.231.109.220']
-else:
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = [host.strip() for host in os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost").split(",")]
 
 
 # Application definition
@@ -97,6 +97,16 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+if IS_PRODUCTION or os.environ.get('DB_ENGINE') == 'postgres':
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('POSTGRES_DB'),
+        'USER': os.environ.get('POSTGRES_USER'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
+        'HOST': os.environ.get('POSTGRES_HOST'),
+        'PORT': os.environ.get('POSTGRES_PORT'),
+    }
 
 
 # Password validation
