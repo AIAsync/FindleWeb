@@ -33,7 +33,7 @@ DEBUG = not IS_PRODUCTION
 if IS_PRODUCTION:
     ALLOWED_HOSTS = ['findle.uz', '207.231.109.220']
 else:
-    ALLOWED_HOSTS = ['192.168.43.225', 'localhost', '127.0.0.1']
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # Application definition
