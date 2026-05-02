@@ -8,6 +8,7 @@ import os
 import psycopg2
 from dotenv import load_dotenv
 import decimal
+from openai import OpenAI
 
 load_dotenv()
 
@@ -84,7 +85,7 @@ def chat_api(request):
                 search_query = f"%{prompt}%"
                 
                 query_sql = f"""
-                    SELECT image_url, title, old_price, price, rating, who_by, product_url, site_name 
+                    SELECT image_url, title, old_price, price, rating, who_by, product_url, site_name, crawled_at 
                     FROM {DB_TABLE} 
                     WHERE title ILIKE %s OR site_name ILIKE %s 
                     LIMIT 50
@@ -99,6 +100,7 @@ def chat_api(request):
                     old_price = row[2]
                     price = row[3]
                     site_name = row[7]
+                    crawled_at = row[8]
                     
                     # Convert Decimal to float/string if needed for JSON
                     if isinstance(old_price, decimal.Decimal):
@@ -108,6 +110,9 @@ def chat_api(request):
                         
                     # Use site_name as who_by if who_by is empty
                     who_by = row[5] or site_name
+
+                    # Format crawled_at
+                    crawled_at_str = crawled_at.strftime('%Y-%m-%d %H:%M') if crawled_at else None
                         
                     products_data.append({
                         'image_url': row[0],
@@ -117,7 +122,8 @@ def chat_api(request):
                         'rating': row[4],
                         'who_by': who_by,
                         'site_name': site_name,
-                        'product_url': row[6]
+                        'product_url': row[6],
+                        'crawled_at': crawled_at_str
                     })
                     
                 cur.close()
@@ -140,11 +146,66 @@ def chat_api(request):
 
         ai_response_content = ""
 
+        # Calculate source counts
+        unique_sites = set(p.get('site_name', '') for p in recommended_products if p.get('site_name'))
+        unique_stores = set(p.get('who_by', '') for p in recommended_products if p.get('who_by'))
+
         return JsonResponse({
             'response': ai_response_content,
             'reasoning_steps': reasoning_steps,
             'products': recommended_products,
+            'sources': {
+                'sites_count': len(unique_sites),
+                'stores_count': len(unique_stores),
+                'products_count': len(recommended_products),
+            }
         })
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+
+def ai_chat_api(request):
+    """Chat endpoint for "Ask AI" tab — uses OpenAI API."""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            prompt = data.get('prompt')
+            context_product = data.get('context_product')
+            tagged_products = data.get('tagged_products', [])
+            
+            if not prompt:
+                return JsonResponse({'error': 'No prompt provided'}, status=400)
+
+            client = OpenAI(api_key=os.getenv('openai_api'))
+            
+            system_prompt = "You are a helpful assistant for Findle AI, a smart product discovery and comparison platform. Help users with their queries about products, shopping, and more. Use Uzbek language by default if user is in Uzbekistan or asks in Uzbek."
+            
+            if context_product:
+                system_prompt += f"\n\nFoydalanuvchi hozirda quyidagi mahsulot haqida so'rayapti (Asosiy subyekt):\n"
+                system_prompt += f"Nomi: {context_product.get('title')}\n"
+                system_prompt += f"Narxi: {context_product.get('price')} so'm\n"
+                system_prompt += f"Do'kon: {context_product.get('shop_name')}\n"
+            
+            if tagged_products:
+                system_prompt += f"\n\nFoydalanuvchi quyidagi mahsulotlarni ham havola (reference) sifatida keltirdi:\n"
+                for i, p in enumerate(tagged_products, 1):
+                    system_prompt += f"{i}. {p.get('title')} ({p.get('price')} so'm, {p.get('shop_name')})\n"
+
+            completion = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt}
+                ]
+            )
+
+            ai_response = completion.choices[0].message.content
+
+            return JsonResponse({
+                'response': ai_response
+            })
+        except Exception as e:
+            print(f"OpenAI error: {e}")
+            return JsonResponse({'error': str(e)}, status=500)
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
 

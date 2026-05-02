@@ -8,5 +8,3 @@ env/
 .env/
 ENV/
 db.sqlite3
-/static/
-/media/

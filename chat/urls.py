@@ -5,6 +5,7 @@ urlpatterns = [
     path('', views.home, name='home'),
     # path('search/', views.search_page, name='search_page'),
     path('api/chat/', views.chat_api, name='chat_api'),
+    path('api/ai-chat/', views.ai_chat_api, name='ai_chat_api'),
     path('api/chat/save/', views.save_chat, name='save_chat'),
     path('api/chat/<int:chat_id>/rename/', views.rename_chat, name='rename_chat'),
     path('api/chat/<int:chat_id>/delete/', views.delete_chat, name='delete_chat'),

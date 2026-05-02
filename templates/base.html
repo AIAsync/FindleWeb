@@ -26,7 +26,7 @@
                         style="width: 70px; height: auto;">
                     <span>Findle AI</span>
                 </div>
-                <div class="topbar-search-container">
+                <div class="topbar-search-container" id="top-search-container">
                     <div class="search-input-wrapper">
                         <button class="search-plus-btn" id="search-plus-btn" type="button">
                             <i class="fa-solid fa-plus"></i>
@@ -149,6 +149,9 @@
                     <a href="#" class="search-tab active" id="tab-all">
                         <i class="fa-solid fa-magnifying-glass"></i> All
                     </a>
+                    <a href="#" class="search-tab" id="tab-fast-answer">
+                        <i class="fa-solid fa-bolt"></i> Ask AI
+                    </a>
                     <a href="#" class="search-tab" id="tab-product">
                         <i class="fa-solid fa-box"></i> Products
                     </a>
@@ -157,9 +160,6 @@
                     </a>
                     <a href="#" class="search-tab" id="tab-news">
                         <i class="fa-solid fa-newspaper"></i> News
-                    </a>
-                    <a href="#" class="search-tab" id="tab-fast-answer">
-                        <i class="fa-solid fa-bolt"></i> Quick answer
                     </a>
                     <a href="#" class="search-tab auth-required" id="tab-alert">
                         <i class="fa-solid fa-bell"></i> Alerts
@@ -265,6 +265,40 @@
                     Account</a>
                 <button class="btn-cancel" id="auth-modal-close" style="margin-top: 10px;">Cancel</button>
             </div>
+        </div>
+    </div>
+    <div class="bottom-chat-container" id="bottom-chat-container">
+        <div id="product-mention-popup" class="product-mention-popup"></div>
+        <div id="chat-reply-context" class="chat-reply-context"></div>
+        <div id="chat-search-tags" class="search-tags" style="margin-bottom: 8px;"></div>
+        <div class="chat-input-wrapper">
+            <button class="chat-plus-btn" id="chat-plus-btn" type="button">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+            <textarea id="chat-bottom-input" placeholder="Ask AI anything..." rows="1"></textarea>
+            <button class="chat-send-btn" id="chat-send-btn">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+        <div class="search-options-dropdown" id="chat-dropdown">
+            <div class="dropdown-option auth-required" id="chat-btn-image-search">
+                <div class="option-icon image-icon"><i class="fa-solid fa-camera"></i></div>
+                <span>Image search</span>
+            </div>
+            <hr style="margin: 4px 0; border: none; border-top: 1px solid rgba(0,0,0,0.05);">
+            <div class="dropdown-option auth-required" id="chat-btn-agent-mode">
+                <div class="option-icon agent-icon"><i class="fa-solid fa-robot"></i></div>
+                <span>Agent mode</span>
+            </div>
+            <div class="dropdown-option auth-required" id="chat-btn-discount">
+                <div class="option-icon discount-icon"><i class="fa-solid fa-tags"></i></div>
+                <span>Discount</span>
+            </div>
+            <div class="dropdown-option" id="chat-btn-filter">
+                <div class="option-icon filter-icon"><i class="fa-solid fa-filter"></i></div>
+                <span>Filter</span>
+            </div>
+            <input type="file" id="chat-image-upload-input" accept="image/*" style="display: none;">
         </div>
     </div>
     <div class="modal-overlay" id="settings-modal-overlay">

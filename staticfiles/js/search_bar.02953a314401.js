@@ -25,8 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <i class="fa-solid fa-xmark"></i>
              `;
 
-            // Remove tag on click of X
-            tag.querySelector('i').addEventListener('click', (e) => {
+            // Function to remove tag and reset state
+            const removeTag = (e) => {
                 e.stopPropagation();
                 tag.remove();
 
@@ -38,8 +38,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (id === 'btn-image-search' && fileInput) {
                     fileInput.value = '';
                 }
-            });
+            };
 
+            // Remove tag on click of the tag itself or the X
+            tag.addEventListener('click', removeTag);
             return tag;
         };
 
@@ -109,6 +111,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Optional: Focus back to input? 
                 // searchInput.focus();
+                // Close dropdown after selection
+                searchDropdown.classList.remove('show');
             });
         });
     }

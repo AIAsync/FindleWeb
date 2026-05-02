@@ -144,8 +144,9 @@ body.landing-page {
    just wider on the landing page */
 .landing-search-wrapper {
     width: 100%;
-    max-width: 620px;
+    max-width: 720px;
     margin-bottom: 28px;
+    position: relative;
 }
 
 .landing-search-input-wrapper {
@@ -159,13 +160,21 @@ body.landing-page {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12) !important;
 }
 
+/* Dropdown positioned within landing search wrapper */
+.landing-search-wrapper .search-options-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 200;
+}
+
 /* Suggestion Chips */
 .landing-suggestions {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
     justify-content: center;
-    max-width: 620px;
+    max-width: 720px;
 }
 
 .landing-suggestion-chip {
@@ -270,4 +279,97 @@ body.landing-page {
         flex-direction: column;
         align-items: center;
     }
+}
+
+/* =====================================================
+   DARK MODE — Landing Page
+   ===================================================== */
+body.dark-mode.landing-page {
+    background: #0f172a;
+}
+
+body.dark-mode .landing-container {
+    background: #0f172a;
+}
+
+body.dark-mode .landing-title {
+    color: #f1f5f9;
+}
+
+/* Search wrapper on landing */
+body.dark-mode .landing-search-input-wrapper {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.dark-mode .landing-search-input-wrapper:hover,
+body.dark-mode .landing-search-input-wrapper:focus-within {
+    background: #0f172a !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+    border-color: #475569 !important;
+}
+
+/* Landing logo shadow */
+body.dark-mode .landing-logo-img {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Suggestion Chips */
+body.dark-mode .landing-suggestion-chip {
+    background: #1e293b;
+    border-color: #334155;
+    color: #94a3b8;
+}
+
+body.dark-mode .landing-suggestion-chip:hover {
+    background: #334155;
+    border-color: #475569;
+    color: #f1f5f9;
+}
+
+body.dark-mode .landing-suggestion-chip i {
+    color: #94a3b8;
+    opacity: 1;
+}
+
+/* Auth Buttons on Landing */
+body.dark-mode .landing-signin-btn {
+    color: #f1f5f9;
+    border-color: #334155;
+}
+
+body.dark-mode .landing-signin-btn:hover {
+    background: #1e293b;
+    border-color: #475569;
+}
+
+body.dark-mode .landing-signup-btn {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #f1f5f9;
+}
+
+body.dark-mode .landing-signup-btn:hover {
+    background: #e2e8f0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Profile avatar on landing */
+body.dark-mode .landing-profile .avatar-small {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+/* Footer */
+body.dark-mode .landing-footer {
+    border-top-color: #1e293b;
+}
+
+body.dark-mode .landing-footer-link {
+    color: #64748b;
+}
+
+body.dark-mode .landing-footer-link:hover {
+    color: #f1f5f9;
 }
