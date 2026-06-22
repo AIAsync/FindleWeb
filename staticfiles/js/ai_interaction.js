@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     searchTabs.forEach(tab => {
         tab.addEventListener('click', (e) => {
-            // e.preventDefault(); // Don't prevent default as other logic might rely on it
+            e.preventDefault(); // Don't prevent default as other logic might rely on it
             const id = tab.id;
             
             // If switching FROM 'tab-all' to another tab, save current results content
@@ -184,12 +184,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 setChatMode(true);
             } else if (id === 'tab-alert') {
                 setChatMode(false);
+                if (topSearchContainer) topSearchContainer.classList.add('hidden');
                 if (window.renderSavedAlerts) {
                     window.renderSavedAlerts();
                 }
             } else {
                 setChatMode(false);
                 if (id === 'tab-all') {
+                    const searchInput = document.getElementById('user-input');
+                    if (searchInput && searchInput.value.trim() === '') {
+                        if (typeof window.showLandingView === 'function') {
+                            window.showLandingView();
+                        } else {
+                            window.location.href = '/';
+                        }
+                        return;
+                    }
                     // Restore results if we have them, otherwise clear
                     chatContainer.innerHTML = allTabContent || '';
                     if (allTabContent) {
@@ -207,6 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setChatMode(true);
         } else if (activeTab.id === 'tab-alert') {
             setChatMode(false);
+            if (topSearchContainer) topSearchContainer.classList.add('hidden');
             if (window.renderSavedAlerts) {
                 window.renderSavedAlerts();
             }
@@ -573,8 +584,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (id.includes('filter')) params.set('filter', '1');
             });
 
-            window.location.href = `/?${params.toString()}`;
-            return;
+            window.history.pushState(null, '', `/?${params.toString()}`);
+            // No return here, allow it to proceed dynamically
         }
 
         const tabAll = document.getElementById('tab-all');
