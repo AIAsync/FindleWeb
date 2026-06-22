@@ -346,11 +346,122 @@
     font-size: 0.8rem;
 }
 
+.rediscovery-input {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: #0f172a;
+    font-size: 0.92rem;
+    font-family: 'Outfit', sans-serif;
+    outline: none;
+    transition: all 0.2s;
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.rediscovery-input:focus {
+    border-color: #cbd5e1;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.03);
+}
+
+body.dark-mode .rediscovery-input {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+body.dark-mode .rediscovery-input:focus {
+    border-color: #475569;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.03);
+}
+
+.alert-detail-edit-container {
+    margin-bottom: 1.5rem;
+    width: 100%;
+}
+
+.rediscovery-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.rediscovery-input-wrapper .rediscovery-input {
+    padding-right: 48px; /* Room for the buttons */
+}
+
+.rediscovery-input-wrapper .alert-edit-pencil-btn,
+.rediscovery-input-wrapper .alert-save-small-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+    padding: 6px 8px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+
+.rediscovery-input-wrapper .alert-edit-pencil-btn {
+    color: #64748b;
+}
+
+.rediscovery-input-wrapper .alert-edit-pencil-btn:hover {
+    color: #475569;
+    background: #f1f5f9;
+}
+
+.rediscovery-input-wrapper .alert-save-small-btn {
+    color: #10b981;
+}
+
+.rediscovery-input-wrapper .alert-save-small-btn:hover {
+    color: #059669;
+    background: #ecfdf5;
+}
+
+.rediscovery-input-wrapper .alert-edit-pencil-btn.hidden,
+.rediscovery-input-wrapper .alert-save-small-btn.hidden {
+    display: none;
+}
+
+/* Dark mode overrides for input wrapper buttons */
+body.dark-mode .rediscovery-input-wrapper .alert-edit-pencil-btn {
+    color: #94a3b8;
+}
+
+body.dark-mode .rediscovery-input-wrapper .alert-edit-pencil-btn:hover {
+    color: #f1f5f9;
+    background: #1e293b;
+}
+
+body.dark-mode .rediscovery-input-wrapper .alert-save-small-btn {
+    color: #34d399;
+}
+
+body.dark-mode .rediscovery-input-wrapper .alert-save-small-btn:hover {
+    color: #6ee7b7;
+    background: #064e3b;
+}
+
 /* Action buttons */
 .alert-detail-actions {
     display: flex;
     gap: 8px;
     flex-shrink: 0;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+body.dark-mode .alert-detail-actions {
+    border-color: #334155;
 }
 
 .alert-action-btn {

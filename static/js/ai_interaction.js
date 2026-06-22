@@ -1,4 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
+    function t(key, defaultVal) {
+        if (window.t) {
+            return window.t(key, defaultVal);
+        }
+        return defaultVal;
+    }
     console.log('AI Interaction script initialized');
     const chatContainer = document.getElementById('chat-container');
     const mainContent = document.querySelector('.main-content');
@@ -19,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatFileInput = document.getElementById('chat-image-upload-input');
     
     const topSearchContainer = document.getElementById('top-search-container');
-    const searchTabs = document.querySelectorAll('.search-tab');
+    const searchTabs = document.querySelectorAll('#tab-all, #tab-fast-answer, #tab-alert');
 
     console.log('DOM Elements found:', { chatContainer, mainContent, userInput, sendBtn, bottomChatContainer });
 
@@ -51,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (aiChatContainer) aiChatContainer.style.display = 'block';
             document.body.classList.add('ask-ai-mode');
             if (bottomChatInput) {
-                bottomChatInput.placeholder = "Ask AI anything...";
+                bottomChatInput.placeholder = t('ask_ai_anything', 'Ask AI anything...');
                 bottomChatInput.focus();
             }
         } else {
@@ -66,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.classList.remove('ask-ai-mode');
             if (chatDropdown) chatDropdown.classList.remove('show');
             if (bottomChatInput) {
-                bottomChatInput.placeholder = "Describe anything...";
+                bottomChatInput.placeholder = t('describe_anything', 'Describe anything...');
             }
         }
     }
@@ -161,11 +167,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     searchTabs.forEach(tab => {
         tab.addEventListener('click', (e) => {
-            // e.preventDefault(); // Don't prevent default as other logic might rely on it
+            e.preventDefault(); // Don't prevent default as other logic might rely on it
             const id = tab.id;
             
-            // If switching FROM 'tab-all' TO 'tab-alert', save current results content
-            if (document.querySelector('.search-tab.active').id === 'tab-all' && id === 'tab-alert') {
+            // If switching FROM 'tab-all' to another tab, save current results content
+            const activeTabAll = document.querySelector('#tab-all.active');
+            if (activeTabAll && id !== 'tab-all') {
                 allTabContent = chatContainer.innerHTML;
             }
 
@@ -177,15 +184,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 setChatMode(true);
             } else if (id === 'tab-alert') {
                 setChatMode(false);
+                if (topSearchContainer) topSearchContainer.classList.add('hidden');
                 if (window.renderSavedAlerts) {
                     window.renderSavedAlerts();
                 }
             } else {
                 setChatMode(false);
                 if (id === 'tab-all') {
-                    // Restore results if we have them
+                    const searchInput = document.getElementById('user-input');
+                    if (searchInput && searchInput.value.trim() === '') {
+                        if (typeof window.showLandingView === 'function') {
+                            window.showLandingView();
+                        } else {
+                            window.location.href = '/';
+                        }
+                        return;
+                    }
+                    // Restore results if we have them, otherwise clear
+                    chatContainer.innerHTML = allTabContent || '';
                     if (allTabContent) {
-                        chatContainer.innerHTML = allTabContent;
                         attachSearchResultsListeners();
                     }
                 }
@@ -200,6 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setChatMode(true);
         } else if (activeTab.id === 'tab-alert') {
             setChatMode(false);
+            if (topSearchContainer) topSearchContainer.classList.add('hidden');
             if (window.renderSavedAlerts) {
                 window.renderSavedAlerts();
             }
@@ -249,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <img src="${product.image_url || ''}" alt="">
                 <div class="mention-info">
                     <div class="mention-title">${escapeHTML(product.title)}</div>
-                    <div class="mention-price">${formatPrice(product.price)} so'm</div>
+                    <div class="mention-price">${formatPrice(product.price)} ${t('som', "so'm")}</div>
                 </div>
             `;
             item.addEventListener('click', () => {
@@ -279,10 +297,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Show reply context
         if (replyContext) {
+            let aboutText = t('question_about', 'question about {title}');
+            aboutText = aboutText.replace('{title}', `<strong>${escapeHTML(product.title)}</strong>`);
             replyContext.innerHTML = `
                 <div class="reply-content">
                     <i class="fa-solid fa-reply"></i> 
-                    <strong>${escapeHTML(product.title)}</strong> haqida savol
+                    ${aboutText}
                 </div>
                 <div class="reply-close" id="close-reply-context"><i class="fa-solid fa-xmark"></i></div>
             `;
@@ -346,7 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (alertModal) {
             alertModal.classList.add('show');
         } else {
-            if (confirm('Ushbu bildirishnomani o\'chirmoqchimisiz?')) {
+            if (confirm(t('delete_notification_confirm', 'Do you want to delete this notification?'))) {
                 const allSaved = JSON.parse(localStorage.getItem('saved_alerts') || '[]');
                 const updated = allSaved.filter(a => String(a.id) !== String(alertId));
                 localStorage.setItem('saved_alerts', JSON.stringify(updated));
@@ -379,10 +399,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const config = [
-            { id: 'discount', btn: btnDiscount, label: 'Discount', icon: 'fa-tag' },
-            { id: 'agent-mode', btn: btnAgentMode, label: 'Agent Mode', icon: 'fa-robot' },
-            { id: 'image-search', btn: btnImageSearch, label: 'Image search', icon: 'fa-image' },
-            { id: 'filter', btn: btnFilter, label: 'Filtering', icon: 'fa-filter' }
+            { id: 'discount', btn: btnDiscount, label: t('discount', 'Discount'), icon: 'fa-tag' },
+            { id: 'agent-mode', btn: btnAgentMode, label: t('agent_mode', 'Agent Mode'), icon: 'fa-robot' },
+            { id: 'image-search', btn: btnImageSearch, label: t('image_search', 'Image search'), icon: 'fa-image' },
+            { id: 'filter', btn: btnFilter, label: t('filtering', 'Filtering'), icon: 'fa-filter' }
         ];
 
         let html = '';
@@ -564,8 +584,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (id.includes('filter')) params.set('filter', '1');
             });
 
-            window.location.href = `/?${params.toString()}`;
-            return;
+            window.history.pushState(null, '', `/?${params.toString()}`);
+            // No return here, allow it to proceed dynamically
         }
 
         const tabAll = document.getElementById('tab-all');
@@ -617,7 +637,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error('Error:', error);
-            chatContainer.innerHTML = '<div style="color:red; padding:1rem;">Sorry, something went wrong.</div>';
+            chatContainer.innerHTML = `<div style="color:red; padding:1rem;">${t('something_went_wrong', 'Sorry, something went wrong.')}</div>`;
         }
 
         const activeInput = (bottomChatContainer && bottomChatContainer.classList.contains('active')) ? bottomChatInput : userInput;
@@ -687,7 +707,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add thinking indicator
         const thinkingDiv = document.createElement('div');
         thinkingDiv.className = 'ai-msg ai-response-msg thinking';
-        thinkingDiv.innerHTML = `<div class="msg-content"><i class="fa-solid fa-ellipsis fa-fade"></i> AI o'ylamoqda...</div>`;
+        thinkingDiv.innerHTML = `<div class="msg-content"><i class="fa-solid fa-ellipsis fa-fade"></i> ${t('ai_thinking', "AI is thinking...")}</div>`;
         aiChatMessages.appendChild(thinkingDiv);
         scrollToBottom();
 
@@ -722,7 +742,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 const errorDiv = document.createElement('div');
                 errorDiv.className = 'ai-msg ai-response-msg error';
-                errorDiv.innerHTML = `<div class="msg-content">Xatolik yuz berdi. Iltimos qaytadan urinib ko'ring.</div>`;
+                errorDiv.innerHTML = `<div class="msg-content">${t('error_try_again', 'An error occurred. Please try again.')}</div>`;
                 aiChatMessages.appendChild(errorDiv);
             }
             scrollToBottom();
@@ -731,7 +751,7 @@ document.addEventListener('DOMContentLoaded', () => {
             thinkingDiv.remove();
             const errorDiv = document.createElement('div');
             errorDiv.className = 'ai-msg ai-response-msg error';
-            errorDiv.innerHTML = `<div class="msg-content">Server bilan aloqa uzildi.</div>`;
+            errorDiv.innerHTML = `<div class="msg-content">${t('connection_lost', 'Connection with server lost.')}</div>`;
             aiChatMessages.appendChild(errorDiv);
             scrollToBottom();
         }
@@ -779,7 +799,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const sources = data.sources || {};
 
         // AI Summary mock text
-        const aiSummary = `"${prompt}" so'rovi bo'yicha ${sources.products_count || products.length} ta mahsulot topildi. Natijalar ${sources.sites_count || 0} ta saytdan va ${sources.stores_count || 0} ta do'kondan to'plangan. Narxlar turli manbalarda farq qilishi mumkin — eng yaxshi taklifni tanlash uchun narxlarni solishtiring.`;
+        let aiSummary = t('search_summary_format', '"{prompt}" so\'rovi bo\'yicha {products_count} ta mahsulot topildi. Natijalar {sites_count} ta saytdan va {stores_count} ta do\'kondan to\'plangan. Narxlar turli manbalarda farq qilishi mumkin — eng yaxshi taklifni tanlash uchun narxlarni solishtiring.');
+        aiSummary = aiSummary
+            .replace('{prompt}', prompt)
+            .replace('{products_count}', sources.products_count || products.length)
+            .replace('{sites_count}', sources.sites_count || 0)
+            .replace('{stores_count}', sources.stores_count || 0);
 
         // Top 3 products
         const topProducts = products.slice(0, 3);
@@ -802,6 +827,16 @@ document.addEventListener('DOMContentLoaded', () => {
             site: p.site_name || ''
         }));
 
+        // Labels for source preview pills
+        const sitesCount = sources.sites_count || 0;
+        const sitesLabel = sitesCount === 1 ? t('site', 'site') : t('sites', 'sites');
+
+        const storesCount = sources.stores_count || 0;
+        const storesLabel = storesCount === 1 ? t('store', 'store') : t('stores', 'stores');
+
+        const productsCount = sources.products_count || products.length;
+        const productsLabel = productsCount === 1 ? t('product', 'product') : t('products', 'products');
+
         // Build left side
         let leftHTML = '';
 
@@ -813,18 +848,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="sr-source-preview">
                         <div class="sr-source-pill">
                             <i class="fa-solid fa-globe"></i>
-                            <span>${sources.sites_count || 0} sayt</span>
+                            <span>${sitesCount} ${sitesLabel}</span>
                         </div>
                         <div class="sr-source-pill">
                             <i class="fa-solid fa-shop"></i>
-                            <span>${sources.stores_count || 0} do'kon</span>
+                            <span>${storesCount} ${storesLabel}</span>
                         </div>
                         <div class="sr-source-pill">
                             <i class="fa-solid fa-box-open"></i>
-                            <span>${sources.products_count || products.length} mahsulot</span>
+                            <span>${productsCount} ${productsLabel}</span>
                         </div>
                     </div>
-                    <button class="sr-continue-btn" id="sr-continue-chat-btn">Suhbatni davom ettirish</button>
+                    <button class="sr-continue-btn" id="sr-continue-chat-btn">${t('continue_conversation', 'Continue conversation')}</button>
                 </div>
             </div>
         `;
@@ -840,7 +875,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Remaining products grid
         if (remainingProducts.length > 0) {
-            leftHTML += `<div class="sr-products-section-title">Barcha natijalar</div>`;
+            leftHTML += `<div class="sr-products-section-title">${t('all_results', 'All results')}</div>`;
             leftHTML += '<div class="sr-products-grid">';
             remainingProducts.forEach(p => {
                 leftHTML += buildGridCard(p);
@@ -855,19 +890,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (prices.length > 0) {
             rightHTML += `
                 <div class="sr-price-viz">
-                    <div class="sr-price-viz-title">Narxlar</div>
+                    <div class="sr-price-viz-title">${t('prices', 'Prices')}</div>
                     <div class="sr-price-stats">
                         <div class="sr-price-stat">
                             <span class="sr-price-stat-value">${formatPrice(minPrice)}</span>
-                            <span class="sr-price-stat-label">Min</span>
+                            <span class="sr-price-stat-label">${t('min', 'Min')}</span>
                         </div>
                         <div class="sr-price-stat">
                             <span class="sr-price-stat-value">${formatPrice(avgPrice)}</span>
-                            <span class="sr-price-stat-label">O'rtacha</span>
+                            <span class="sr-price-stat-label">${t('average', 'Average')}</span>
                         </div>
                         <div class="sr-price-stat">
                             <span class="sr-price-stat-value">${formatPrice(maxPrice)}</span>
-                            <span class="sr-price-stat-label">Max</span>
+                            <span class="sr-price-stat-label">${t('max', 'Max')}</span>
                         </div>
                     </div>
                     <div class="sr-price-bars">
@@ -892,7 +927,7 @@ document.addEventListener('DOMContentLoaded', () => {
             rightHTML += `
                 <div class="sr-links-section">
                     <div class="sr-links-title">
-                        Manbalar (${allLinks.length})
+                        ${t('sources', 'Sources')} (${allLinks.length})
                         <span class="sr-links-collapse-btn" id="sr-collapse-links"><i class="fa-solid fa-xmark"></i></span>
                     </div>
                     <div class="sr-links-list ${hasMore ? 'collapsed' : ''}" id="sr-links-list">
@@ -904,7 +939,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         `).join('')}
                     </div>
-                    ${hasMore ? `<button class="sr-links-show-all" id="sr-show-all-links">Barchasi (${allLinks.length})</button>` : ''}
+                    ${hasMore ? `<button class="sr-links-show-all" id="sr-show-all-links">${t('all', 'All')} (${allLinks.length})</button>` : ''}
                 </div>
             `;
         }
@@ -978,12 +1013,12 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="sr-top-card">
                 <a href="${escapeHTML(url)}" target="_blank" rel="noopener" class="sr-top-card-link">
                     <div class="sr-top-card-img">
-                        ${imgSrc ? `<img src="${escapeHTML(imgSrc)}" alt="${escapeHTML(p.title || '')}" loading="lazy">` : '<span>No image</span>'}
+                        ${imgSrc ? `<img src="${escapeHTML(imgSrc)}" alt="${escapeHTML(p.title || '')}" loading="lazy">` : `<span>${t('no_image', 'No image')}</span>`}
                     </div>
                     <div class="sr-top-card-body">
                         <div class="sr-top-card-title">${escapeHTML(p.title || '')}</div>
                         <div class="sr-top-card-price-row">
-                            ${priceText ? `<span class="sr-top-card-price">${priceText} so'm</span>` : ''}
+                            ${priceText ? `<span class="sr-top-card-price">${priceText} ${t('som', "so'm")}</span>` : ''}
                             ${oldPriceText && oldPriceText !== priceText ? `<span class="sr-top-card-old-price">${oldPriceText}</span>` : ''}
                         </div>
                         <div class="sr-top-card-seller">${escapeHTML(p.who_by || p.site_name || '')}</div>
@@ -1003,11 +1038,11 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="sr-grid-card">
                 <a href="${escapeHTML(url)}" target="_blank" rel="noopener" class="sr-grid-card-link">
                     <div class="sr-grid-card-img">
-                        ${imgSrc ? `<img src="${escapeHTML(imgSrc)}" alt="${escapeHTML(p.title || '')}" loading="lazy">` : '<span>No image</span>'}
+                        ${imgSrc ? `<img src="${escapeHTML(imgSrc)}" alt="${escapeHTML(p.title || '')}" loading="lazy">` : `<span>${t('no_image', 'No image')}</span>`}
                     </div>
                     <div class="sr-grid-card-body">
                         <div class="sr-grid-card-title">${escapeHTML(p.title || '')}</div>
-                        ${priceText ? `<span class="sr-grid-card-price">${priceText} so'm</span>` : ''}
+                        ${priceText ? `<span class="sr-grid-card-price">${priceText} ${t('som', "so'm")}</span>` : ''}
                         ${oldPriceText && oldPriceText !== priceText ? `<span class="sr-grid-card-old-price">${oldPriceText}</span>` : ''}
                         <div class="sr-grid-card-seller">${escapeHTML(p.who_by || p.site_name || '')}</div>
                     </div>
@@ -1054,7 +1089,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isNaN(d.getTime())) return date; // Return original if invalid
 
         const seconds = Math.floor((new Date() - d) / 1000);
-        if (seconds < 60) return 'Just now';
+        if (seconds < 60) return t('just_now', 'Just now');
 
         const intervals = {
             year: 31536000,
@@ -1067,10 +1102,22 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let unit in intervals) {
             const count = Math.floor(seconds / intervals[unit]);
             if (count >= 1) {
-                return count + ' ' + unit + (count > 1 ? 's' : '') + ' ago';
+                const isUz = t('ago', 'ago') !== 'ago';
+                if (isUz) {
+                    const uzUnits = {
+                        year: 'yil',
+                        month: 'oy',
+                        day: 'kun',
+                        hour: 'soat',
+                        minute: 'daqiqa'
+                    };
+                    return `${count} ${uzUnits[unit]} ${t('ago', 'oldin')}`;
+                } else {
+                    return `${count} ${unit}${count > 1 ? 's' : ''} ${t('ago', 'ago')}`;
+                }
             }
         }
-        return 'Recently';
+        return t('recently', 'Recently');
     }
 
     sendBtn.addEventListener('click', () => {
@@ -1129,8 +1176,8 @@ document.addEventListener('DOMContentLoaded', () => {
             conversationIdInput.value = '';
             chatContainer.innerHTML = `
                 <div class="welcome-screen" style="text-align: center; margin-top: 10vh;">
-                    <h1>How can I help you explore products today?</h1>
-                    <p style="color: var(--text-muted); margin-top: 10px;">Ask about laptops, accessories, or any gadgets.</p>
+                    <h1>${t('welcome_h1', 'How can I help you explore products today?')}</h1>
+                    <p style="color: var(--text-muted); margin-top: 10px;">${t('welcome_p', 'Ask about laptops, accessories, or any gadgets.')}</p>
                 </div>
             `;
             const newUrl = '/new/';
@@ -1260,7 +1307,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (alertBtn) {
         alertBtn.addEventListener('click', async () => {
             if (!lastResponseData || !lastResponseData.prompt) {
-                alert('Iltimos, avval biror narsa qidiring.');
+                alert(t('please_search_first', 'Please search something first.'));
                 return;
             }
 
@@ -1314,11 +1361,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         alertBtn.innerHTML = '<i class="fa-regular fa-bell"></i>';
                     }, 2000);
                 } else {
-                    alert('Save Error');
+                    alert(t('save_error', 'Save Error'));
                 }
             } catch (err) {
                 console.error('Save error:', err);
-                alert('Save Error');
+                alert(t('save_error', 'Save Error'));
             }
 
             alertBtn.disabled = false;
@@ -1337,11 +1384,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="alerts-empty-icon-wrapper">
                             <i class="fa-regular fa-bell-slash"></i>
                         </div>
-                        <h3>Hali hech qanday bildirishnoma saqlanmagan</h3>
-                        <p>Qidiruv natijalarini qo'ng'iroqcha tugmasi orqali saqlab qo'ying.</p>
+                        <h3>${t('no_alerts_saved', 'No alerts saved yet')}</h3>
+                        <p>${t('save_alerts_desc', 'Save search results using the bell button.')}</p>
                         <div class="alerts-empty-hint">
                             <i class="fa-regular fa-lightbulb"></i>
-                            Qidiruv natijasini saqlash uchun <strong>&nbsp;🔔&nbsp;</strong> tugmasini bosing
+                            ${t('save_alerts_hint', 'Press the 🔔 button to save the search result')}
                         </div>
                     </div>
                 </div>
@@ -1356,14 +1403,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="alerts-sidebar-header-left">
                             <div class="alerts-sidebar-icon"><i class="fa-solid fa-bookmark"></i></div>
                             <div>
-                                <div class="alerts-sidebar-title">Alerts History</div>
+                                <div class="alerts-sidebar-title">${t('alerts_history', 'Alerts History')}</div>
                             </div>
                         </div>
                         <span class="alerts-count-badge">${alerts.length}</span>
                     </div>
                     <div class="alerts-search-bar">
                         <i class="fa-solid fa-magnifying-glass alerts-search-icon"></i>
-                        <input type="text" class="alerts-search-input" id="alerts-search-input" placeholder="Search alerts history" />
+                        <input type="text" class="alerts-search-input" id="alerts-search-input" placeholder="${t('search_alerts_placeholder', 'Search alerts history')}" />
                     </div>
                     <div class="alerts-list-container" id="alerts-list"></div>
                 </div>
@@ -1372,8 +1419,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="alert-detail-empty-icon">
                             <i class="fa-regular fa-hand-pointer"></i>
                         </div>
-                        <h3>For more details</h3>
-                        <p> Select any alert history on the left </p>
+                        <h3>${t('for_more_details', 'For more details')}</h3>
+                        <p> ${t('select_alert_hint', 'Select any alert history on the left')} </p>
                     </div>
                 </div>
             </div>
@@ -1393,7 +1440,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 listContainer.innerHTML = `
                     <div style="text-align: center; padding: 2rem 1rem; color: #475569;">
                         <i class="fa-solid fa-search" style="font-size: 1.5rem; margin-bottom: 0.75rem; opacity: 0.4;"></i>
-                        <p style="font-size: 0.9rem;">Natija topilmadi</p>
+                        <p style="font-size: 0.9rem;">${t('no_results_found', 'No results found')}</p>
                     </div>
                 `;
                 return;
@@ -1412,7 +1459,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.innerHTML = `
                     <div class="alert-item-header">
                         <div class="alert-item-prompt">${alert.prompt}</div>
-                        <button class="delete-alert-small" title="O'chirish">
+                        <button class="delete-alert-small" title="${t('delete', 'Delete')}">
                             <i class="fa-solid fa-xmark"></i>
                         </button>
                     </div>
@@ -1466,7 +1513,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="alert-detail-content-wrapper">
                     <div class="mobile-sticky-header">
                         <button class="mobile-back-btn" id="mobile-alert-back">
-                            <i class="fa-solid fa-chevron-left"></i> Back
+                            <i class="fa-solid fa-chevron-left"></i> ${t('back', 'Back')}
                         </button>
                     </div>
                     <div class="alert-detail-header">
@@ -1480,11 +1527,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         </div>
                         <div class="alert-detail-actions">
-                            <button class="alert-action-btn alert-action-btn-search" title="Try again discovery" id="re-search-btn">
-                                <i class="fa-solid fa-magnifying-glass"></i> Rediscovery
+                            <button class="alert-action-btn alert-action-btn-search" title="${t('try_again_discovery', 'Try again discovery')}" id="re-search-btn">
+                                <i class="fa-solid fa-magnifying-glass"></i> ${t('rediscovery', 'Rediscovery')}
                             </button>
                             <button class="alert-action-btn alert-action-btn-delete" id="delete-alert-btn">
-                                <i class="fa-regular fa-trash-can"></i> Delete
+                                <i class="fa-regular fa-trash-can"></i> ${t('delete', 'Delete')}
                             </button>
                         </div>
                     </div>
@@ -1681,8 +1728,32 @@ document.addEventListener('DOMContentLoaded', () => {
             const selectedLang = languageSelect.value;
             localStorage.setItem('language', selectedLang);
             console.log(`Language changed to: ${selectedLang}`);
-            // Mock reload or UI update could happen here
-            // location.reload(); // Uncomment if real reload is needed
+            
+            // Submit form to Django's setlang view
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/i18n/setlang/';
+
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = getCookie('csrftoken') || '';
+            form.appendChild(csrfInput);
+
+            const langInput = document.createElement('input');
+            langInput.type = 'hidden';
+            langInput.name = 'language';
+            langInput.value = selectedLang;
+            form.appendChild(langInput);
+
+            const nextInput = document.createElement('input');
+            nextInput.type = 'hidden';
+            nextInput.name = 'next';
+            nextInput.value = window.location.pathname;
+            form.appendChild(nextInput);
+
+            document.body.appendChild(form);
+            form.submit();
         });
     }
 
@@ -1717,7 +1788,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Show feedback
             const feedback = document.createElement('div');
             feedback.className = 'alert-feedback-toast';
-            feedback.innerHTML = `<i class="fa-solid fa-paper-plane"></i>Alert turned on for ${platformNames}`;
+            feedback.innerHTML = `<i class="fa-solid fa-paper-plane"></i>${t('alert_turned_on', 'Alert turned on for')} ${platformNames}`;
             feedback.style.cssText = `
                 position: fixed;
                 bottom: 20px;

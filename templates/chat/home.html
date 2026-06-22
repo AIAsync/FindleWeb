@@ -1,13 +1,13 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ request.LANGUAGE_CODE }}">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Findle - AI Search</title>
+    <title>{% translate "Findle - AI Search" %}</title>
     <meta name="description"
-        content="Findle AI - Search, compare and find the best products and services in one place.">
+        content="{% translate 'Findle AI - Search, compare and find the best products and services in one place.' %}">
     <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,6 +15,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link rel="stylesheet" href="{% static 'css/landing.css' %}">
+    <link rel="stylesheet" href="{% static 'css/alerts.css' %}">
+    <link rel="stylesheet" href="{% static 'css/monitoring.css' %}">
     <link rel="stylesheet" href="{% static 'css/mobile_responsive.css' %}">
 </head>
 
@@ -43,17 +45,17 @@
                             </div>
                         </div>
                         <hr>
-                        <a href="#" class="dropdown-item btn-settings"><i class="fa-solid fa-gear"></i> Settings</a>
-                        <a href="#" class="dropdown-item"><i class="fa-solid fa-circle-question"></i> Help</a>
-                        <a href="#" class="dropdown-item"><i class="fa-solid fa-file-contract"></i> Terms of Service</a>
+                        <a href="#" class="dropdown-item btn-settings"><i class="fa-solid fa-gear"></i> {% translate "Settings" %}</a>
+                        <a href="#" class="dropdown-item"><i class="fa-solid fa-circle-question"></i> {% translate "Help" %}</a>
+                        <a href="#" class="dropdown-item"><i class="fa-solid fa-file-contract"></i> {% translate "Terms of Service" %}</a>
                         <hr>
                         <a href="{% url 'logout' %}" class="dropdown-item logout"><i
-                                class="fa-solid fa-right-from-bracket"></i> Logout</a>
+                                class="fa-solid fa-right-from-bracket"></i> {% translate "Logout" %}</a>
                     </div>
                 </div>
                 {% else %}
-                <a href="{% url 'login' %}" class="landing-auth-btn landing-signin-btn">Sign in</a>
-                <a href="{% url 'register' %}" class="landing-auth-btn landing-signup-btn">Sign up</a>
+                <a href="{% url 'login' %}" class="landing-auth-btn landing-signin-btn">{% translate "Sign in" %}</a>
+                <a href="{% url 'register' %}" class="landing-auth-btn landing-signup-btn">{% translate "Sign up" %}</a>
                 {% endif %}
             </div>
         </nav>
@@ -62,7 +64,7 @@
         <div class="landing-center">
             <div class="landing-logo-section">
                 <img src="{% static 'images/findle-logo-new.png' %}" alt="Findle" class="landing-logo-img">
-                <h1 class="landing-title">Findle AI</h1>
+                <h1 class="landing-title">{% translate "Findle AI" %}</h1>
             </div>
 
             <div class="landing-search-wrapper">
@@ -70,7 +72,7 @@
                     <button class="search-plus-btn" id="landing-plus-btn" type="button">
                         <i class="fa-solid fa-plus"></i>
                     </button>
-                    <textarea id="landing-search-input" placeholder="Describe anything..." class="topbar-search-input"
+                    <textarea id="landing-search-input" placeholder="{% translate 'Describe anything...' %}" class="topbar-search-input"
                         rows="1" autofocus></textarea>
                     <button class="search-icon-btn" id="landing-search-btn" type="button">
                         <i class="fa-solid fa-magnifying-glass"></i>
@@ -81,93 +83,289 @@
                 <div class="search-options-dropdown" id="landing-search-dropdown">
                     <div class="dropdown-option auth-required" id="landing-btn-image-search">
                         <div class="option-icon image-icon"><i class="fa-solid fa-camera"></i></div>
-                        <span>Image search</span>
+                        <span>{% translate "Image search" %}</span>
                     </div>
                     <hr style="margin: 4px 0; border: none; border-top: 1px solid rgba(0,0,0,0.05);">
                     <div class="dropdown-option auth-required" id="landing-btn-agent-mode">
                         <div class="option-icon agent-icon"><i class="fa-solid fa-robot"></i></div>
-                        <span>Agent mode</span>
+                        <span>{% translate "Agent mode" %}</span>
                     </div>
                     <div class="dropdown-option auth-required" id="landing-btn-discount">
                         <div class="option-icon discount-icon"><i class="fa-solid fa-tags"></i></div>
-                        <span>Discount</span>
+                        <span>{% translate "Discount" %}</span>
                     </div>
                     <div class="dropdown-option" id="landing-btn-filter">
                         <div class="option-icon filter-icon"><i class="fa-solid fa-filter"></i></div>
-                        <span>Filter</span>
+                        <span>{% translate "Filter" %}</span>
                     </div>
                     <input type="file" id="landing-image-upload-input" accept="image/*" style="display: none;">
                 </div>
+                
+                <div class="topbar-search-tabs-container" style="background: transparent; border: none; padding: 0; margin-top: 15px;">
+                    <div class="topbar-search-tabs" style="justify-content: center; gap: 15px;">
+                        <a href="#" class="search-tab active" id="landing-tab-all" data-tab="all">
+                            <i class="fa-solid fa-magnifying-glass"></i> {% translate "Search" %}
+                        </a>
+                        <a href="#" class="search-tab" id="landing-tab-fast-answer" data-tab="fast-answer">
+                            <i class="fa-solid fa-bolt"></i> {% translate "Ask AI" %}
+                        </a>
+                        <a href="#" class="search-tab auth-required" id="landing-tab-alert" data-tab="alert">
+                            <i class="fa-solid fa-bell"></i> {% translate "Alerts" %}
+                        </a>
+                    </div>
+                </div>
             </div>
 
-            <div class="landing-suggestions">
-                <button class="landing-suggestion-chip"
-                    onclick="document.getElementById('landing-search-input').value = this.textContent.trim(); document.getElementById('landing-search-btn').click();">
-                    <i class="fa-solid fa-mobile-screen-button"></i> Cheapest iPhone 17 Pro in USA
-                </button>
-                <button class="landing-suggestion-chip"
-                    onclick="document.getElementById('landing-search-input').value = this.textContent.trim(); document.getElementById('landing-search-btn').click();">
-                    <i class="fa-solid fa-screwdriver-wrench"></i> Top-rated, cheap plumber services in New York
-                </button>
-                <button class="landing-suggestion-chip"
-                    onclick="document.getElementById('landing-search-input').value = this.textContent.trim(); document.getElementById('landing-search-btn').click();">
-                    <i class="fa-solid fa-robot"></i> Which is the cheapest, highest quality AI chatbot?
-                </button>
-            </div>
+
         </div>
 
         <!-- Footer -->
         <footer class="landing-footer">
             <div class="landing-footer-links">
-                <a href="#" class="landing-footer-link">Help</a>
-                <a href="#" class="landing-footer-link">Terms of Service</a>
-                <a href="#" class="landing-footer-link">About Findle AI</a>
-                <a href="#" class="landing-footer-link">Subscription</a>
+                <a href="#" class="landing-footer-link">{% translate "Help" %}</a>
+                <a href="#" class="landing-footer-link">{% translate "Terms of Service" %}</a>
+                <a href="#" class="landing-footer-link">{% translate "About Findle AI" %}</a>
+                <a href="#" class="landing-footer-link">{% translate "Subscription" %}</a>
             </div>
         </footer>
     </div>
 
-    <!-- Filter Modal -->
+    <!-- ========== APP VIEW (Search / Ask AI / Alerts) — hidden by default ========== -->
+    <div class="app-container app-view-container" id="app-view" style="display: none;">
+        <main class="main-content">
+            <header class="topbar">
+                <div class="topbar-brand" id="app-topbar-brand" style="cursor: pointer;">
+                    <img src="{% static 'images/findle-logo-new.png' %}" alt="Findle"
+                        style="width: 70px; height: auto;">
+                    <span>{% translate "Findle AI" %}</span>
+                </div>
+                <div class="topbar-search-container" id="top-search-container">
+                    <div class="search-input-wrapper">
+                        <button class="search-plus-btn" id="search-plus-btn" type="button">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                        <input type="hidden" id="conversation-id" value="">
+                        <textarea id="user-input" placeholder="{% translate 'Describe anything...' %}" class="topbar-search-input"
+                            rows="1"></textarea>
+                        <button class="search-icon-btn auth-required" id="alert-btn" type="button"
+                            style="margin-right: 8px;" title="{% translate 'Save' %}">
+                            <i class="fa-regular fa-bell"></i>
+                        </button>
+                        <button class="search-icon-btn" id="send-btn" type="button">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                        <div id="search-tags" class="search-tags"></div>
+                    </div>
+                    <div class="search-options-dropdown" id="search-dropdown">
+                        <div class="dropdown-option auth-required" id="btn-image-search">
+                            <div class="option-icon image-icon"><i class="fa-solid fa-camera"></i></div>
+                            <span>{% translate "Image search" %}</span>
+                        </div>
+                        <hr style="margin: 4px 0; border: none; border-top: 1px solid rgba(0,0,0,0.05);">
+                        <div class="dropdown-option auth-required" id="btn-agent-mode">
+                            <div class="option-icon agent-icon"><i class="fa-solid fa-robot"></i></div>
+                            <span>{% translate "Agent mode" %}</span>
+                        </div>
+                        <div class="dropdown-option auth-required" id="btn-discount">
+                            <div class="option-icon discount-icon"><i class="fa-solid fa-tags"></i></div>
+                            <span>{% translate "Discount" %}</span>
+                        </div>
+                        <div class="dropdown-option" id="btn-filter">
+                            <div class="option-icon filter-icon"><i class="fa-solid fa-filter"></i></div>
+                            <span>{% translate "Filter" %}</span>
+                        </div>
+                        <input type="file" id="image-upload-input" accept="image/*" style="display: none;">
+                    </div>
+                </div>
+                <div class="right-controls mobile-hidden">
+                    {% if user.is_authenticated %}
+                    <div class="topbar-profile" id="topbar-profile" title="{% translate 'Profile' %}">
+                        <div class="avatar-small">{{ user.username|first|upper }}</div>
+                    </div>
+                    <div class="profile-dropdown" id="profile-dropdown">
+                        <div class="profile-header">
+                            <div class="avatar-large">{{ user.username|first|upper }}</div>
+                            <div class="profile-info">
+                                <span class="profile-username">{{ user.username }}</span>
+                                <span class="profile-email">{{ user.email }}</span>
+                            </div>
+                        </div>
+                        <hr>
+                        <a href="#" class="dropdown-item btn-settings"><i class="fa-solid fa-gear"></i> {% translate "Settings" %}</a>
+                        <a href="#" class="dropdown-item"><i class="fa-solid fa-circle-question"></i> {% translate "Help" %}</a>
+                        <a href="#" class="dropdown-item"><i class="fa-solid fa-file-contract"></i> {% translate "Terms of Service" %}</a>
+                        <hr>
+                        <a href="{% url 'logout' %}" class="dropdown-item logout"><i
+                                class="fa-solid fa-right-from-bracket"></i> {% translate "Logout" %}</a>
+                    </div>
+                    {% else %}
+                    <a href="{% url 'login' %}" class="topbar-auth-btn topbar-signin-btn">{% translate "Sign in" %}</a>
+                    <a href="{% url 'register' %}" class="topbar-auth-btn topbar-signup-btn">{% translate "Sign up" %}</a>
+                    {% endif %}
+                </div>
+            </header>
+            <div class="topbar-search-tabs-container">
+                <div class="topbar-search-tabs">
+                    <a href="#" class="search-tab active" id="tab-all">
+                        <i class="fa-solid fa-magnifying-glass"></i> {% translate "Search" %}
+                    </a>
+                    <a href="#" class="search-tab" id="tab-fast-answer">
+                        <i class="fa-solid fa-bolt"></i> {% translate "Ask AI" %}
+                    </a>
+                    <a href="#" class="search-tab auth-required" id="tab-alert">
+                        <i class="fa-solid fa-bell"></i> {% translate "Alerts" %}
+                    </a>
+                </div>
+            </div>
+            <div class="content-area">
+                <!-- Filter Modal -->
+                <div class="modal-overlay" id="filter-modal-overlay">
+                    <div class="modal-box filter-modal">
+                        <h3>{% translate "Filtering" %}</h3>
+                        <div class="filter-grid">
+                            <div class="filter-group">
+                                <label>{% translate "Price ($)" %}</label>
+                                <div class="range-inputs">
+                                    <input type="number" id="filter-price-min" placeholder="{% translate 'Min' %}">
+                                    <input type="number" id="filter-price-max" placeholder="{% translate 'Max' %}">
+                                </div>
+                            </div>
+                            <div class="filter-group">
+                                <label>{% translate "Color" %}</label>
+                                <input type="text" id="filter-color" placeholder="{% translate 'For example: Black' %}">
+                            </div>
+                            <div class="filter-group">
+                                <label>{% translate "Region" %}</label>
+                                <input type="text" id="filter-region" placeholder="{% translate 'For example: California' %}">
+                            </div>
+                            <div class="filter-group">
+                                <label>{% translate "Rating" %}</label>
+                                <select id="filter-rating">
+                                    <option value="">{% translate "All" %}</option>
+                                    <option value="4.5">4.5+</option>
+                                    <option value="4.0">4.0+</option>
+                                    <option value="3.5">3.5+</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>{% translate "Relevance" %}</label>
+                                <select id="filter-sort">
+                                    <option value="relevance">{% translate "Recommended" %}</option>
+                                    <option value="price_asc">{% translate "Cheapest" %}</option>
+                                    <option value="price_desc">{% translate "Most expensive" %}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-actions">
+                            <button class="btn-cancel" id="filter-cancel">{% translate "Cancel" %}</button>
+                            <button class="btn-confirm" id="filter-confirm">{% translate "OK" %}</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-container" id="chat-container"></div>
+                <div class="chat-container ai-chat-mode-container" id="ai-chat-container" style="display: none;">
+                    <div id="ai-chat-messages" class="ai-chat-messages">
+                        <div class="ai-chat-welcome">
+                            <h2>{% translate "Chat with Findle AI" %}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bottom Chat Container (for Ask AI mode) -->
+    <div class="bottom-chat-container" id="bottom-chat-container">
+        <div id="product-mention-popup" class="product-mention-popup"></div>
+        <div id="chat-reply-context" class="chat-reply-context"></div>
+        <div id="chat-search-tags" class="search-tags" style="margin-bottom: 8px;"></div>
+        <div class="chat-input-wrapper">
+            <button class="chat-plus-btn" id="chat-plus-btn" type="button">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+            <textarea id="chat-bottom-input" placeholder="{% translate 'Ask AI anything...' %}" rows="1"></textarea>
+            <button class="chat-send-btn" id="chat-send-btn">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+        <div class="search-options-dropdown" id="chat-dropdown">
+            <div class="dropdown-option auth-required" id="chat-btn-image-search">
+                <div class="option-icon image-icon"><i class="fa-solid fa-camera"></i></div>
+                <span>{% translate "Image search" %}</span>
+            </div>
+            <hr style="margin: 4px 0; border: none; border-top: 1px solid rgba(0,0,0,0.05);">
+            <div class="dropdown-option auth-required" id="chat-btn-agent-mode">
+                <div class="option-icon agent-icon"><i class="fa-solid fa-robot"></i></div>
+                <span>{% translate "Agent mode" %}</span>
+            </div>
+            <div class="dropdown-option auth-required" id="chat-btn-discount">
+                <div class="option-icon discount-icon"><i class="fa-solid fa-tags"></i></div>
+                <span>{% translate "Discount" %}</span>
+            </div>
+            <div class="dropdown-option" id="chat-btn-filter">
+                <div class="option-icon filter-icon"><i class="fa-solid fa-filter"></i></div>
+                <span>{% translate "Filter" %}</span>
+            </div>
+            <input type="file" id="chat-image-upload-input" accept="image/*" style="display: none;">
+        </div>
+    </div>
+
+    <!-- Alert Delete Modal -->
+    <div class="alert-modal-overlay" id="alert-delete-modal">
+        <div class="alert-modal-box">
+            <div class="alert-modal-icon">
+                <i class="fa-solid fa-trash-can"></i>
+            </div>
+            <div class="alert-modal-title">{% translate "Delete this alert?" %}</div>
+            <div class="alert-modal-text"></div>
+            <div class="alert-modal-actions">
+                <button class="alert-modal-btn alert-modal-btn-cancel" id="alert-modal-cancel">{% translate "Cancel" %}</button>
+                <button class="alert-modal-btn alert-modal-btn-confirm" id="alert-modal-confirm">{% translate "Delete" %}</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Modal (landing) -->
     <div class="modal-overlay" id="landing-filter-modal-overlay">
         <div class="modal-box filter-modal">
-            <h3>Filtering</h3>
+            <h3>{% translate "Filtering" %}</h3>
             <div class="filter-grid">
                 <div class="filter-group">
-                    <label>Price ($)</label>
+                    <label>{% translate "Price ($)" %}</label>
                     <div class="range-inputs">
-                        <input type="number" id="landing-filter-price-min" placeholder="Min">
-                        <input type="number" id="landing-filter-price-max" placeholder="Max">
+                        <input type="number" id="landing-filter-price-min" placeholder="{% translate 'Min' %}">
+                        <input type="number" id="landing-filter-price-max" placeholder="{% translate 'Max' %}">
                     </div>
                 </div>
                 <div class="filter-group">
-                    <label>Color</label>
-                    <input type="text" id="landing-filter-color" placeholder="For example: Black">
+                    <label>{% translate "Color" %}</label>
+                    <input type="text" id="landing-filter-color" placeholder="{% translate 'For example: Black' %}">
                 </div>
                 <div class="filter-group">
-                    <label>Region</label>
-                    <input type="text" id="landing-filter-region" placeholder="For exa mple: California">
+                    <label>{% translate "Region" %}</label>
+                    <input type="text" id="landing-filter-region" placeholder="{% translate 'For example: California' %}">
                 </div>
                 <div class="filter-group">
-                    <label>Rating</label>
+                    <label>{% translate "Rating" %}</label>
                     <select id="landing-filter-rating">
-                        <option value="">All</option>
+                        <option value="">{% translate "All" %}</option>
                         <option value="4.5">4.5+</option>
                         <option value="4.0">4.0+</option>
                         <option value="3.5">3.5+</option>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>Relevance</label>
+                    <label>{% translate "Relevance" %}</label>
                     <select id="landing-filter-sort">
-                        <option value="relevance">Recommended</option>
-                        <option value="price_asc">Cheapest</option>
-                        <option value="price_desc">Most expensive</option>
+                        <option value="relevance">{% translate "Recommended" %}</option>
+                        <option value="price_asc">{% translate "Cheapest" %}</option>
+                        <option value="price_desc">{% translate "Most expensive" %}</option>
                     </select>
                 </div>
             </div>
             <div class="modal-actions">
-                <button class="btn-cancel" id="landing-filter-cancel">Cancel</button>
-                <button class="btn-confirm" id="landing-filter-confirm">OK</button>
+                <button class="btn-cancel" id="landing-filter-cancel">{% translate "Cancel" %}</button>
+                <button class="btn-confirm" id="landing-filter-confirm">{% translate "OK" %}</button>
             </div>
         </div>
     </div>
@@ -178,15 +376,14 @@
             <div style="margin-bottom: 20px;">
                 <i class="fa-solid fa-lock" style="font-size: 3rem; color: #0f172a;"></i>
             </div>
-            <h3>Login Required</h3>
-            <p>Please sign in or create an account to use this feature.</p>
+            <h3>{% translate "Login Required" %}</h3>
+            <p>{% translate "Please sign in or create an account to use this feature." %}</p>
             <div class="modal-actions" style="flex-direction: column; gap: 10px;">
                 <a href="{% url 'login' %}" class="btn-confirm"
-                    style="text-decoration: none; width: 100%; display: block; padding: 12px;">Sign In</a>
+                    style="text-decoration: none; width: 100%; display: block; padding: 12px;">{% translate "Sign In" %}</a>
                 <a href="{% url 'register' %}" class="btn-cancel"
-                    style="text-decoration: none; width: 100%; display: block; padding: 12px; border: 1px solid #ccc;">Create
-                    Account</a>
-                <button class="btn-cancel" id="auth-modal-close" style="margin-top: 10px;">Cancel</button>
+                    style="text-decoration: none; width: 100%; display: block; padding: 12px; border: 1px solid #ccc;">{% translate "Create Account" %}</a>
+                <button class="btn-cancel" id="auth-modal-close" style="margin-top: 10px;">{% translate "Cancel" %}</button>
             </div>
         </div>
     </div>
@@ -197,36 +394,36 @@
             <div class="settings-container">
                 <div class="settings-sidebar">
                     <div class="settings-nav-item active" data-target="general">
-                        <i class="fa-solid fa-sliders"></i> General
+                        <i class="fa-solid fa-sliders"></i> {% translate "General" %}
                     </div>
                     <div class="settings-nav-item" data-target="appearance">
-                        <i class="fa-solid fa-palette"></i> Appearance
+                        <i class="fa-solid fa-palette"></i> {% translate "Appearance" %}
                     </div>
                     <div class="settings-nav-item" data-target="search">
-                        <i class="fa-solid fa-magnifying-glass"></i> Search
+                        <i class="fa-solid fa-magnifying-glass"></i> {% translate "Search" %}
                     </div>
                     <div class="settings-nav-item" data-target="notifications">
-                        <i class="fa-regular fa-bell"></i> Notifications
+                        <i class="fa-regular fa-bell"></i> {% translate "Notifications" %}
                     </div>
                     <div class="settings-nav-item" data-target="account">
-                        <i class="fa-solid fa-user"></i> Account
+                        <i class="fa-solid fa-user"></i> {% translate "Account" %}
                     </div>
                 </div>
                 <div class="settings-content">
                     <!-- General Section -->
                     <div class="settings-section active" id="section-general">
-                        <h3>General</h3>
-                        <p class="section-desc">Manage general application settings.</p>
+                        <h3>{% translate "General" %}</h3>
+                        <p class="section-desc">{% translate "Manage general application settings." %}</p>
 
                         <div class="setting-item">
                             <div class="setting-info">
-                                <div class="setting-label">Language</div>
-                                <div class="setting-hint">Select your preferred language.</div>
+                                <div class="setting-label">{% translate "Language" %}</div>
+                                <div class="setting-hint">{% translate "Select your preferred language." %}</div>
                             </div>
                             <div class="setting-control">
                                 <select class="settings-select" id="language-select">
-                                    <option value="en">English</option>
-                                    <option value="uz">O'zbek</option>
+                                    <option value="en" {% if request.LANGUAGE_CODE == 'en' %}selected{% endif %}>English</option>
+                                    <option value="uz" {% if request.LANGUAGE_CODE == 'uz' %}selected{% endif %}>O'zbek</option>
                                 </select>
                             </div>
                         </div>
@@ -234,13 +431,13 @@
 
                     <!-- Appearance Section -->
                     <div class="settings-section" id="section-appearance">
-                        <h3>Appearance</h3>
-                        <p class="section-desc">Customize how Findle AI looks on your device.</p>
+                        <h3>{% translate "Appearance" %}</h3>
+                        <p class="section-desc">{% translate "Customize how Findle AI looks on your device." %}</p>
 
                         <div class="setting-item">
                             <div class="setting-info">
-                                <div class="setting-label">Dark Mode</div>
-                                <div class="setting-hint">Adjust the theme to reduce eye strain.</div>
+                                <div class="setting-label">{% translate "Dark Mode" %}</div>
+                                <div class="setting-hint">{% translate "Adjust the theme to reduce eye strain." %}</div>
                             </div>
                             <div class="setting-control">
                                 <label class="switch">
@@ -252,8 +449,8 @@
 
                         <div class="setting-item">
                             <div class="setting-info">
-                                <div class="setting-label">Accent Color</div>
-                                <div class="setting-hint">Choose a Highlight color for the interface.</div>
+                                <div class="setting-label">{% translate "Accent Color" %}</div>
+                                <div class="setting-hint">{% translate "Choose a Highlight color for the interface." %}</div>
                             </div>
                             <div class="setting-control">
                                 <div class="color-presets">
@@ -269,33 +466,33 @@
 
                     <!-- Search Section -->
                     <div class="settings-section" id="section-search">
-                        <h3>Search Settings</h3>
-                        <p class="section-desc">Configure your search preferences.</p>
+                        <h3>{% translate "Search Settings" %}</h3>
+                        <p class="section-desc">{% translate "Configure your search preferences." %}</p>
 
                         <div class="setting-item">
                             <div class="setting-info">
-                                <div class="setting-label">Safe Search</div>
-                                <div class="setting-hint">Filter out explicit content from results.</div>
+                                <div class="setting-label">{% translate "Safe Search" %}</div>
+                                <div class="setting-hint">{% translate "Filter out explicit content from results." %}</div>
                             </div>
                             <div class="setting-control">
                                 <select class="settings-select">
-                                    <option>Strict</option>
-                                    <option selected>Moderate</option>
-                                    <option>Off</option>
+                                    <option>{% translate "Strict" %}</option>
+                                    <option selected>{% translate "Moderate" %}</option>
+                                    <option>{% translate "Off" %}</option>
                                 </select>
                             </div>
                         </div>
 
                         <div class="setting-item">
                             <div class="setting-info">
-                                <div class="setting-label">Region</div>
-                                <div class="setting-hint">Localize your search results.</div>
+                                <div class="setting-label">{% translate "Region" %}</div>
+                                <div class="setting-hint">{% translate "Localize your search results." %}</div>
                             </div>
                             <div class="setting-control">
                                 <select class="settings-select">
-                                    <option>Uzbekistan</option>
-                                    <option>United States</option>
-                                    <option>Global</option>
+                                    <option>{% translate "Uzbekistan" %}</option>
+                                    <option>{% translate "United States" %}</option>
+                                    <option>{% translate "Global" %}</option>
                                 </select>
                             </div>
                         </div>
@@ -303,14 +500,14 @@
 
                     <!-- Notifications Section -->
                     <div class="settings-section" id="section-notifications">
-                        <h3>Social Media Alerts</h3>
-                        <p class="section-desc">Receive alerts on your favorite platforms.</p>
+                        <h3>{% translate "Social Media Alerts" %}</h3>
+                        <p class="section-desc">{% translate "Receive alerts on your favorite platforms." %}</p>
 
                         <div class="setting-item">
                             <div class="setting-info">
                                 <div class="setting-label"><i class="fa-brands fa-telegram" style="color: #24A1DE;"></i>
                                     Telegram</div>
-                                <div class="setting-hint">Get alerts via Telegram bot.</div>
+                                <div class="setting-hint">{% translate "Get alerts via Telegram bot." %}</div>
                             </div>
                             <div class="setting-control">
                                 <label class="switch">
@@ -324,7 +521,7 @@
                             <div class="setting-info">
                                 <div class="setting-label"><i class="fa-brands fa-whatsapp" style="color: #25D366;"></i>
                                     WhatsApp</div>
-                                <div class="setting-hint">Get alerts via WhatsApp message.</div>
+                                <div class="setting-hint">{% translate "Get alerts via WhatsApp message." %}</div>
                             </div>
                             <div class="setting-control">
                                 <label class="switch">
@@ -338,7 +535,7 @@
                             <div class="setting-info">
                                 <div class="setting-label"><i class="fa-brands fa-discord" style="color: #5865F2;"></i>
                                     Discord</div>
-                                <div class="setting-hint">Get alerts via Discord webhook.</div>
+                                <div class="setting-hint">{% translate "Get alerts via Discord webhook." %}</div>
                             </div>
                             <div class="setting-control">
                                 <label class="switch">
@@ -351,7 +548,7 @@
                         <div class="setting-item">
                             <div class="setting-info">
                                 <div class="setting-label"><i class="fa-regular fa-envelope"></i> Email</div>
-                                <div class="setting-hint">Get alerts via Email.</div>
+                                <div class="setting-hint">{% translate "Get alerts via Email." %}</div>
                             </div>
                             <div class="setting-control">
                                 <label class="switch">
@@ -364,37 +561,104 @@
 
                     <!-- Account Section -->
                     <div class="settings-section" id="section-account">
-                        <h3>Account info</h3>
-                        <p class="section-desc">Manage your personal information.</p>
+                        <h3>{% translate "Account info" %}</h3>
+                        <p class="section-desc">{% translate "Manage your personal information." %}</p>
 
                         <div class="account-form">
                             <div class="form-group">
-                                <label>Username</label>
+                                <label>{% translate "Username" %}</label>
                                 <input type="text" value="{{ user.username }}" id="settings-username">
                             </div>
                             <div class="form-group">
-                                <label>Email Address</label>
+                                <label>{% translate "Email Address" %}</label>
                                 <input type="email" value="{{ user.email }}" id="settings-email">
                             </div>
-                            <button class="btn-confirm" style="width: 100%; margin-top: 10px;">Update Profile</button>
+                            <button class="btn-confirm" style="width: 100%; margin-top: 10px;">{% translate "Update Profile" %}</button>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="settings-footer">
-                <button class="btn-cancel" id="settings-close">Close</button>
+                <button class="btn-cancel" id="settings-close">{% translate "Close" %}</button>
             </div>
         </div>
     </div>
 
     <script>
         window.isAuthenticated = {% if user.is_authenticated %}true{% else %} false{% endif %};
+        window.isLandingPage = true;
+        window.JS_TRANSLATIONS = {
+            "ask_ai_anything": "{% translate 'Ask AI anything...' %}",
+            "describe_anything": "{% translate 'Describe anything...' %}",
+            "som": "{% translate "so'm" %}",
+            "search_summary_format": "{% translate '\"{prompt}\" query returned {products_count} products from {sites_count} sites and {stores_count} stores. Prices may vary across sources — compare to find the best offer.' %}",
+            "question_about": "{% translate 'question about {title}' %}",
+            "delete_notification_confirm": "{% translate 'Do you want to delete this notification?' %}",
+            "discount": "{% translate 'Discount' %}",
+            "agent_mode": "{% translate 'Agent Mode' %}",
+            "image_search": "{% translate 'Image search' %}",
+            "filtering": "{% translate 'Filtering' %}",
+            "something_went_wrong": "{% translate 'Sorry, something went wrong.' %}",
+            "ai_thinking": "{% translate 'AI is thinking...' %}",
+            "error_try_again": "{% translate 'An error occurred. Please try again.' %}",
+            "connection_lost": "{% translate 'Connection with server lost.' %}",
+            "products_found": "{% translate 'products found for query' %}",
+            "site": "{% translate 'site' %}",
+            "sites": "{% translate 'sites' %}",
+            "store": "{% translate 'store' %}",
+            "stores": "{% translate 'stores' %}",
+            "product": "{% translate 'product' %}",
+            "products": "{% translate 'products' %}",
+            "continue_conversation": "{% translate 'Continue conversation' %}",
+            "all_results": "{% translate 'All results' %}",
+            "prices": "{% translate 'Prices' %}",
+            "min": "{% translate 'Min' %}",
+            "average": "{% translate 'Average' %}",
+            "max": "{% translate 'Max' %}",
+            "sources": "{% translate 'Sources' %}",
+            "all": "{% translate 'All' %}",
+            "no_image": "{% translate 'No image' %}",
+            "just_now": "{% translate 'Just now' %}",
+            "recently": "{% translate 'Recently' %}",
+            "ago": "{% translate 'ago' %}",
+            "welcome_h1": "{% translate 'How can I help you explore products today?' %}",
+            "welcome_p": "{% translate 'Ask about laptops, accessories, or any gadgets.' %}",
+            "please_search_first": "{% translate 'Please search something first.' %}",
+            "save_error": "{% translate 'Save Error' %}",
+            "no_alerts_saved": "{% translate 'No alerts saved yet' %}",
+            "save_alerts_desc": "{% translate 'Save search results using the bell button.' %}",
+            "save_alerts_hint": "{% translate 'Press the 🔔 button to save the search result' %}",
+            "alerts_history": "{% translate 'Alerts History' %}",
+            "search_alerts_placeholder": "{% translate 'Search alerts history' %}",
+            "for_more_details": "{% translate 'For more details' %}",
+            "select_alert_hint": "{% translate 'Select any alert history on the left' %}",
+            "no_results_found": "{% translate 'No results found' %}",
+            "delete": "{% translate 'Delete' %}",
+            "back": "{% translate 'Back' %}",
+            "try_again_discovery": "{% translate 'Try again discovery' %}",
+            "rediscovery": "{% translate 'Rediscovery' %}",
+            "alert_turned_on": "{% translate 'Alert turned on for' %}",
+            "img_prefix": "{% translate 'Img' %}",
+            "filter": "{% translate 'Filter' %}",
+            "delete_alert_confirm": "{% translate 'Delete this alert?' %}"
+        };
+        window.t = function(key, defaultVal) {
+            if (window.JS_TRANSLATIONS && window.JS_TRANSLATIONS[key] !== undefined) {
+                return window.JS_TRANSLATIONS[key];
+            }
+            return defaultVal;
+        };
     </script>
 
+    <script src="{% static 'js/ai_interaction.js' %}"></script>
+    <script src="{% static 'js/search_bar.js' %}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const searchInput = document.getElementById('landing-search-input');
             const searchBtn = document.getElementById('landing-search-btn');
+            const landingContainer = document.querySelector('.landing-container');
+            const appView = document.getElementById('app-view');
+            const appUserInput = document.getElementById('user-input');
 
             // Auto-resize textarea
             if (searchInput) {
@@ -404,23 +668,134 @@
                 });
             }
 
+            // ===== Dynamic View Switching =====
+            function showAppView(tabId, query) {
+                // Transfer query text to app's search input
+                if (appUserInput && query) {
+                    appUserInput.value = query;
+                }
+
+                // Fade out landing
+                landingContainer.style.opacity = '0';
+                landingContainer.style.transform = 'scale(0.98)';
+
+                setTimeout(() => {
+                    landingContainer.style.display = 'none';
+                    document.body.classList.remove('landing-page');
+
+                    // Show app view
+                    appView.style.display = '';
+                    appView.style.opacity = '0';
+                    appView.style.transform = 'translateY(10px)';
+
+                    requestAnimationFrame(() => {
+                        appView.style.opacity = '1';
+                        appView.style.transform = 'translateY(0)';
+                    });
+
+                    // Activate the correct tab in the app view
+                    const appTabs = appView.querySelectorAll('.search-tab');
+                    appTabs.forEach(t => t.classList.remove('active'));
+                    const targetTab = document.getElementById(tabId);
+                    if (targetTab) {
+                        targetTab.classList.add('active');
+                        targetTab.click();
+                    }
+
+                    // If search query, trigger search
+                    if (query && tabId === 'tab-all') {
+                        setTimeout(() => {
+                            const sendBtn = document.getElementById('send-btn');
+                            if (sendBtn) {
+                                sendBtn.dataset.isAutoTrigger = 'true';
+                                sendBtn.click();
+                                delete sendBtn.dataset.isAutoTrigger;
+                            }
+                        }, 200);
+                    }
+                }, 250);
+            }
+
+            function showLandingView() {
+                // Fade out app view
+                appView.style.opacity = '0';
+                appView.style.transform = 'translateY(10px)';
+
+                setTimeout(() => {
+                    appView.style.display = 'none';
+                    document.body.classList.add('landing-page');
+
+                    // Show landing
+                    landingContainer.style.display = '';
+                    landingContainer.style.opacity = '0';
+                    landingContainer.style.transform = 'scale(0.98)';
+
+                    requestAnimationFrame(() => {
+                        landingContainer.style.opacity = '1';
+                        landingContainer.style.transform = 'scale(1)';
+                    });
+
+                    // Reset landing tabs
+                    const landingTabs = document.querySelectorAll('#landing-tab-all, #landing-tab-fast-answer, #landing-tab-alert');
+                    landingTabs.forEach(t => t.classList.remove('active'));
+                    const allTab = document.getElementById('landing-tab-all');
+                    if (allTab) allTab.classList.add('active');
+
+                    // Focus search
+                    if (searchInput) searchInput.focus();
+                }, 250);
+            }
+
+            // Expose globally so ai_interaction.js can call it
+            window.showLandingView = showLandingView;
+
+            // Landing tab click handlers
+            const landingTabs = document.querySelectorAll('#landing-tab-all, #landing-tab-fast-answer, #landing-tab-alert');
+            landingTabs.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (tab.classList.contains('auth-required') && window.isAuthenticated === false) {
+                        return;
+                    }
+                    landingTabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    const query = searchInput ? searchInput.value.trim() : '';
+                    const tabName = tab.getAttribute('data-tab');
+
+                    if (tabName === 'fast-answer') {
+                        showAppView('tab-fast-answer', query);
+                    } else if (tabName === 'alert') {
+                        showAppView('tab-alert', query);
+                    } else if (tabName === 'all' && query) {
+                        showAppView('tab-all', query);
+                    }
+                });
+            });
+
+            // App topbar brand click -> go back to landing
+            const appBrand = document.getElementById('app-topbar-brand');
+            if (appBrand) {
+                appBrand.addEventListener('click', () => {
+                    showLandingView();
+                });
+            }
+
             function performSearch() {
                 const query = searchInput.value.trim();
                 if (!query) return;
 
-                // Collect active tags/options
-                const tags = document.querySelectorAll('#landing-search-tags .search-tag');
-                let params = new URLSearchParams();
-                params.set('q', query);
+                // Determine which tab is active
+                const activeTab = document.querySelector('#landing-tab-all, #landing-tab-fast-answer, #landing-tab-alert');
+                const activeLandingTab = document.querySelector('#landing-tab-all.active, #landing-tab-fast-answer.active, #landing-tab-alert.active');
+                let tabId = 'tab-all';
+                if (activeLandingTab) {
+                    const tabName = activeLandingTab.getAttribute('data-tab');
+                    if (tabName === 'fast-answer') tabId = 'tab-fast-answer';
+                    else if (tabName === 'alert') tabId = 'tab-alert';
+                }
 
-                tags.forEach(tag => {
-                    const id = tag.dataset.id;
-                    if (id === 'landing-btn-agent-mode') params.set('agent_mode', '1');
-                    if (id === 'landing-btn-discount') params.set('discount', '1');
-                    if (id === 'landing-btn-filter') params.set('filter', '1');
-                });
-
-                window.location.href = `/?${params.toString()}`;
+                showAppView(tabId, query);
             }
 
             if (searchBtn) {
@@ -436,7 +811,7 @@
                 });
             }
 
-            // Profile dropdown
+            // Profile dropdown (landing)
             const profileBtn = document.getElementById('landing-profile');
             const profileDropdown = document.getElementById('landing-profile-dropdown');
 
@@ -449,6 +824,23 @@
                 document.addEventListener('click', (e) => {
                     if (!profileDropdown.contains(e.target) && !profileBtn.contains(e.target)) {
                         profileDropdown.classList.remove('show');
+                    }
+                });
+            }
+
+            // Profile dropdown (app view)
+            const appProfileBtn = document.getElementById('topbar-profile');
+            const appProfileDropdown = document.getElementById('profile-dropdown');
+
+            if (appProfileBtn && appProfileDropdown) {
+                appProfileBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    appProfileDropdown.classList.toggle('show');
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!appProfileDropdown.contains(e.target) && !appProfileBtn.contains(e.target)) {
+                        appProfileDropdown.classList.remove('show');
                     }
                 });
             }
@@ -513,7 +905,7 @@
                             let existingTag = searchTagsContainer.querySelector(`.search-tag[data-id="${id}"]`);
                             if (existingTag) existingTag.remove();
 
-                            const tag = createTag(`Img: ${fileName}`, id);
+                            const tag = createTag(`${window.t('img_prefix', 'Img')}: ${fileName}`, id);
                             searchTagsContainer.appendChild(tag);
 
                             if (option) option.classList.add('active');
@@ -615,7 +1007,7 @@
                     filterConfirm.addEventListener('click', () => {
                         // Add filter tag
                         if (btnFilter && !btnFilter.classList.contains('active')) {
-                            const tag = createTag('Filter', 'landing-btn-filter');
+                            const tag = createTag(window.t('filter', 'Filter'), 'landing-btn-filter');
                             searchTagsContainer.appendChild(tag);
                             btnFilter.classList.add('active');
                         }
@@ -760,17 +1152,6 @@
                         colorDots.forEach(d => d.classList.remove('active'));
                         dot.classList.add('active');
                     }
-                });
-            }
-
-            // Language Switcher Logic
-            const languageSelect = document.getElementById('language-select');
-            if (languageSelect) {
-                const savedLang = localStorage.getItem('language') || 'en';
-                languageSelect.value = savedLang;
-                languageSelect.addEventListener('change', () => {
-                    const selectedLang = languageSelect.value;
-                    localStorage.setItem('language', selectedLang);
                 });
             }
 

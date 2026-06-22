@@ -1,47 +1,48 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
 {% block content %}
 
 <div class="modal-overlay" id="filter-modal-overlay">
     <div class="modal-box filter-modal">
-        <h3>Filtering</h3>
+        <h3>{% translate "Filtering" %}</h3>
         <div class="filter-grid">
             <div class="filter-group">
-                <label>Price ($)</label>
+                <label>{% translate "Price ($)" %}</label>
                 <div class="range-inputs">
-                    <input type="number" id="filter-price-min" placeholder="Min">
-                    <input type="number" id="filter-price-max" placeholder="Max">
+                    <input type="number" id="filter-price-min" placeholder="{% translate 'Min' %}">
+                    <input type="number" id="filter-price-max" placeholder="{% translate 'Max' %}">
                 </div>
             </div>
             <div class="filter-group">
-                <label>Color</label>
-                <input type="text" id="filter-color" placeholder="For example: Black">
+                <label>{% translate "Color" %}</label>
+                <input type="text" id="filter-color" placeholder="{% translate 'For example: Black' %}">
             </div>
             <div class="filter-group">
-                <label>Region</label>
-                <input type="text" id="filter-region" placeholder="For example: California">
+                <label>{% translate "Region" %}</label>
+                <input type="text" id="filter-region" placeholder="{% translate 'For example: California' %}">
             </div>
             <div class="filter-group">
-                <label>Rating</label>
+                <label>{% translate "Rating" %}</label>
                 <select id="filter-rating">
-                    <option value="">All</option>
+                    <option value="">{% translate "All" %}</option>
                     <option value="4.5">4.5+</option>
                     <option value="4.0">4.0+</option>
                     <option value="3.5">3.5+</option>
                 </select>
             </div>
             <div class="filter-group">
-                <label>Relevance</label>
+                <label>{% translate "Relevance" %}</label>
                 <select id="filter-sort">
-                    <option value="relevance">Recommended</option>
-                    <option value="price_asc">Cheapest</option>
-                    <option value="price_desc">Most expensive</option>
+                    <option value="relevance">{% translate "Recommended" %}</option>
+                    <option value="price_asc">{% translate "Cheapest" %}</option>
+                    <option value="price_desc">{% translate "Most expensive" %}</option>
                 </select>
             </div>
         </div>
         <div class="modal-actions">
-            <button class="btn-cancel" id="filter-cancel">Cancel</button>
-            <button class="btn-confirm" id="filter-confirm">OK</button>
+            <button class="btn-cancel" id="filter-cancel">{% translate "Cancel" %}</button>
+            <button class="btn-confirm" id="filter-confirm">{% translate "OK" %}</button>
         </div>
     </div>
 </div>
@@ -52,7 +53,7 @@
 <div class="chat-container ai-chat-mode-container" id="ai-chat-container" style="display: none;">
     <div id="ai-chat-messages" class="ai-chat-messages">
         <div class="ai-chat-welcome">
-            <h2>Findle AI bilan suhbat</h2>
+            <h2>{% translate "Chat with Findle AI" %}</h2>
         </div>
     </div>
 </div>

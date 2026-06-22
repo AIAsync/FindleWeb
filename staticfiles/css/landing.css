@@ -11,6 +11,12 @@ body.landing-page {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* App view transition support */
+.app-view-container {
+    transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
 /* Navigation */

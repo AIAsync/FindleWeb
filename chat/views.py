@@ -38,7 +38,8 @@ def get_db_connection():
 def home(request):
     """Landing page — Google-like centered search. No login required."""
     query = request.GET.get('q', '')
-    if query:
+    tab = request.GET.get('tab', '')
+    if query or (tab and tab != 'all'):
         return render(request, 'chat/search.html', {'initial_query': query})
     return render(request, 'chat/home.html')
 

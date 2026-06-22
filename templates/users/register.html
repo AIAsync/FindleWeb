@@ -1,10 +1,11 @@
+{% load i18n %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ request.LANGUAGE_CODE }}">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Findle - Register</title>
+    <title>{% translate "Findle - Register" %}</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -13,7 +14,7 @@
 <body>
     <div class="auth-container">
         <div class="auth-box">
-            <h2>Create Account</h2>
+            <h2>{% translate "Create Account" %}</h2>
             <form method="post" class="auth-form">
                 {% csrf_token %}
                 <!-- Simple rendering of form fields for demo, or loop through form -->
@@ -27,21 +28,21 @@
                     {% endif %}
                 </div>
                 {% endfor %}
-                <button type="submit">Register</button>
+                <button type="submit">{% translate "Register" %}</button>
             </form>
 
             <div style="margin: 1.5rem 0; display: flex; align-items: center; gap: 1rem;">
                 <div style="flex: 1; height: 1px; background: rgba(255, 255, 255, 0.1);"></div>
-                <span style="color: var(--text-muted); font-size: 0.9rem;">or</span>
+                <span style="color: var(--text-muted); font-size: 0.9rem;">{% translate "or" %}</span>
                 <div style="flex: 1; height: 1px; background: rgba(255, 255, 255, 0.1);"></div>
             </div>
 
             <a href="/accounts/google/login/?process=signup" class="google-login-btn">
-                <i class="fab fa-google"></i> Continue with Google
+                <i class="fab fa-google"></i> {% translate "Continue with Google" %}
             </a>
 
             <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
-                Already have an account? <a href="{% url 'login' %}" style="color: var(--primary);">Login</a>
+                {% translate "Already have an account?" %} <a href="{% url 'login' %}" style="color: var(--primary);">{% translate "Login" %}</a>
             </p>
         </div>
     </div>

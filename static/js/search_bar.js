@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     let existingTag = searchTagsContainer.querySelector(`.search-tag[data-id="${id}"]`);
                     if (existingTag) existingTag.remove();
 
-                    const tag = createTag(`Img: ${fileName}`, id);
+                    const tag = createTag(`${window.t('img_prefix', 'Img')}: ${fileName}`, id);
                     searchTagsContainer.appendChild(tag);
 
                     if (option) option.classList.add('active');
