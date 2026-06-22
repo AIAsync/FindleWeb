@@ -1456,6 +1456,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const item = document.createElement('div');
                 item.className = 'alert-item';
+                item.dataset.alertId = alert.id;
                 item.innerHTML = `
                     <div class="alert-item-header">
                         <div class="alert-item-prompt">${alert.prompt}</div>
@@ -1519,7 +1520,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="alert-detail-header">
                         <div style="width: 100%;">
                             <div class="alert-detail-header-info">
-                                <div class="alert-detail-title">${alert.prompt}</div>
+                                <div class="alert-detail-title-wrapper">
+                                    <input type="text" id="alert-prompt-input" class="alert-detail-title-input" value="${alert.prompt.replace(/"/g, '&quot;')}" readonly>
+                                    <button class="edit-prompt-btn" id="edit-alert-prompt-btn" title="Edit">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                </div>
                                 <div class="alert-detail-meta">
                                     <span class="alert-detail-meta-item"><i class="fa-regular fa-calendar"></i> ${dateFull}</span>
                                     <span class="alert-detail-meta-item"><i class="fa-solid fa-hashtag"></i> ID: ${alert.id.toString().slice(-6)}</span>
@@ -1556,6 +1562,48 @@ document.addEventListener('DOMContentLoaded', () => {
                         userInput.focus();
                         userInput.style.height = 'auto';
                         userInput.style.height = (userInput.scrollHeight) + 'px';
+                    }
+                });
+            }
+
+            const editPromptBtn = document.getElementById('edit-alert-prompt-btn');
+            const promptInput = document.getElementById('alert-prompt-input');
+            if (editPromptBtn && promptInput) {
+                const icon = editPromptBtn.querySelector('i');
+                let isEditing = false;
+
+                const savePrompt = () => {
+                    promptInput.setAttribute('readonly', 'true');
+                    promptInput.classList.remove('editing');
+                    icon.classList.remove('fa-check');
+                    icon.classList.add('fa-pen');
+                    isEditing = false;
+
+                    if (alert.prompt !== promptInput.value) {
+                        alert.prompt = promptInput.value;
+                        const sidebarItemPrompt = document.querySelector(`.alert-item[data-alert-id="${alert.id}"] .alert-item-prompt`);
+                        if (sidebarItemPrompt) {
+                            sidebarItemPrompt.textContent = alert.prompt;
+                        }
+                    }
+                };
+
+                editPromptBtn.addEventListener('click', () => {
+                    if (!isEditing) {
+                        promptInput.removeAttribute('readonly');
+                        promptInput.focus();
+                        promptInput.classList.add('editing');
+                        icon.classList.remove('fa-pen');
+                        icon.classList.add('fa-check');
+                        isEditing = true;
+                    } else {
+                        savePrompt();
+                    }
+                });
+
+                promptInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        savePrompt();
                     }
                 });
             }
