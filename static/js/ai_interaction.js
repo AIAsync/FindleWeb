@@ -1008,6 +1008,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const oldPriceText = p.old_price ? formatPrice(p.old_price) : '';
         const imgSrc = p.image_url || '';
         const url = p.product_url || '#';
+        const accuracyHtml = p.accuracy !== undefined && p.accuracy !== null ? `
+            <div class="sr-accuracy-badge" title="${t('accuracy_title', 'Match accuracy')}">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>${t('accuracy', 'Accuracy')}: ${p.accuracy}%</span>
+            </div>
+        ` : '';
 
         return `
             <div class="sr-top-card">
@@ -1016,6 +1022,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${imgSrc ? `<img src="${escapeHTML(imgSrc)}" alt="${escapeHTML(p.title || '')}" loading="lazy">` : `<span>${t('no_image', 'No image')}</span>`}
                     </div>
                     <div class="sr-top-card-body">
+                        ${accuracyHtml}
                         <div class="sr-top-card-title">${escapeHTML(p.title || '')}</div>
                         <div class="sr-top-card-price-row">
                             ${priceText ? `<span class="sr-top-card-price">${priceText} ${t('som', "so'm")}</span>` : ''}
@@ -1033,6 +1040,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const oldPriceText = p.old_price ? formatPrice(p.old_price) : '';
         const imgSrc = p.image_url || '';
         const url = p.product_url || '#';
+        const accuracyHtml = p.accuracy !== undefined && p.accuracy !== null ? `
+            <div class="sr-accuracy-badge" title="${t('accuracy_title', 'Match accuracy')}">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>${t('accuracy', 'Accuracy')}: ${p.accuracy}%</span>
+            </div>
+        ` : '';
 
         return `
             <div class="sr-grid-card">
@@ -1041,6 +1054,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${imgSrc ? `<img src="${escapeHTML(imgSrc)}" alt="${escapeHTML(p.title || '')}" loading="lazy">` : `<span>${t('no_image', 'No image')}</span>`}
                     </div>
                     <div class="sr-grid-card-body">
+                        ${accuracyHtml}
                         <div class="sr-grid-card-title">${escapeHTML(p.title || '')}</div>
                         ${priceText ? `<span class="sr-grid-card-price">${priceText} ${t('som', "so'm")}</span>` : ''}
                         ${oldPriceText && oldPriceText !== priceText ? `<span class="sr-grid-card-old-price">${oldPriceText}</span>` : ''}

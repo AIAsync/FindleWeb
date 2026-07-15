@@ -9,6 +9,7 @@ import psycopg2
 from dotenv import load_dotenv
 import decimal
 from openai import OpenAI
+import requests
 
 load_dotenv()
 
@@ -22,8 +23,11 @@ DB_TABLE = os.getenv('POSTGRES_TABLE', 'products')
 
 def get_db_connection():
     try:
+        host = DB_HOST
+        if host == 'localhost':
+            host = '127.0.0.1'
         conn = psycopg2.connect(
-            host=DB_HOST,
+            host=host,
             port=DB_PORT,
             database=DB_NAME,
             user=DB_USER,
@@ -52,6 +56,75 @@ def search_page(request):
     })
 
 
+def _map_api_result_to_product(res):
+    """Map a Findle API result (real estate or product) to the frontend product schema."""
+    structured = res.get('structured') or {}
+
+    # Build a human-readable title from available fields
+    parts = []
+    prop_type = res.get('property_type') or ''
+    trans_type = res.get('transaction_type') or ''
+    rooms = structured.get('rooms')
+    address = res.get('address') or ''
+    district = res.get('district') or ''
+    region = res.get('region') or ''
+    total_area = res.get('total_area')
+
+    if prop_type:
+        parts.append(prop_type)
+    if trans_type:
+        parts.append(f"({trans_type})")
+    if rooms:
+        parts.append(f"{rooms}-xonali")
+    if total_area:
+        parts.append(f"{total_area} m²")
+    if address:
+        parts.append(address)
+    elif district:
+        parts.append(district)
+
+    title = ' '.join(parts) if parts else res.get('product_id', 'Listing')
+
+    # Location string for who_by / site_name
+    location_parts = [p for p in [district, region] if p]
+    location_str = ', '.join(location_parts) if location_parts else 'findle.uz'
+
+    # Price
+    price = res.get('price')
+    currency = res.get('currency') or ''
+    if price is not None:
+        try:
+            price = float(price)
+        except (TypeError, ValueError):
+            price = None
+
+    # Accuracy score (integer 0-100 from API)
+    accuracy = res.get('accuracy')
+
+    # Build a product_url from product_id if available
+    product_id = res.get('product_id', '')
+    product_url = f"https://findle.uz/product/{product_id}" if product_id else '#'
+
+    return {
+        'image_url': None,
+        'product_url': product_url,
+        'title': title,
+        'rating': None,
+        'who_by': location_str,
+        'site_name': 'findle.uz',
+        'price': price,
+        'old_price': None,
+        'currency': currency,
+        'accuracy': accuracy,
+        'district': district,
+        'region': region,
+        'transaction_type': trans_type,
+        'property_type': prop_type,
+        'total_area': total_area,
+        'rooms': rooms,
+    }
+
+
 def chat_api(request):
     """Search endpoint — does NOT save to database. Works like Google search query. No login required."""
     if request.method == 'POST':
@@ -66,85 +139,118 @@ def chat_api(request):
             "This product can be an individual choice for you. Therefore, choose for yourself in terms of affordability and quality."
         ]
         
-        # PostgreSQL Search Logic
         products_data = []
-        conn = get_db_connection()
         
-        if conn:
-            try:
-                cur = conn.cursor()
-                # Determine columns to select - assuming table schema matches requirements or mapping is needed.
-                # Based on user request: 
-                # 1. image_url (column: image_url)
-                # 2. title (column: title)
-                # 3. old_price (column: old_price), price (column: price)
-                # 4. rating (column: rating)
-                # 5. who_by (column: who_by)
-                # 6. product_url (column: product_url)
-                
-                # Search query using ILIKE for partial case-insensitive match on title or site_name
-                search_query = f"%{prompt}%"
-                
-                query_sql = f"""
-                    SELECT image_url, title, old_price, price, rating, who_by, product_url, site_name, crawled_at 
-                    FROM {DB_TABLE} 
-                    WHERE title ILIKE %s OR site_name ILIKE %s 
-                    LIMIT 50
-                """
-                
-                cur.execute(query_sql, (search_query, search_query))
-                rows = cur.fetchall()
-                
-                for row in rows:
-                    # Map row to dictionary
-                    # Index 2: old_price, Index 3: price
-                    old_price = row[2]
-                    price = row[3]
-                    site_name = row[7]
-                    crawled_at = row[8]
-                    
-                    # Convert Decimal to float/string if needed for JSON
-                    if isinstance(old_price, decimal.Decimal):
-                        old_price = float(old_price)
-                    if isinstance(price, decimal.Decimal):
-                        price = float(price)
-                        
-                    # Use site_name as who_by if who_by is empty
-                    who_by = row[5] or site_name
+        # 1. Call Findle Search API
+        try:
+            api_url = 'https://api.findle.uz/search'
+            payload = {
+                'query': prompt,
+                'limit': 10
+            }
+            res = requests.post(api_url, json=payload, headers={'accept': 'application/json', 'Content-Type': 'application/json'}, timeout=15)
+            if res.status_code == 200:
+                api_data = res.json()
+                results = api_data.get('results', [])
+            else:
+                results = []
+        except Exception as e:
+            print(f"Error calling findle api: {e}")
+            results = []
+            
+        # Try to enrich from DB first; fall back to raw API data
+        accuracy_map = {r['product_id']: r.get('accuracy') for r in results if 'product_id' in r}
+        product_ids = list(accuracy_map.keys())
 
-                    # Format crawled_at
-                    crawled_at_str = crawled_at.strftime('%Y-%m-%d %H:%M') if crawled_at else None
-                        
-                    products_data.append({
-                        'image_url': row[0],
-                        'title': row[1],
-                        'old_price': old_price,
-                        'price': price,
-                        'rating': row[4],
-                        'who_by': who_by,
-                        'site_name': site_name,
-                        'product_url': row[6],
-                        'crawled_at': crawled_at_str
-                    })
+        db_results = {}
+        if product_ids:
+            conn = get_db_connection()
+            if conn:
+                try:
+                    cur = conn.cursor()
+                    query_sql = """
+                        SELECT product_id, image_url, product_url, title, rating, who_by, site_name, raw_data 
+                        FROM raw_products 
+                        WHERE product_id IN %s
+                    """
+                    cur.execute(query_sql, (tuple(product_ids),))
+                    rows = cur.fetchall()
                     
-                cur.close()
-                conn.close()
-            except Exception as e:
-                print(f"Error executing query: {e}")
-                if conn:
+                    for row in rows:
+                        p_id = row[0]
+                        image_url = row[1]
+                        product_url = row[2]
+                        title = row[3]
+                        rating = row[4]
+                        who_by = row[5]
+                        site_name = row[6]
+                        raw_data = row[7]
+
+                        # Parse price and old_price from raw_data
+                        price = None
+                        old_price = None
+                        if isinstance(raw_data, dict):
+                            price_obj = raw_data.get('price')
+                            if isinstance(price_obj, dict):
+                                price = price_obj.get('value')
+                            elif isinstance(price_obj, (int, float, str)):
+                                price = price_obj
+
+                            old_price_obj = raw_data.get('old_price')
+                            if isinstance(old_price_obj, dict):
+                                old_price = old_price_obj.get('value')
+                            elif isinstance(old_price_obj, (int, float, str)):
+                                old_price = old_price_obj
+
+                        # Convert Decimal/float if needed
+                        if isinstance(price, decimal.Decimal):
+                            price = float(price)
+                        elif isinstance(price, str):
+                            try:
+                                price = float(price)
+                            except ValueError:
+                                pass
+                        
+                        if isinstance(old_price, decimal.Decimal):
+                            old_price = float(old_price)
+                        elif isinstance(old_price, str):
+                            try:
+                                old_price = float(old_price)
+                            except ValueError:
+                                pass
+
+                        if isinstance(rating, decimal.Decimal):
+                            rating = float(rating)
+
+                        db_results[p_id] = {
+                            'image_url': image_url,
+                            'product_url': product_url,
+                            'title': title,
+                            'rating': rating,
+                            'who_by': who_by or site_name,
+                            'site_name': site_name,
+                            'price': price,
+                            'old_price': old_price
+                        }
+                    cur.close()
                     conn.close()
-        
+                except Exception as e:
+                    print(f"Error executing database query: {e}")
+                    if conn:
+                        conn.close()
+
+        # Build final products list: prefer DB data, fall back to API data
+        for r in results:
+            p_id = r.get('product_id')
+            if p_id in db_results:
+                p_data = db_results[p_id].copy()
+                p_data['accuracy'] = accuracy_map.get(p_id)
+                products_data.append(p_data)
+            else:
+                # Use Findle API result directly (real estate or any other category)
+                products_data.append(_map_api_result_to_product(r))
+
         recommended_products = products_data
-
-        # Legacy mock support or empty result handling could go here if needed, 
-        # but prompt implied strict Postgres usage.
-        
-        # If no products found via Postgres, maybe return empty or a message?
-        if not recommended_products and not conn:
-            # Fallback if DB connection failed entirely (optional, for safety)
-             recommended_products = [] 
-
-
         ai_response_content = ""
 
         # Calculate source counts
