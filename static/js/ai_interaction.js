@@ -267,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <img src="${product.image_url || ''}" alt="">
                 <div class="mention-info">
                     <div class="mention-title">${escapeHTML(product.title)}</div>
-                    <div class="mention-price">${formatPrice(product.price)} ${t('som', "so'm")}</div>
+                    <div class="mention-price">${formatPrice(product.price)} ${product.currency || t('som', "so'm")}</div>
                 </div>
             `;
             item.addEventListener('click', () => {
@@ -815,6 +815,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
         const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
         const avgPrice = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
+        // Determine dominant currency for price visualization
+        const currencyCounts = {};
+        products.forEach(p => { if (p.currency) { currencyCounts[p.currency] = (currencyCounts[p.currency] || 0) + 1; } });
+        const dominantCurrency = Object.keys(currencyCounts).sort((a, b) => currencyCounts[b] - currencyCounts[a])[0] || t('som', "so'm");
 
         // Price distribution for bars
         const priceRanges = buildPriceRanges(prices, minPrice, maxPrice);
@@ -890,7 +894,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (prices.length > 0) {
             rightHTML += `
                 <div class="sr-price-viz">
-                    <div class="sr-price-viz-title">${t('prices', 'Prices')}</div>
+                    <div class="sr-price-viz-title">${t('prices', 'Prices')} <span class="sr-price-currency-label">${dominantCurrency}</span></div>
                     <div class="sr-price-stats">
                         <div class="sr-price-stat">
                             <span class="sr-price-stat-value">${formatPrice(minPrice)}</span>
@@ -1025,7 +1029,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${accuracyHtml}
                         <div class="sr-top-card-title">${escapeHTML(p.title || '')}</div>
                         <div class="sr-top-card-price-row">
-                            ${priceText ? `<span class="sr-top-card-price">${priceText} ${t('som', "so'm")}</span>` : ''}
+                            ${priceText ? `<span class="sr-top-card-price">${priceText} <span class="sr-price-currency">${p.currency || t('som', "so'm")}</span></span>` : ''}
                             ${oldPriceText && oldPriceText !== priceText ? `<span class="sr-top-card-old-price">${oldPriceText}</span>` : ''}
                         </div>
                         <div class="sr-top-card-seller">${escapeHTML(p.who_by || p.site_name || '')}</div>
@@ -1056,7 +1060,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="sr-grid-card-body">
                         ${accuracyHtml}
                         <div class="sr-grid-card-title">${escapeHTML(p.title || '')}</div>
-                        ${priceText ? `<span class="sr-grid-card-price">${priceText} ${t('som', "so'm")}</span>` : ''}
+                        ${priceText ? `<span class="sr-grid-card-price">${priceText} <span class="sr-price-currency">${p.currency || t('som', "so'm")}</span></span>` : ''}
                         ${oldPriceText && oldPriceText !== priceText ? `<span class="sr-grid-card-old-price">${oldPriceText}</span>` : ''}
                         <div class="sr-grid-card-seller">${escapeHTML(p.who_by || p.site_name || '')}</div>
                     </div>

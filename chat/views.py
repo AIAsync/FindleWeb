@@ -186,13 +186,15 @@ def chat_api(request):
                         site_name = row[6]
                         raw_data = row[7]
 
-                        # Parse price and old_price from raw_data
+                        # Parse price, old_price and currency from raw_data
                         price = None
                         old_price = None
+                        currency = None
                         if isinstance(raw_data, dict):
                             price_obj = raw_data.get('price')
                             if isinstance(price_obj, dict):
                                 price = price_obj.get('value')
+                                currency = price_obj.get('currency') or currency
                             elif isinstance(price_obj, (int, float, str)):
                                 price = price_obj
 
@@ -230,7 +232,8 @@ def chat_api(request):
                             'who_by': who_by or site_name,
                             'site_name': site_name,
                             'price': price,
-                            'old_price': old_price
+                            'old_price': old_price,
+                            'currency': currency,
                         }
                     cur.close()
                     conn.close()

@@ -4061,3 +4061,29 @@ body.dark-mode .sr-accuracy-badge {
     color: #34d399;
 }
 
+/* Currency label inside price */
+.sr-price-currency {
+    font-size: 0.78em;
+    font-weight: 500;
+    opacity: 0.75;
+    letter-spacing: 0.02em;
+}
+
+/* Currency label next to "Prices" title in price viz panel */
+.sr-price-currency-label {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 5px;
+    background: rgba(99, 102, 241, 0.12);
+    color: #6366f1;
+    margin-left: 4px;
+    vertical-align: middle;
+}
+
+body.dark-mode .sr-price-currency-label {
+    background: rgba(99, 102, 241, 0.22);
+    color: #818cf8;
+}
+
