@@ -1847,17 +1847,7 @@ body {
     background: rgba(0, 0, 0, 0.06);
 }
 
-.dropdown-option:hover .option-icon.agent-icon {
-    background: rgba(139, 92, 246, 0.2);
-    color: #a78bfa;
-}
-
-.dropdown-option:hover .option-icon.discount-icon {
-    background: rgba(239, 68, 68, 0.2);
-    color: #f87171;
-}
-
-.dropdown-option:hover .option-icon.image-icon {
+.dropdown-option:hover .option-icon.attach-icon {
     background: rgba(59, 130, 246, 0.2);
     color: #60a5fa;
 }
@@ -2827,141 +2817,90 @@ body.dark-mode .alert-modal-btn-cancel:hover {
     color: var(--text-main);
 }
 
-/* --- Top Product Cards (3 featured) --- */
-.sr-top-cards {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-}
-
-.sr-top-card {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    overflow: hidden;
-    transition: all 0.2s ease;
-    display: flex;
-    flex-direction: column;
-}
-
-.sr-top-card:hover {
-    border-color: #cbd5e1;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-    transform: translateY(-2px);
-}
-
-.sr-top-card-link {
-    text-decoration: none;
-    color: inherit;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
-.sr-top-card-img {
-    height: 160px;
-    background: #f1f5f9;
+/* --- Result header (Search tab) --- */
+.sr-result-header {
     display: flex;
     align-items: center;
-    justify-content: center;
-    overflow: hidden;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-bottom: 12px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid #e2e8f0;
 }
 
-.sr-top-card-img img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    padding: 12px;
-}
-
-.sr-top-card-body {
-    padding: 14px;
+.sr-result-headline {
     display: flex;
-    flex-direction: column;
-    flex: 1;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
-.sr-top-card-title {
-    font-size: 0.9rem;
+.sr-result-count {
+    font-size: 0.95rem;
     font-weight: 600;
     color: var(--text-main);
-    line-height: 1.4;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    margin-bottom: 8px;
 }
 
-.sr-top-card-price-row {
+.sr-result-time {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.sr-mode-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(99, 102, 241, 0.12);
+    color: #4f46e5;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.sr-result-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
-.sr-top-card-price {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #10b981;
-}
-
-.sr-top-card-old-price {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    text-decoration: line-through;
-}
-
-.sr-top-card-seller {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    margin-top: auto;
-}
-
-/* --- Products Grid (remaining) --- */
-.sr-products-section-title {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #e2e8f0;
-    margin-bottom: 0;
-}
-
+/* --- Product grid: every card the same width, a little taller --- */
 .sr-products-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+    gap: 16px;
+    align-items: stretch;
 }
 
 .sr-grid-card {
-    background: #f8fafc;
+    display: flex;
+    background: #fff;
     border: 1px solid #e2e8f0;
-    border-radius: 10px;
+    border-radius: 12px;
     overflow: hidden;
-    transition: all 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .sr-grid-card:hover {
     border-color: #cbd5e1;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07);
+    transform: translateY(-2px);
 }
 
 .sr-grid-card-link {
     text-decoration: none;
     color: inherit;
     display: flex;
-    flex-direction: row;
-    align-items: center;
-    height: 100%;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
 }
 
 .sr-grid-card-img {
-    height: 90px;
-    width: 90px;
+    position: relative;
+    height: 175px;
     flex-shrink: 0;
     background: #f1f5f9;
     display: flex;
@@ -2973,50 +2912,155 @@ body.dark-mode .alert-modal-btn-cancel:hover {
 .sr-grid-card-img img {
     width: 100%;
     height: 100%;
-    object-fit: contain;
-    padding: 8px;
+    object-fit: cover;
+}
+
+.sr-grid-card-noimg {
+    color: #cbd5e1;
+    font-size: 1.8rem;
+}
+
+/* Accuracy sits on the image so every card body starts at the same height */
+.sr-grid-card-img .sr-accuracy-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    margin-bottom: 0;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(4px);
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
 }
 
 .sr-grid-card-body {
-    padding: 10px 12px;
+    padding: 12px 14px 14px;
     display: flex;
     flex-direction: column;
     flex: 1;
     min-width: 0;
-    justify-content: center;
+    gap: 6px;
 }
 
 .sr-grid-card-title {
-    font-size: 0.8rem;
+    font-size: 0.88rem;
     font-weight: 600;
     color: var(--text-main);
-    line-height: 1.3;
+    line-height: 1.35;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    margin-bottom: 6px;
+    /* Reserve two lines so single-line titles don't shorten the card */
+    min-height: 2.7em;
+}
+
+.sr-grid-card-specs {
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sr-grid-card-price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
 .sr-grid-card-price {
-    font-size: 0.95rem;
+    font-size: 1.05rem;
     font-weight: 700;
     color: #10b981;
 }
 
+.sr-grid-card-price.muted {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
 .sr-grid-card-old-price {
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     color: var(--text-muted);
     text-decoration: line-through;
-    margin-top: 2px;
+}
+
+.sr-grid-card-footer {
+    margin-top: auto;
+    padding-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border-top: 1px solid #f1f5f9;
 }
 
 .sr-grid-card-seller {
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     color: var(--text-muted);
-    margin-top: auto;
-    padding-top: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sr-grid-card-site {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: #f1f5f9;
+    padding: 2px 8px;
+    border-radius: 999px;
+    flex-shrink: 0;
+}
+
+/* --- Grid skeleton --- */
+.sr-grid-card-skeleton {
+    flex-direction: column;
+    pointer-events: none;
+}
+
+.sr-grid-card-skeleton .sr-grid-card-body {
+    gap: 8px;
+}
+
+.sr-skeleton-img {
+    height: 175px;
+    border-radius: 0;
+}
+
+.sr-loading-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    padding-bottom: 8px;
+}
+
+/* --- Empty / error states --- */
+.sr-empty,
+.sr-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 48px 20px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.sr-empty i {
+    font-size: 2rem;
+    color: #cbd5e1;
+}
+
+.sr-error {
+    flex-direction: row;
+    justify-content: center;
+    color: #ef4444;
 }
 
 /* --- Sidebar: Price Visualization --- */
@@ -3043,23 +3087,28 @@ body.dark-mode .alert-modal-btn-cancel:hover {
     gap: 8px;
 }
 
-.sr-price-stat {
-    text-align: center;
-    flex: 1;
-}
-
-.sr-price-stat-value {
-    font-size: 1.1rem;
-    font-weight: 700;
+.sr-price-stats-inline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(241, 245, 249, 0.6);
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 0.88rem;
     color: var(--text-main);
-    display: block;
+    white-space: nowrap;
 }
 
-.sr-price-stat-label {
-    font-size: 0.7rem;
+.sr-price-stat-item strong {
     color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
+    font-weight: 600;
+    margin-right: 4px;
+}
+
+.sr-price-stat-divider {
+    color: #cbd5e1;
+    font-size: 0.75rem;
 }
 
 .sr-price-bars {
@@ -3265,7 +3314,7 @@ body.dark-mode .alert-modal-btn-cancel:hover {
     }
 
     .sr-products-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
     }
 }
 
@@ -3274,31 +3323,24 @@ body.dark-mode .alert-modal-btn-cancel:hover {
         gap: 16px;
     }
 
-    .sr-top-cards {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
-    }
-
-    .sr-top-card-img {
-        height: 100px;
-    }
-
-    .sr-top-card-body {
-        padding: 10px;
-    }
-
-    .sr-top-card-title {
-        font-size: 0.78rem;
-    }
-
     .sr-products-grid {
-        grid-template-columns: 1fr;
-        gap: 8px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
     }
 
-    .sr-grid-card-img {
-        height: 80px;
-        width: 80px;
+    .sr-grid-card-img,
+    .sr-skeleton-img {
+        height: 140px;
+    }
+
+    .sr-grid-card-title {
+        font-size: 0.82rem;
+    }
+
+    .sr-result-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
     }
 
     .search-results-sidebar {
@@ -3327,12 +3369,13 @@ body.dark-mode .alert-modal-btn-cancel:hover {
 }
 
 @media (max-width: 480px) {
-    .sr-top-cards {
+    .sr-products-grid {
         grid-template-columns: 1fr;
     }
 
-    .sr-products-grid {
-        grid-template-columns: 1fr;
+    .sr-grid-card-img,
+    .sr-skeleton-img {
+        height: 190px;
     }
 }
 
@@ -3373,26 +3416,13 @@ body.dark-mode .sr-continue-btn:hover {
     color: #f1f5f9;
 }
 
-body.dark-mode .sr-top-card {
-    background: #1e293b;
-    border-color: #334155;
-}
-
-body.dark-mode .sr-top-card:hover {
-    border-color: #475569;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-body.dark-mode .sr-top-card-img {
-    background: #0f172a;
-}
-
-body.dark-mode .sr-top-card-price {
-    color: #4ade80;
-}
-
-body.dark-mode .sr-products-section-title {
+body.dark-mode .sr-result-header {
     border-bottom-color: #334155;
+}
+
+body.dark-mode .sr-mode-chip {
+    background: rgba(129, 140, 248, 0.18);
+    color: #a5b4fc;
 }
 
 body.dark-mode .sr-grid-card {
@@ -3402,14 +3432,32 @@ body.dark-mode .sr-grid-card {
 
 body.dark-mode .sr-grid-card:hover {
     border-color: #475569;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
 body.dark-mode .sr-grid-card-img {
     background: #0f172a;
 }
 
+body.dark-mode .sr-grid-card-noimg {
+    color: #475569;
+}
+
+body.dark-mode .sr-grid-card-img .sr-accuracy-badge {
+    background: rgba(15, 23, 42, 0.88);
+    box-shadow: none;
+}
+
 body.dark-mode .sr-grid-card-price {
     color: #4ade80;
+}
+
+body.dark-mode .sr-grid-card-footer {
+    border-top-color: #334155;
+}
+
+body.dark-mode .sr-grid-card-site {
+    background: #0f172a;
 }
 
 body.dark-mode .sr-price-viz {
@@ -4087,3 +4135,178 @@ body.dark-mode .sr-price-currency-label {
     color: #818cf8;
 }
 
+
+/* =============================================
+   ASK AI TAB — assist answers & deep-research reports
+   ============================================= */
+
+.dropdown-option:hover .option-icon.research-icon {
+    background: rgba(99, 102, 241, 0.2);
+    color: #818cf8;
+}
+
+/* Unread dot on the Ask AI tab when an answer is waiting there */
+.search-tab.has-unread {
+    position: relative;
+}
+
+.search-tab.has-unread::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    right: 0;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #6366f1;
+    box-shadow: 0 0 0 2px var(--bg-main, #fff);
+}
+
+.sr-answer-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    margin-bottom: 10px;
+    border-radius: 999px;
+    background: rgba(99, 102, 241, 0.12);
+    color: #4f46e5;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.sr-answer-goal {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main);
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    border-left: 3px solid #6366f1;
+    background: rgba(99, 102, 241, 0.06);
+    border-radius: 0 8px 8px 0;
+}
+
+.sr-answer-subtitle {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-muted);
+    margin: 14px 0 6px;
+}
+
+.sr-answer-list {
+    margin: 6px 0 0;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.sr-answer-list li {
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: var(--text-main);
+}
+
+.sr-answer-steps {
+    margin-top: 14px;
+    font-size: 0.83rem;
+}
+
+.sr-answer-steps summary {
+    cursor: pointer;
+    color: var(--text-muted);
+    font-weight: 600;
+    user-select: none;
+}
+
+.sr-answer-steps ol {
+    margin: 8px 0 0;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    color: var(--text-muted);
+}
+
+.sr-step-count {
+    font-size: 0.72rem;
+    background: #f1f5f9;
+    color: var(--text-muted);
+    padding: 1px 7px;
+    border-radius: 999px;
+}
+
+.sr-answer-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 16px;
+    padding: 8px 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.83rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sr-answer-link:hover {
+    background: #f1f5f9;
+    color: var(--text-main);
+}
+
+body.dark-mode .sr-answer-badge {
+    background: rgba(129, 140, 248, 0.18);
+    color: #a5b4fc;
+}
+
+body.dark-mode .sr-answer-goal {
+    background: rgba(129, 140, 248, 0.1);
+    border-left-color: #818cf8;
+}
+
+body.dark-mode .sr-step-count {
+    background: #0f172a;
+}
+
+body.dark-mode .sr-answer-link {
+    border-color: #334155;
+}
+
+body.dark-mode .sr-answer-link:hover {
+    background: #334155;
+    color: #f1f5f9;
+}
+
+body.dark-mode .search-tab.has-unread::after {
+    box-shadow: 0 0 0 2px #0f172a;
+}
+
+/* --- Dark mode fixes --- */
+
+/* --primary is #ffffff in dark mode, so the signup button was white text on white */
+body.dark-mode .topbar-signup-btn {
+    background: #f1f5f9;
+    border-color: #f1f5f9;
+    color: #0f172a;
+}
+
+body.dark-mode .topbar-signup-btn:hover {
+    background: #ffffff;
+    border-color: #ffffff;
+    color: #0f172a;
+}
+
+/* The price strip kept its light background, hiding the Min/Average/Max labels */
+body.dark-mode .sr-price-stats-inline {
+    background: rgba(15, 23, 42, 0.6);
+}
+
+body.dark-mode .sr-price-stat-divider {
+    color: #475569;
+}

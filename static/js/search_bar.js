@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const options = searchDropdown.querySelectorAll('.dropdown-option');
         const searchTagsContainer = document.getElementById('search-tags');
-        const fileInput = document.getElementById('image-upload-input');
+        const fileInput = document.getElementById('attach-file-input');
 
         // Function to create a tag
         const createTag = (text, id) => {
@@ -34,8 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const option = document.getElementById(id);
                 if (option) option.classList.remove('active');
 
-                // Clear file input if it was the image tag
-                if (id === 'btn-image-search' && fileInput) {
+                // Clear file input if it was the attach-file tag
+                if (id === 'btn-attach-file' && fileInput) {
                     fileInput.value = '';
                 }
             };
@@ -50,14 +50,14 @@ document.addEventListener('DOMContentLoaded', () => {
             fileInput.addEventListener('change', (e) => {
                 if (fileInput.files && fileInput.files[0]) {
                     const fileName = fileInput.files[0].name;
-                    const id = 'btn-image-search';
+                    const id = 'btn-attach-file';
                     const option = document.getElementById(id);
 
-                    // Remove existing image tag if any
+                    // Remove existing file tag if any
                     let existingTag = searchTagsContainer.querySelector(`.search-tag[data-id="${id}"]`);
                     if (existingTag) existingTag.remove();
 
-                    const tag = createTag(`${window.t('img_prefix', 'Img')}: ${fileName}`, id);
+                    const tag = createTag(`${window.t('file_prefix', 'File')}: ${fileName}`, id);
                     searchTagsContainer.appendChild(tag);
 
                     if (option) option.classList.add('active');
@@ -71,8 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const id = option.id;
 
-                // Special handling for Image Search
-                if (id === 'btn-image-search') {
+                // Special handling for Attach file
+                if (id === 'btn-attach-file') {
                     // If already active, remove it (toggle off)
                     let existingTag = null;
                     if (searchTagsContainer) {

@@ -1,44 +1,179 @@
 import json
-import time
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import ensure_csrf_cookie
 from .models import Conversation, Message
 import os
-import psycopg2
 from dotenv import load_dotenv
-import decimal
 from openai import OpenAI
 import requests
 
 load_dotenv()
 
-# Database connection parameters from .env
-DB_HOST = os.getenv('POSTGRES_HOST')
-DB_PORT = os.getenv('POSTGRES_PORT', '5432')
-DB_NAME = os.getenv('POSTGRES_DB')
-DB_USER = os.getenv('POSTGRES_USER')
-DB_PASSWORD = os.getenv('POSTGRES_PASSWORD')
-DB_TABLE = os.getenv('POSTGRES_TABLE', 'products')
+# Findle backend API (search / product details / deep research)
+FINDLE_API_BASE = os.getenv('FINDLE_API_BASE', 'http://api.findle.uz:8001').rstrip('/')
 
-def get_db_connection():
+SEARCH_TIMEOUT = 25
+DETAILS_TIMEOUT = 25
+DEEP_RESEARCH_TIMEOUT = 180
+
+# How many results we turn into cards for the Search tab
+MAX_CARDS = 24
+
+
+def _findle_post(path, payload, timeout):
+    """POST to the Findle API. Returns parsed JSON or None on any failure."""
+    url = f"{FINDLE_API_BASE}{path}"
     try:
-        host = DB_HOST
-        if host == 'localhost':
-            host = '127.0.0.1'
-        conn = psycopg2.connect(
-            host=host,
-            port=DB_PORT,
-            database=DB_NAME,
-            user=DB_USER,
-            password=DB_PASSWORD
+        res = requests.post(
+            url,
+            json=payload,
+            headers={'accept': 'application/json', 'Content-Type': 'application/json'},
+            timeout=timeout,
         )
-        return conn
     except Exception as e:
-        print(f"Error connecting to database: {e}")
+        print(f"[findle-api] request to {url} failed: {e}")
+        return None
+
+    if res.status_code != 200:
+        print(f"[findle-api] {url} returned HTTP {res.status_code}: {res.text[:300]}")
+        return None
+
+    try:
+        return res.json()
+    except ValueError as e:
+        print(f"[findle-api] {url} returned non-JSON body: {e}")
         return None
 
 
+def _to_float(value):
+    if value is None or value == '':
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _fetch_product_details(product_ids):
+    """POST /products/details — returns {product_id: detail}. Missing ids are simply absent."""
+    if not product_ids:
+        return {}
+
+    data = _findle_post('/products/details', {'product_ids': list(product_ids)}, DETAILS_TIMEOUT)
+    if data is None:
+        return {}
+
+    # The endpoint answers with a list; tolerate a {"results": [...]} wrapper too.
+    if isinstance(data, dict):
+        data = data.get('results') or data.get('products') or []
+    if not isinstance(data, list):
+        return {}
+
+    details = {}
+    for item in data:
+        if isinstance(item, dict) and item.get('product_id'):
+            details[str(item['product_id'])] = item
+    return details
+
+
+def _build_title(res, detail):
+    """Prefer the real listing title from /products/details, else describe the listing."""
+    if detail and detail.get('title'):
+        return detail['title']
+
+    structured = res.get('structured') or {}
+    parts = []
+    if res.get('property_type'):
+        parts.append(res['property_type'])
+    if structured.get('rooms'):
+        parts.append(f"{structured['rooms']}-xonali")
+    if res.get('total_area'):
+        parts.append(f"{res['total_area']} m²")
+    if res.get('address'):
+        parts.append(res['address'])
+    elif res.get('landmark'):
+        parts.append(res['landmark'])
+    elif res.get('district'):
+        parts.append(res['district'])
+
+    return ' '.join(str(p) for p in parts) if parts else str(res.get('product_id', ''))
+
+
+def _build_card(res, detail):
+    """Map one /search result (+ its /products/details record) to the card schema the UI renders."""
+    structured = res.get('structured') or {}
+    detail = detail or {}
+
+    district = res.get('district') or ''
+    region = res.get('region') or ''
+    location = ', '.join(p for p in (district, region) if p)
+
+    product_id = str(res.get('product_id') or '')
+    price = _to_float(res.get('price'))
+    if price is None:
+        price = _to_float(detail.get('price'))
+
+    return {
+        'product_id': product_id,
+        'title': _build_title(res, detail),
+        'image_url': detail.get('image_url') or None,
+        'product_url': detail.get('product_url') or None,
+        'site_name': detail.get('site_name') or res.get('site_name') or '',
+        'who_by': location or detail.get('site_name') or res.get('site_name') or '',
+        'price': price,
+        'old_price': None,
+        'currency': res.get('currency') or '',
+        'accuracy': res.get('accuracy'),
+        'rating': None,
+        'district': district,
+        'region': region,
+        'address': res.get('address') or '',
+        'landmark': res.get('landmark') or '',
+        'property_type': res.get('property_type') or '',
+        'transaction_type': res.get('transaction_type') or '',
+        'total_area': res.get('total_area'),
+        'rooms': structured.get('rooms'),
+        'floor': structured.get('floor'),
+        'total_floors': structured.get('total_floors'),
+        'listed_at': res.get('listed_at') or '',
+    }
+
+
+def _build_cards(results, limit=MAX_CARDS):
+    """Turn /search results into ordered cards, enriched in one batched /products/details call."""
+    results = [r for r in (results or []) if isinstance(r, dict)][:limit]
+    if not results:
+        return []
+
+    details = _fetch_product_details([str(r['product_id']) for r in results if r.get('product_id')])
+    return [_build_card(r, details.get(str(r.get('product_id')))) for r in results]
+
+
+def _build_sources(cards, total_count):
+    sites = {c['site_name'] for c in cards if c.get('site_name')}
+    districts = {c['district'] for c in cards if c.get('district')}
+    return {
+        'sites_count': len(sites),
+        'stores_count': len(districts),
+        'products_count': len(cards),
+        'total_count': total_count if total_count is not None else len(cards),
+    }
+
+
+def _build_assist(assist):
+    """The LLM/assist half of a search response — rendered in the "Ask AI" tab, never in Search."""
+    assist = assist or {}
+    return {
+        'answer': assist.get('answer') or '',
+        'highlights': assist.get('highlights') or [],
+        'questions': assist.get('questions') or [],
+        'language': assist.get('language') or '',
+    }
+
+
+@ensure_csrf_cookie
 def home(request):
     """Landing page — Google-like centered search. No login required."""
     query = request.GET.get('q', '')
@@ -48,6 +183,7 @@ def home(request):
     return render(request, 'chat/home.html')
 
 
+@ensure_csrf_cookie
 def search_page(request):
     """Search results page — renders the topbar + tabs layout. No login required."""
     query = request.GET.get('q', '')
@@ -56,268 +192,172 @@ def search_page(request):
     })
 
 
-def _map_api_result_to_product(res):
-    """Map a Findle API result (real estate or product) to the frontend product schema."""
-    structured = res.get('structured') or {}
-
-    # Build a human-readable title from available fields
-    parts = []
-    prop_type = res.get('property_type') or ''
-    trans_type = res.get('transaction_type') or ''
-    rooms = structured.get('rooms')
-    address = res.get('address') or ''
-    district = res.get('district') or ''
-    region = res.get('region') or ''
-    total_area = res.get('total_area')
-
-    if prop_type:
-        parts.append(prop_type)
-    if trans_type:
-        parts.append(f"({trans_type})")
-    if rooms:
-        parts.append(f"{rooms}-xonali")
-    if total_area:
-        parts.append(f"{total_area} m²")
-    if address:
-        parts.append(address)
-    elif district:
-        parts.append(district)
-
-    title = ' '.join(parts) if parts else res.get('product_id', 'Listing')
-
-    # Location string for who_by / site_name
-    location_parts = [p for p in [district, region] if p]
-    location_str = ', '.join(location_parts) if location_parts else 'findle.uz'
-
-    # Price
-    price = res.get('price')
-    currency = res.get('currency') or ''
-    if price is not None:
-        try:
-            price = float(price)
-        except (TypeError, ValueError):
-            price = None
-
-    # Accuracy score (integer 0-100 from API)
-    accuracy = res.get('accuracy')
-
-    # Build a product_url from product_id if available
-    product_id = res.get('product_id', '')
-    product_url = f"https://findle.uz/product/{product_id}" if product_id else '#'
-
-    return {
-        'image_url': None,
-        'product_url': product_url,
-        'title': title,
-        'rating': None,
-        'who_by': location_str,
-        'site_name': 'findle.uz',
-        'price': price,
-        'old_price': None,
-        'currency': currency,
-        'accuracy': accuracy,
-        'district': district,
-        'region': region,
-        'transaction_type': trans_type,
-        'property_type': prop_type,
-        'total_area': total_area,
-        'rooms': rooms,
-    }
-
-
 def chat_api(request):
-    """Search endpoint — does NOT save to database. Works like Google search query. No login required."""
-    if request.method == 'POST':
+    """Search endpoint — proxies POST /search. Cards feed the Search tab, assist feeds "Ask AI"."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid request'}, status=400)
+
+    try:
         data = json.loads(request.body)
-        prompt = data.get('prompt')
+    except ValueError:
+        return JsonResponse({'error': 'Invalid JSON body'}, status=400)
 
-        if not prompt:
-             return JsonResponse({'error': 'No prompt provided'}, status=400)
+    prompt = (data.get('prompt') or '').strip()
+    if not prompt:
+        return JsonResponse({'error': 'No prompt provided'}, status=400)
 
-        # Mock AI Reasoning
-        reasoning_steps = [
-            "This product can be an individual choice for you. Therefore, choose for yourself in terms of affordability and quality."
-        ]
-        
-        products_data = []
-        
-        # 1. Call Findle Search API
-        try:
-            api_url = 'https://api.findle.uz/search'
-            payload = {
-                'query': prompt,
-                'limit': 10
-            }
-            res = requests.post(api_url, json=payload, headers={'accept': 'application/json', 'Content-Type': 'application/json'}, timeout=15)
-            if res.status_code == 200:
-                api_data = res.json()
-                results = api_data.get('results', [])
-            else:
-                results = []
-        except Exception as e:
-            print(f"Error calling findle api: {e}")
-            results = []
-            
-        # Try to enrich from DB first; fall back to raw API data
-        accuracy_map = {r['product_id']: r.get('accuracy') for r in results if 'product_id' in r}
-        product_ids = list(accuracy_map.keys())
+    api_data = _findle_post('/search', {'query': prompt, 'assist': 'auto'}, SEARCH_TIMEOUT)
+    if api_data is None:
+        return JsonResponse({'error': 'Search service is unavailable'}, status=502)
 
-        db_results = {}
-        if product_ids:
-            conn = get_db_connection()
-            if conn:
-                try:
-                    cur = conn.cursor()
-                    query_sql = """
-                        SELECT product_id, image_url, product_url, title, rating, who_by, site_name, raw_data 
-                        FROM raw_products 
-                        WHERE product_id IN %s
-                    """
-                    cur.execute(query_sql, (tuple(product_ids),))
-                    rows = cur.fetchall()
-                    
-                    for row in rows:
-                        p_id = row[0]
-                        image_url = row[1]
-                        product_url = row[2]
-                        title = row[3]
-                        rating = row[4]
-                        who_by = row[5]
-                        site_name = row[6]
-                        raw_data = row[7]
+    cards = _build_cards(api_data.get('results'))
 
-                        # Parse price, old_price and currency from raw_data
-                        price = None
-                        old_price = None
-                        currency = None
-                        if isinstance(raw_data, dict):
-                            price_obj = raw_data.get('price')
-                            if isinstance(price_obj, dict):
-                                price = price_obj.get('value')
-                                currency = price_obj.get('currency') or currency
-                            elif isinstance(price_obj, (int, float, str)):
-                                price = price_obj
+    return JsonResponse({
+        'query': prompt,
+        'products': cards,
+        'assist': _build_assist(api_data.get('assist')),
+        'sources': _build_sources(cards, api_data.get('total_count')),
+        'category': api_data.get('category') or '',
+        'extracted_data': api_data.get('extracted_data') or {},
+    })
 
-                            old_price_obj = raw_data.get('old_price')
-                            if isinstance(old_price_obj, dict):
-                                old_price = old_price_obj.get('value')
-                            elif isinstance(old_price_obj, (int, float, str)):
-                                old_price = old_price_obj
 
-                        # Convert Decimal/float if needed
-                        if isinstance(price, decimal.Decimal):
-                            price = float(price)
-                        elif isinstance(price, str):
-                            try:
-                                price = float(price)
-                            except ValueError:
-                                pass
-                        
-                        if isinstance(old_price, decimal.Decimal):
-                            old_price = float(old_price)
-                        elif isinstance(old_price, str):
-                            try:
-                                old_price = float(old_price)
-                            except ValueError:
-                                pass
+def deep_research_api(request):
+    """Deep research — the report goes to the "Ask AI" tab, the listings to the Search tab."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid request'}, status=400)
 
-                        if isinstance(rating, decimal.Decimal):
-                            rating = float(rating)
+    try:
+        data = json.loads(request.body)
+    except ValueError:
+        return JsonResponse({'error': 'Invalid JSON body'}, status=400)
 
-                        db_results[p_id] = {
-                            'image_url': image_url,
-                            'product_url': product_url,
-                            'title': title,
-                            'rating': rating,
-                            'who_by': who_by or site_name,
-                            'site_name': site_name,
-                            'price': price,
-                            'old_price': old_price,
-                            'currency': currency,
-                        }
-                    cur.close()
-                    conn.close()
-                except Exception as e:
-                    print(f"Error executing database query: {e}")
-                    if conn:
-                        conn.close()
+    prompt = (data.get('prompt') or '').strip()
+    if not prompt:
+        return JsonResponse({'error': 'No prompt provided'}, status=400)
 
-        # Build final products list: prefer DB data, fall back to API data
-        for r in results:
-            p_id = r.get('product_id')
-            if p_id in db_results:
-                p_data = db_results[p_id].copy()
-                p_data['accuracy'] = accuracy_map.get(p_id)
-                products_data.append(p_data)
-            else:
-                # Use Findle API result directly (real estate or any other category)
-                products_data.append(_map_api_result_to_product(r))
+    try:
+        max_steps = int(data.get('max_steps') or 6)
+    except (TypeError, ValueError):
+        max_steps = 6
+    max_steps = max(1, min(max_steps, 12))
 
-        recommended_products = products_data
-        ai_response_content = ""
+    research = _findle_post(
+        '/deep-research',
+        {'query': prompt, 'max_steps': max_steps},
+        DEEP_RESEARCH_TIMEOUT,
+    )
+    if research is None:
+        return JsonResponse({'error': 'Deep research service is unavailable'}, status=502)
 
-        # Calculate source counts
-        unique_sites = set(p.get('site_name', '') for p in recommended_products if p.get('site_name'))
-        unique_stores = set(p.get('who_by', '') for p in recommended_products if p.get('who_by'))
+    # /deep-research answers with aggregates only, so pull the listings themselves from /search.
+    search_data = _findle_post('/search', {'query': prompt, 'assist': 'off'}, SEARCH_TIMEOUT) or {}
+    cards = _build_cards(search_data.get('results'))
 
-        return JsonResponse({
-            'response': ai_response_content,
-            'reasoning_steps': reasoning_steps,
-            'products': recommended_products,
-            'sources': {
-                'sites_count': len(unique_sites),
-                'stores_count': len(unique_stores),
-                'products_count': len(recommended_products),
-            }
-        })
-    return JsonResponse({'error': 'Invalid request'}, status=400)
+    report = research.get('report') or {}
+    steps = [
+        {
+            'question': s.get('question') or '',
+            'query': s.get('query') or '',
+            'total': s.get('total'),
+        }
+        for s in (research.get('steps') or [])
+        if isinstance(s, dict)
+    ]
+
+    return JsonResponse({
+        'query': prompt,
+        'products': cards,
+        'sources': _build_sources(cards, search_data.get('total_count')),
+        'report': {
+            'goal': research.get('goal') or '',
+            'summary': report.get('summary') or '',
+            'findings': report.get('findings') or [],
+            'gaps': report.get('gaps') or [],
+        },
+        'steps': steps,
+        'status': research.get('status') or '',
+        'total_seen': research.get('total_seen'),
+    })
+
+
+def _openai_answer(prompt, context_product, tagged_products):
+    """Fallback chat completion. Returns the answer, or None when OpenAI is unusable."""
+    api_key = os.getenv('openai_api')
+    if not api_key:
+        return None
+
+    system_prompt = (
+        "You are a helpful assistant for Findle AI, a smart product and real-estate discovery platform. "
+        "Help users with their queries about listings, prices and shopping. "
+        "Use Uzbek language by default if user is in Uzbekistan or asks in Uzbek."
+    )
+
+    if context_product:
+        system_prompt += "\n\nFoydalanuvchi hozirda quyidagi e'lon haqida so'rayapti (Asosiy subyekt):\n"
+        system_prompt += f"Nomi: {context_product.get('title')}\n"
+        system_prompt += f"Narxi: {context_product.get('price')} {context_product.get('currency') or ''}\n"
+        system_prompt += f"Manba: {context_product.get('site_name') or context_product.get('shop_name')}\n"
+
+    if tagged_products:
+        system_prompt += "\n\nFoydalanuvchi quyidagi e'lonlarni ham havola (reference) sifatida keltirdi:\n"
+        for i, p in enumerate(tagged_products, 1):
+            system_prompt += f"{i}. {p.get('title')} ({p.get('price')} {p.get('currency') or ''})\n"
+
+    try:
+        client = OpenAI(api_key=api_key)
+        completion = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt},
+            ],
+        )
+        return completion.choices[0].message.content
+    except Exception as e:
+        print(f"[openai] chat completion failed: {e}")
+        return None
 
 
 def ai_chat_api(request):
-    """Chat endpoint for "Ask AI" tab — uses OpenAI API."""
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            prompt = data.get('prompt')
-            context_product = data.get('context_product')
-            tagged_products = data.get('tagged_products', [])
-            
-            if not prompt:
-                return JsonResponse({'error': 'No prompt provided'}, status=400)
+    """Follow-up chat for the "Ask AI" tab.
 
-            client = OpenAI(api_key=os.getenv('openai_api'))
-            
-            system_prompt = "You are a helpful assistant for Findle AI, a smart product discovery and comparison platform. Help users with their queries about products, shopping, and more. Use Uzbek language by default if user is in Uzbekistan or asks in Uzbek."
-            
-            if context_product:
-                system_prompt += f"\n\nFoydalanuvchi hozirda quyidagi mahsulot haqida so'rayapti (Asosiy subyekt):\n"
-                system_prompt += f"Nomi: {context_product.get('title')}\n"
-                system_prompt += f"Narxi: {context_product.get('price')} so'm\n"
-                system_prompt += f"Do'kon: {context_product.get('shop_name')}\n"
-            
-            if tagged_products:
-                system_prompt += f"\n\nFoydalanuvchi quyidagi mahsulotlarni ham havola (reference) sifatida keltirdi:\n"
-                for i, p in enumerate(tagged_products, 1):
-                    system_prompt += f"{i}. {p.get('title')} ({p.get('price')} so'm, {p.get('shop_name')})\n"
+    Answers come from the Findle assist API first (it already knows the listing data);
+    OpenAI is only a fallback for questions the assist cannot handle.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid request'}, status=400)
 
-            completion = client.chat.completions.create(
-                model="gpt-4o",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": prompt}
-                ]
-            )
+    try:
+        data = json.loads(request.body)
+    except ValueError:
+        return JsonResponse({'error': 'Invalid JSON body'}, status=400)
 
-            ai_response = completion.choices[0].message.content
+    prompt = (data.get('prompt') or '').strip()
+    if not prompt:
+        return JsonResponse({'error': 'No prompt provided'}, status=400)
 
+    context_product = data.get('context_product')
+    tagged_products = data.get('tagged_products', [])
+
+    # 1. Findle assist — grounded in the real listing data
+    api_data = _findle_post('/search', {'query': prompt, 'assist': 'auto'}, SEARCH_TIMEOUT)
+    if api_data:
+        assist = _build_assist(api_data.get('assist'))
+        if assist['answer']:
             return JsonResponse({
-                'response': ai_response
+                'response': assist['answer'],
+                'highlights': assist['highlights'],
+                'questions': assist['questions'],
+                'source': 'findle',
             })
-        except Exception as e:
-            print(f"OpenAI error: {e}")
-            return JsonResponse({'error': str(e)}, status=500)
-    return JsonResponse({'error': 'Invalid request'}, status=400)
 
+    # 2. OpenAI fallback
+    answer = _openai_answer(prompt, context_product, tagged_products)
+    if answer:
+        return JsonResponse({'response': answer, 'highlights': [], 'questions': [], 'source': 'openai'})
+
+    return JsonResponse({'error': 'Assistant is unavailable right now.'}, status=502)
 
 @login_required
 def save_chat(request):

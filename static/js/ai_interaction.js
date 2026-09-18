@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatPlusBtn = document.getElementById('chat-plus-btn');
     const chatDropdown = document.getElementById('chat-dropdown');
     const chatSearchTagsContainer = document.getElementById('chat-search-tags');
-    const chatFileInput = document.getElementById('chat-image-upload-input');
+    const chatFileInput = document.getElementById('chat-attach-file-input');
     
     const topSearchContainer = document.getElementById('top-search-container');
     const searchTabs = document.querySelectorAll('#tab-all, #tab-fast-answer, #tab-alert');
@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 tag.remove();
                 const option = document.getElementById(id);
                 if (option) option.classList.remove('active');
-                if (id === 'chat-btn-image-search' && chatFileInput) chatFileInput.value = '';
+                if (id === 'chat-btn-attach-file' && chatFileInput) chatFileInput.value = '';
             });
             return tag;
         };
@@ -114,11 +114,11 @@ document.addEventListener('DOMContentLoaded', () => {
             chatFileInput.addEventListener('change', (e) => {
                 if (chatFileInput.files && chatFileInput.files[0]) {
                     const fileName = chatFileInput.files[0].name;
-                    const id = 'chat-btn-image-search';
+                    const id = 'chat-btn-attach-file';
                     const option = document.getElementById(id);
                     let existingTag = chatSearchTagsContainer.querySelector(`.search-tag[data-id="${id}"]`);
                     if (existingTag) existingTag.remove();
-                    const tag = createChatTag(`Img: ${fileName}`, id);
+                    const tag = createChatTag(`${t('file_prefix', 'File')}: ${fileName}`, id);
                     chatSearchTagsContainer.appendChild(tag);
                     if (option) option.classList.add('active');
                 }
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.stopPropagation();
                 const id = option.id;
 
-                if (id === 'chat-btn-image-search') {
+                if (id === 'chat-btn-attach-file') {
                     let existingTag = chatSearchTagsContainer.querySelector(`.search-tag[data-id="${id}"]`);
                     if (existingTag) {
                         existingTag.remove();
@@ -181,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tab.classList.add('active');
 
             if (id === 'tab-fast-answer') {
+                tab.classList.remove('has-unread');
                 setChatMode(true);
             } else if (id === 'tab-alert') {
                 setChatMode(false);
@@ -377,17 +378,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const btnDiscount = document.getElementById('btn-discount');
-    const btnAgentMode = document.getElementById('btn-agent-mode');
-    const btnImageSearch = document.getElementById('btn-image-search');
+    const btnAttachFile = document.getElementById('btn-attach-file');
     const btnFilter = document.getElementById('btn-filter');
     const mobilePlusBtn = document.getElementById('mobile-plus-btn');
     const mobileActionsPopover = document.getElementById('mobile-actions-popover');
     const activeTogglesMobile = document.getElementById('active-toggles-mobile');
     const getActionBtn = (action) => {
-        if (action === 'agent-mode') return btnAgentMode;
-        if (action === 'image-search') return btnImageSearch;
-        if (action === 'discount') return btnDiscount;
+        if (action === 'attach-file') return btnAttachFile;
         if (action === 'filter') return btnFilter;
         return null;
     };
@@ -399,9 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const config = [
-            { id: 'discount', btn: btnDiscount, label: t('discount', 'Discount'), icon: 'fa-tag' },
-            { id: 'agent-mode', btn: btnAgentMode, label: t('agent_mode', 'Agent Mode'), icon: 'fa-robot' },
-            { id: 'image-search', btn: btnImageSearch, label: t('image_search', 'Image search'), icon: 'fa-image' },
+            { id: 'attach-file', btn: btnAttachFile, label: t('attach_file', 'Attach file'), icon: 'fa-paperclip' },
             { id: 'filter', btn: btnFilter, label: t('filtering', 'Filtering'), icon: 'fa-filter' }
         ];
 
@@ -454,7 +449,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    [btnDiscount, btnAgentMode, btnImageSearch, btnFilter].forEach(btn => {
+    [btnAttachFile, btnFilter].forEach(btn => {
         if (btn) {
             toggleObserver.observe(btn, { attributes: true });
         }
@@ -548,6 +543,12 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem(`draft_${id}`);
     }
 
+    /** True when a plus-menu tag such as "deep-research" is active in either search bar. */
+    function hasActiveTag(name) {
+        return Array.from(document.querySelectorAll('#search-tags .search-tag, #chat-search-tags .search-tag'))
+            .some(tag => (tag.dataset.id || '').includes(name));
+    }
+
     async function sendMessage(overridePrompt = null) {
         console.log('sendMessage called');
         let prompt = overridePrompt;
@@ -608,13 +609,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const welcome = document.querySelector('.welcome-screen');
         if (welcome) welcome.remove();
 
+        const isDeepResearch = hasActiveTag('deep-research');
+
         // Show loading skeleton
-        chatContainer.innerHTML = buildLoadingSkeleton();
+        chatContainer.innerHTML = buildLoadingSkeleton(isDeepResearch);
 
         try {
             const startTime = Date.now();
 
-            const response = await fetch('/api/chat/', {
+            const response = await fetch(isDeepResearch ? '/api/deep-research/' : '/api/chat/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -625,19 +628,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             });
 
-            const data = await response.json();
+            // An error page (403/500) is HTML, not JSON — don't let the parse mask the real status
+            const data = await response.json().catch(() => null);
+            if (!response.ok || !data) {
+                throw new Error((data && data.error) || `${t('something_went_wrong', 'Sorry, something went wrong.')} (HTTP ${response.status})`);
+            }
+
             lastResponseData = data;
             lastResponseData.prompt = prompt;
 
             const endTime = Date.now();
             const duration = ((endTime - startTime) / 1000).toFixed(2);
 
-            // Render the search results
+            // Listings render in the Search tab...
             renderSearchResults(data, prompt, duration);
+            // ...while the LLM answer (assist or deep-research report) goes to Ask AI.
+            pushAnswerToAskAI(prompt, data, isDeepResearch);
 
         } catch (error) {
-            console.error('Error:', error);
-            chatContainer.innerHTML = `<div style="color:red; padding:1rem;">${t('something_went_wrong', 'Sorry, something went wrong.')}</div>`;
+            console.error('Search error:', error);
+            chatContainer.innerHTML = `<div class="sr-error"><i class="fa-solid fa-triangle-exclamation"></i> ${escapeHTML(error.message || t('something_went_wrong', 'Sorry, something went wrong.'))}</div>`;
         }
 
         const activeInput = (bottomChatContainer && bottomChatContainer.classList.contains('active')) ? bottomChatInput : userInput;
@@ -731,18 +741,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(chatPayload)
             });
 
-            const data = await response.json();
+            const data = await response.json().catch(() => null);
             thinkingDiv.remove();
 
-            if (data.response) {
+            if (response.ok && data && data.response) {
+                let html = `<div class="msg-text">${formatAiMessage(data.response)}</div>`;
+                if (data.highlights && data.highlights.length) {
+                    html += `<ul class="sr-answer-list">${data.highlights.map(h => `<li>${escapeHTML(h)}</li>`).join('')}</ul>`;
+                }
+                if (data.questions && data.questions.length) {
+                    html += `<div class="sr-answer-subtitle">${t('to_refine_search', 'To narrow the search')}</div>`;
+                    html += `<ul class="sr-answer-list">${data.questions.map(q => `<li>${escapeHTML(q)}</li>`).join('')}</ul>`;
+                }
+
                 const aiMsgDiv = document.createElement('div');
                 aiMsgDiv.className = 'ai-msg ai-response-msg';
-                aiMsgDiv.innerHTML = `<div class="msg-content">${formatAiMessage(data.response)}</div>`;
+                aiMsgDiv.innerHTML = `<div class="msg-content">${html}</div>`;
                 aiChatMessages.appendChild(aiMsgDiv);
             } else {
                 const errorDiv = document.createElement('div');
                 errorDiv.className = 'ai-msg ai-response-msg error';
-                errorDiv.innerHTML = `<div class="msg-content">${t('error_try_again', 'An error occurred. Please try again.')}</div>`;
+                errorDiv.innerHTML = `<div class="msg-content">${escapeHTML((data && data.error) || t('error_try_again', 'An error occurred. Please try again.'))}</div>`;
                 aiChatMessages.appendChild(errorDiv);
             }
             scrollToBottom();
@@ -766,15 +785,27 @@ document.addEventListener('DOMContentLoaded', () => {
         return formatted;
     }
 
-    function buildLoadingSkeleton() {
+    function buildLoadingSkeleton(isDeepResearch) {
+        const cards = Array.from({ length: 8 }, () => `
+            <div class="sr-grid-card sr-grid-card-skeleton">
+                <div class="sr-skeleton sr-skeleton-img"></div>
+                <div class="sr-grid-card-body">
+                    <div class="sr-skeleton sr-skeleton-text w90"></div>
+                    <div class="sr-skeleton sr-skeleton-text w60"></div>
+                    <div class="sr-skeleton sr-skeleton-text w75"></div>
+                </div>
+            </div>
+        `).join('');
+
+        const note = isDeepResearch
+            ? `<div class="sr-loading-note"><i class="fa-solid fa-flask fa-fade"></i> ${t('deep_research_running', 'Deep research is running, this may take up to a minute...')}</div>`
+            : '';
+
         return `
             <div class="search-results-layout">
                 <div class="search-results-main">
-                    <div class="sr-ai-summary">
-                        <div class="sr-skeleton sr-skeleton-text w90"></div>
-                        <div class="sr-skeleton sr-skeleton-text w75"></div>
-                        <div class="sr-skeleton sr-skeleton-text w60"></div>
-                    </div>
+                    ${note}
+                    <div class="sr-products-grid">${cards}</div>
                 </div>
                 <div class="search-results-sidebar">
                     <div class="sr-price-viz">
@@ -794,120 +825,90 @@ document.addEventListener('DOMContentLoaded', () => {
         return num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     }
 
+    /* =========================================================
+       SEARCH TAB — listings only. Every LLM answer lives in Ask AI.
+       ========================================================= */
     function renderSearchResults(data, prompt, duration) {
         const products = data.products || [];
         const sources = data.sources || {};
-
-        // AI Summary mock text
-        let aiSummary = t('search_summary_format', '"{prompt}" so\'rovi bo\'yicha {products_count} ta mahsulot topildi. Natijalar {sites_count} ta saytdan va {stores_count} ta do\'kondan to\'plangan. Narxlar turli manbalarda farq qilishi mumkin — eng yaxshi taklifni tanlash uchun narxlarni solishtiring.');
-        aiSummary = aiSummary
-            .replace('{prompt}', prompt)
-            .replace('{products_count}', sources.products_count || products.length)
-            .replace('{sites_count}', sources.sites_count || 0)
-            .replace('{stores_count}', sources.stores_count || 0);
-
-        // Top 3 products
-        const topProducts = products.slice(0, 3);
-        const remainingProducts = products.slice(3, 13);
+        const isDeepResearch = !!data.report;
 
         // Price calculations
         const prices = products.map(p => parseFloat(p.price)).filter(p => p > 0 && !isNaN(p));
         const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
         const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
         const avgPrice = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
+
         // Determine dominant currency for price visualization
         const currencyCounts = {};
         products.forEach(p => { if (p.currency) { currencyCounts[p.currency] = (currencyCounts[p.currency] || 0) + 1; } });
         const dominantCurrency = Object.keys(currencyCounts).sort((a, b) => currencyCounts[b] - currencyCounts[a])[0] || t('som', "so'm");
 
-        // Price distribution for bars
         const priceRanges = buildPriceRanges(prices, minPrice, maxPrice);
 
         // Links from all products
         const allLinks = products.filter(p => p.product_url).map(p => ({
             title: p.title || '',
             url: p.product_url,
-            crawled_at: p.crawled_at || '',
+            crawled_at: p.listed_at || '',
             site: p.site_name || ''
         }));
 
-        // Labels for source preview pills
         const sitesCount = sources.sites_count || 0;
         const sitesLabel = sitesCount === 1 ? t('site', 'site') : t('sites', 'sites');
+        const districtsCount = sources.stores_count || 0;
+        const totalCount = sources.total_count || products.length;
+        // Deep research matches far more than it renders — say how many are on screen
+        const countText = (totalCount > products.length)
+            ? `${products.length} / ${totalCount}`
+            : `${totalCount}`;
 
-        const storesCount = sources.stores_count || 0;
-        const storesLabel = storesCount === 1 ? t('store', 'store') : t('stores', 'stores');
-
-        const productsCount = sources.products_count || products.length;
-        const productsLabel = productsCount === 1 ? t('product', 'product') : t('products', 'products');
-
-        // Build left side
-        let leftHTML = '';
-
-        // AI Summary
-        leftHTML += `
-            <div class="sr-ai-summary">
-                <div class="sr-ai-summary-text">${aiSummary}</div>
-                <div class="sr-ai-action-row">
+        // ---- Left column: result header + one uniform grid ----
+        let leftHTML = `
+            <div class="sr-result-header">
+                <div class="sr-result-headline">
+                    ${isDeepResearch ? `<span class="sr-mode-chip"><i class="fa-solid fa-flask"></i> ${t('deep_research', 'Deep research')}</span>` : ''}
+                    <span class="sr-result-count">${countText} ${t('listings_found', 'listings found')}</span>
+                    ${duration ? `<span class="sr-result-time">${duration}s</span>` : ''}
+                </div>
+                <div class="sr-result-actions">
                     <div class="sr-source-preview">
-                        <div class="sr-source-pill">
-                            <i class="fa-solid fa-globe"></i>
-                            <span>${sitesCount} ${sitesLabel}</span>
-                        </div>
-                        <div class="sr-source-pill">
-                            <i class="fa-solid fa-shop"></i>
-                            <span>${storesCount} ${storesLabel}</span>
-                        </div>
-                        <div class="sr-source-pill">
-                            <i class="fa-solid fa-box-open"></i>
-                            <span>${productsCount} ${productsLabel}</span>
-                        </div>
+                        <div class="sr-source-pill"><i class="fa-solid fa-globe"></i><span>${sitesCount} ${sitesLabel}</span></div>
+                        ${districtsCount ? `<div class="sr-source-pill"><i class="fa-solid fa-location-dot"></i><span>${districtsCount} ${t('districts', 'districts')}</span></div>` : ''}
                     </div>
-                    <button class="sr-continue-btn" id="sr-continue-chat-btn">${t('continue_conversation', 'Continue conversation')}</button>
+                    <button class="sr-continue-btn" id="sr-continue-chat-btn">
+                        <i class="fa-solid fa-bolt"></i> ${t('view_ai_answer', 'View AI answer')}
+                    </button>
                 </div>
             </div>
         `;
 
-        // Top 3 product cards
-        if (topProducts.length > 0) {
-            leftHTML += '<div class="sr-top-cards">';
-            topProducts.forEach(p => {
-                leftHTML += buildTopCard(p);
-            });
-            leftHTML += '</div>';
+        if (products.length > 0) {
+            leftHTML += `<div class="sr-products-grid">${products.map(buildGridCard).join('')}</div>`;
+        } else {
+            leftHTML += `
+                <div class="sr-empty">
+                    <i class="fa-regular fa-face-frown"></i>
+                    <p>${t('no_results_found', 'No listings matched this search.')}</p>
+                </div>
+            `;
         }
 
-        // Remaining products grid
-        if (remainingProducts.length > 0) {
-            leftHTML += `<div class="sr-products-section-title">${t('all_results', 'All results')}</div>`;
-            leftHTML += '<div class="sr-products-grid">';
-            remainingProducts.forEach(p => {
-                leftHTML += buildGridCard(p);
-            });
-            leftHTML += '</div>';
-        }
-
-        // Build right side
+        // ---- Right column: price distribution + sources ----
         let rightHTML = '';
 
-        // Price visualization
         if (prices.length > 0) {
             rightHTML += `
                 <div class="sr-price-viz">
-                    <div class="sr-price-viz-title">${t('prices', 'Prices')} <span class="sr-price-currency-label">${dominantCurrency}</span></div>
-                    <div class="sr-price-stats">
-                        <div class="sr-price-stat">
-                            <span class="sr-price-stat-value">${formatPrice(minPrice)}</span>
-                            <span class="sr-price-stat-label">${t('min', 'Min')}</span>
-                        </div>
-                        <div class="sr-price-stat">
-                            <span class="sr-price-stat-value">${formatPrice(avgPrice)}</span>
-                            <span class="sr-price-stat-label">${t('average', 'Average')}</span>
-                        </div>
-                        <div class="sr-price-stat">
-                            <span class="sr-price-stat-value">${formatPrice(maxPrice)}</span>
-                            <span class="sr-price-stat-label">${t('max', 'Max')}</span>
-                        </div>
+                    <div class="sr-price-viz-header">
+                        <div class="sr-price-viz-title">${t('prices', 'Prices')} <span class="sr-price-currency-label">${escapeHTML(dominantCurrency)}</span></div>
+                    </div>
+                    <div class="sr-price-stats-inline">
+                        <span class="sr-price-stat-item"><strong>${t('min', 'Min')}:</strong> ${formatPrice(minPrice)}</span>
+                        <span class="sr-price-stat-divider">•</span>
+                        <span class="sr-price-stat-item"><strong>${t('average', 'Average')}:</strong> ${formatPrice(avgPrice)}</span>
+                        <span class="sr-price-stat-divider">•</span>
+                        <span class="sr-price-stat-item"><strong>${t('max', 'Max')}:</strong> ${formatPrice(maxPrice)}</span>
                     </div>
                     <div class="sr-price-bars">
                         ${priceRanges.map(r => `
@@ -923,7 +924,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
         }
-        // Links section
+
         if (allLinks.length > 0) {
             const defaultShow = 10;
             const hasMore = allLinks.length > defaultShow;
@@ -948,14 +949,13 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
 
-        // Assemble
         chatContainer.innerHTML = `
             <div class="search-results-layout">
                 <div class="search-results-main">${leftHTML}</div>
                 <div class="search-results-sidebar">${rightHTML}</div>
             </div>
         `;
-        
+
         // Update allTabContent whenever new results are rendered
         allTabContent = chatContainer.innerHTML;
 
@@ -1003,70 +1003,160 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function escapeHTML(str) {
-        if (!str) return '';
-        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        if (str === null || str === undefined) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    function buildTopCard(p) {
-        const priceText = p.price ? formatPrice(p.price) : '';
-        const oldPriceText = p.old_price ? formatPrice(p.old_price) : '';
-        const imgSrc = p.image_url || '';
-        const url = p.product_url || '#';
-        const accuracyHtml = p.accuracy !== undefined && p.accuracy !== null ? `
-            <div class="sr-accuracy-badge" title="${t('accuracy_title', 'Match accuracy')}">
-                <i class="fa-solid fa-circle-check"></i>
-                <span>${t('accuracy', 'Accuracy')}: ${p.accuracy}%</span>
-            </div>
-        ` : '';
-
-        return `
-            <div class="sr-top-card">
-                <a href="${escapeHTML(url)}" target="_blank" rel="noopener" class="sr-top-card-link">
-                    <div class="sr-top-card-img">
-                        ${imgSrc ? `<img src="${escapeHTML(imgSrc)}" alt="${escapeHTML(p.title || '')}" loading="lazy">` : `<span>${t('no_image', 'No image')}</span>`}
-                    </div>
-                    <div class="sr-top-card-body">
-                        ${accuracyHtml}
-                        <div class="sr-top-card-title">${escapeHTML(p.title || '')}</div>
-                        <div class="sr-top-card-price-row">
-                            ${priceText ? `<span class="sr-top-card-price">${priceText} <span class="sr-price-currency">${p.currency || t('som', "so'm")}</span></span>` : ''}
-                            ${oldPriceText && oldPriceText !== priceText ? `<span class="sr-top-card-old-price">${oldPriceText}</span>` : ''}
-                        </div>
-                        <div class="sr-top-card-seller">${escapeHTML(p.who_by || p.site_name || '')}</div>
-                    </div>
-                </a>
-            </div>
-        `;
-    }
-
+    /* Every card is the same width and height — a plain grid, no featured row. */
     function buildGridCard(p) {
         const priceText = p.price ? formatPrice(p.price) : '';
-        const oldPriceText = p.old_price ? formatPrice(p.old_price) : '';
         const imgSrc = p.image_url || '';
-        const url = p.product_url || '#';
-        const accuracyHtml = p.accuracy !== undefined && p.accuracy !== null ? `
-            <div class="sr-accuracy-badge" title="${t('accuracy_title', 'Match accuracy')}">
-                <i class="fa-solid fa-circle-check"></i>
-                <span>${t('accuracy', 'Accuracy')}: ${p.accuracy}%</span>
-            </div>
+        const url = p.product_url || '';
+        const title = p.title || '';
+
+        const accuracyHtml = (p.accuracy !== undefined && p.accuracy !== null) ? `
+            <span class="sr-accuracy-badge" title="${t('accuracy_title', 'Match accuracy')}">
+                <i class="fa-solid fa-circle-check"></i> ${p.accuracy}%
+            </span>
         ` : '';
 
-        return `
-            <div class="sr-grid-card">
-                <a href="${escapeHTML(url)}" target="_blank" rel="noopener" class="sr-grid-card-link">
-                    <div class="sr-grid-card-img">
-                        ${imgSrc ? `<img src="${escapeHTML(imgSrc)}" alt="${escapeHTML(p.title || '')}" loading="lazy">` : `<span>${t('no_image', 'No image')}</span>`}
-                    </div>
-                    <div class="sr-grid-card-body">
-                        ${accuracyHtml}
-                        <div class="sr-grid-card-title">${escapeHTML(p.title || '')}</div>
-                        ${priceText ? `<span class="sr-grid-card-price">${priceText} <span class="sr-price-currency">${p.currency || t('som', "so'm")}</span></span>` : ''}
-                        ${oldPriceText && oldPriceText !== priceText ? `<span class="sr-grid-card-old-price">${oldPriceText}</span>` : ''}
-                        <div class="sr-grid-card-seller">${escapeHTML(p.who_by || p.site_name || '')}</div>
-                    </div>
-                </a>
+        // Compact spec line: rooms · area · floor
+        const specs = [];
+        if (p.rooms) specs.push(`${p.rooms} ${t('rooms_short', 'xona')}`);
+        if (p.total_area) specs.push(`${p.total_area} m²`);
+        if (p.floor) specs.push(p.total_floors ? `${p.floor}/${p.total_floors} ${t('floor_short', 'qavat')}` : `${p.floor} ${t('floor_short', 'qavat')}`);
+        const specsHtml = specs.length ? `<div class="sr-grid-card-specs">${specs.map(s => escapeHTML(s)).join(' · ')}</div>` : '';
+
+        const location = p.who_by || p.district || p.region || '';
+
+        const inner = `
+            <div class="sr-grid-card-img">
+                ${imgSrc
+                    ? `<img src="${escapeHTML(imgSrc)}" alt="${escapeHTML(title)}" loading="lazy">`
+                    : `<span class="sr-grid-card-noimg"><i class="fa-regular fa-image"></i></span>`}
+                ${accuracyHtml}
+            </div>
+            <div class="sr-grid-card-body">
+                <div class="sr-grid-card-title">${escapeHTML(title)}</div>
+                ${specsHtml}
+                <div class="sr-grid-card-price-row">
+                    ${priceText
+                        ? `<span class="sr-grid-card-price">${priceText} <span class="sr-price-currency">${escapeHTML(p.currency || t('som', "so'm"))}</span></span>`
+                        : `<span class="sr-grid-card-price muted">${t('price_not_listed', 'Price on request')}</span>`}
+                </div>
+                <div class="sr-grid-card-footer">
+                    <span class="sr-grid-card-seller">${escapeHTML(location)}</span>
+                    ${p.site_name ? `<span class="sr-grid-card-site">${escapeHTML(p.site_name)}</span>` : ''}
+                </div>
             </div>
         `;
+
+        // Telegram-sourced listings have no public URL — render them as a plain card.
+        return url
+            ? `<div class="sr-grid-card"><a href="${escapeHTML(url)}" target="_blank" rel="noopener" class="sr-grid-card-link">${inner}</a></div>`
+            : `<div class="sr-grid-card"><div class="sr-grid-card-link">${inner}</div></div>`;
+    }
+
+    /* =========================================================
+       ASK AI TAB — assist answers and deep-research reports
+       ========================================================= */
+    function buildAssistAnswer(data) {
+        const assist = data.assist || {};
+        const total = (data.sources && data.sources.total_count) || (data.products || []).length;
+
+        let html = '';
+        html += `<div class="msg-text">${assist.answer
+            ? formatAiMessage(assist.answer)
+            : `${total} ${t('listings_found', 'listings found')}.`}</div>`;
+
+        if (assist.highlights && assist.highlights.length) {
+            html += `<ul class="sr-answer-list">${assist.highlights.map(h => `<li>${escapeHTML(h)}</li>`).join('')}</ul>`;
+        }
+
+        if (assist.questions && assist.questions.length) {
+            html += `<div class="sr-answer-subtitle">${t('to_refine_search', 'To narrow the search')}</div>`;
+            html += `<ul class="sr-answer-list">${assist.questions.map(q => `<li>${escapeHTML(q)}</li>`).join('')}</ul>`;
+        }
+
+        html += buildBackToSearchLink(total);
+        return html;
+    }
+
+    function buildDeepResearchAnswer(data) {
+        const report = data.report || {};
+        const steps = data.steps || [];
+        const total = (data.sources && data.sources.total_count) || (data.products || []).length;
+
+        let html = `<div class="sr-answer-badge"><i class="fa-solid fa-flask"></i> ${t('deep_research', 'Deep research')}</div>`;
+
+        if (report.goal) {
+            html += `<div class="sr-answer-goal">${escapeHTML(report.goal)}</div>`;
+        }
+        if (report.summary) {
+            html += `<div class="msg-text">${formatAiMessage(report.summary)}</div>`;
+        }
+        if (report.findings && report.findings.length) {
+            html += `<div class="sr-answer-subtitle">${t('key_findings', 'Key findings')}</div>`;
+            html += `<ul class="sr-answer-list">${report.findings.map(f => `<li>${escapeHTML(f)}</li>`).join('')}</ul>`;
+        }
+        if (report.gaps && report.gaps.length) {
+            html += `<div class="sr-answer-subtitle">${t('open_questions', 'Open questions')}</div>`;
+            html += `<ul class="sr-answer-list">${report.gaps.map(g => `<li>${escapeHTML(g)}</li>`).join('')}</ul>`;
+        }
+        if (steps.length) {
+            html += `
+                <details class="sr-answer-steps">
+                    <summary>${t('research_steps', 'Research steps')} (${steps.length})</summary>
+                    <ol>${steps.map(s => `<li>${escapeHTML(s.question || s.query)}${s.total ? ` <span class="sr-step-count">${s.total}</span>` : ''}</li>`).join('')}</ol>
+                </details>
+            `;
+        }
+
+        html += buildBackToSearchLink(total);
+        return html;
+    }
+
+    function buildBackToSearchLink(total) {
+        return `
+            <button type="button" class="sr-answer-link" data-goto-search>
+                <i class="fa-solid fa-magnifying-glass"></i>
+                ${t('see_listings', 'See listings')}${total ? ` (${total})` : ''}
+            </button>
+        `;
+    }
+
+    /** Mirror the query into the Ask AI tab and render the LLM answer there. */
+    function pushAnswerToAskAI(prompt, data, isDeepResearch) {
+        if (!aiChatMessages) return;
+
+        const welcome = aiChatMessages.querySelector('.ai-chat-welcome');
+        if (welcome) welcome.remove();
+
+        const userMsg = document.createElement('div');
+        userMsg.className = 'ai-msg user-msg';
+        userMsg.innerHTML = `<div class="msg-content"><div class="msg-text">${escapeHTML(prompt)}</div></div>`;
+        aiChatMessages.appendChild(userMsg);
+
+        const aiMsg = document.createElement('div');
+        aiMsg.className = 'ai-msg ai-response-msg';
+        aiMsg.innerHTML = `<div class="msg-content">${isDeepResearch ? buildDeepResearchAnswer(data) : buildAssistAnswer(data)}</div>`;
+        aiChatMessages.appendChild(aiMsg);
+
+        // Hint that an answer is waiting on the other tab
+        const askAiTab = document.getElementById('tab-fast-answer');
+        if (askAiTab && !askAiTab.classList.contains('active')) {
+            askAiTab.classList.add('has-unread');
+        }
+    }
+
+    // "See listings" inside an Ask AI answer jumps back to the Search tab
+    if (aiChatMessages) {
+        aiChatMessages.addEventListener('click', (e) => {
+            const link = e.target.closest('[data-goto-search]');
+            if (!link) return;
+            const searchTab = document.getElementById('tab-all');
+            if (searchTab) searchTab.click();
+        });
     }
 
     function buildPriceRanges(prices, minPrice, maxPrice) {
@@ -1309,7 +1399,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    [btnDiscount, btnAgentMode, btnImageSearch, btnFilter].forEach(btn => {
+    [btnAttachFile, btnFilter].forEach(btn => {
         if (btn) {
             btn.addEventListener('click', () => {
                 setTimeout(syncActiveTogglesMobile, 50);

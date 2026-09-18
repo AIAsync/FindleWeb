@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-22 08:26+0000\n"
+"POT-Creation-Date: 2026-09-18 17:55+0000\n"
 "PO-Revision-Date: 2026-06-22 08:00+0500\n"
 "Last-Translator: \n"
 "Language-Team: Uzbek\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: config/settings.py:141
+#: config/settings.py:142
 msgid "O'zbek"
 msgstr "O'zbek"
 
-#: config/settings.py:142
+#: config/settings.py:143
 msgid "English"
 msgstr "Ingliz tili"
 
@@ -30,534 +30,581 @@ msgid "Findle - AI Search"
 msgstr "Findle - AI Qidiruv"
 
 #: templates/base.html:27 templates/chat/home.html:67
-#: templates/chat/home.html:140
+#: templates/chat/home.html:139
 msgid "Findle AI"
 msgstr "Findle AI"
 
-#: templates/base.html:35 templates/base.html:440 templates/chat/home.html:75
-#: templates/chat/home.html:148 templates/chat/home.html:592
+#: templates/base.html:35 templates/base.html:430 templates/chat/home.html:75
+#: templates/chat/home.html:147 templates/chat/home.html:581
 msgid "Describe anything..."
 msgstr "Xohlagan narsani tasvirlang..."
 
-#: templates/base.html:38 templates/base.html:163 templates/chat/home.html:151
+#: templates/base.html:38 templates/base.html:158 templates/chat/home.html:150
 msgid "Save"
 msgstr "Saqlash"
 
-#: templates/base.html:49 templates/base.html:224 templates/base.html:447
-#: templates/chat/home.html:86 templates/chat/home.html:162
-#: templates/chat/home.html:294 templates/chat/home.html:599
-msgid "Image search"
-msgstr "Rasm orqali qidirish"
+#: templates/base.html:49 templates/base.html:219 templates/base.html:435
+#: templates/chat/home.html:90 templates/chat/home.html:161
+#: templates/chat/home.html:288 templates/chat/home.html:586
+msgid "Attach file"
+msgstr "Fayl biriktirish"
 
-#: templates/base.html:54 templates/base.html:229 templates/chat/home.html:91
-#: templates/chat/home.html:167 templates/chat/home.html:299
-msgid "Agent mode"
-msgstr "Agent rejimi"
-
-#: templates/base.html:58 templates/base.html:233
-msgid "Live search"
-msgstr "Jonli qidiruv"
-
-#: templates/base.html:62 templates/base.html:237 templates/base.html:490
-#: templates/chat/home.html:99 templates/chat/home.html:175
-#: templates/chat/home.html:307 templates/chat/home.html:642
+#: templates/base.html:53 templates/base.html:223 templates/base.html:492
+#: templates/chat/home.html:94 templates/chat/home.html:165
+#: templates/chat/home.html:292 templates/chat/home.html:643
 msgid "Filter"
 msgstr "Filtr"
 
-#: templates/base.html:70 templates/chat/home.html:182
+#: templates/base.html:57 templates/base.html:227 templates/base.html:448
+#: templates/chat/home.html:98 templates/chat/home.html:169
+#: templates/chat/home.html:296 templates/chat/home.html:599
+msgid "Deep research"
+msgstr "Chuqur tadqiqot"
+
+#: templates/base.html:65 templates/chat/home.html:176
 msgid "Profile"
 msgstr "Profil"
 
-#: templates/base.html:82 templates/chat/home.html:48
-#: templates/chat/home.html:194
+#: templates/base.html:77 templates/chat/home.html:48
+#: templates/chat/home.html:188
 msgid "Settings"
 msgstr "Sozlamalar"
 
-#: templates/base.html:83 templates/chat/home.html:49
-#: templates/chat/home.html:125 templates/chat/home.html:195
+#: templates/base.html:78 templates/chat/home.html:49
+#: templates/chat/home.html:124 templates/chat/home.html:189
 msgid "Help"
 msgstr "Yordam"
 
-#: templates/base.html:84 templates/chat/home.html:50
-#: templates/chat/home.html:126 templates/chat/home.html:196
+#: templates/base.html:79 templates/chat/home.html:50
+#: templates/chat/home.html:125 templates/chat/home.html:190
 msgid "Terms of Service"
 msgstr "Foydalanish shartlari"
 
-#: templates/base.html:87 templates/chat/home.html:53
-#: templates/chat/home.html:199
+#: templates/base.html:82 templates/chat/home.html:53
+#: templates/chat/home.html:193
 msgid "Logout"
 msgstr "Chiqish"
 
-#: templates/base.html:90 templates/chat/home.html:57
-#: templates/chat/home.html:202
+#: templates/base.html:85 templates/chat/home.html:57
+#: templates/chat/home.html:196
 msgid "Sign in"
 msgstr "Kirish"
 
-#: templates/base.html:91 templates/chat/home.html:58
-#: templates/chat/home.html:203
+#: templates/base.html:86 templates/chat/home.html:58
+#: templates/chat/home.html:197
 msgid "Sign up"
 msgstr "Ro'yxatdan o'tish"
 
-#: templates/base.html:98 templates/base.html:256 templates/chat/home.html:107
-#: templates/chat/home.html:210 templates/chat/home.html:403
+#: templates/base.html:93 templates/base.html:246 templates/chat/home.html:106
+#: templates/chat/home.html:204 templates/chat/home.html:392
 msgid "Search"
 msgstr "Qidiruv"
 
-#: templates/base.html:101 templates/chat/home.html:110
-#: templates/chat/home.html:213
-msgid "Ask AI"
-msgstr "AI'dan so'rash"
+#: templates/base.html:96 templates/chat/home.html:109
+#: templates/chat/home.html:207
+msgid "Agent"
+msgstr "Agent"
 
-#: templates/base.html:104 templates/chat/home.html:113
-#: templates/chat/home.html:216
+#: templates/base.html:99 templates/chat/home.html:78
+#: templates/chat/home.html:112 templates/chat/home.html:210
 msgid "Alerts"
 msgstr "Bildirishnomalar"
 
-#: templates/base.html:110
+#: templates/base.html:105
 msgid "Monitoring"
 msgstr "Monitoring"
 
-#: templates/base.html:112 templates/base.html:127
+#: templates/base.html:107 templates/base.html:122
 msgid "Maximize"
 msgstr "Kattalashtirish"
 
-#: templates/base.html:113 templates/base.html:128 templates/chat/home.html:582
+#: templates/base.html:108 templates/base.html:123 templates/chat/home.html:571
 msgid "Close"
 msgstr "Yopish"
 
-#: templates/base.html:118
+#: templates/base.html:113
 msgid "System monitoring data will appear here."
 msgstr "Tizim monitoringi ma'lumotlari bu yerda ko'rinadi."
 
-#: templates/base.html:125 templates/base.html:259 templates/chat/home.html:406
+#: templates/base.html:120 templates/base.html:249 templates/chat/home.html:395
 msgid "Notifications"
 msgstr "Bildirishnomalar"
 
-#: templates/base.html:135
+#: templates/base.html:130
 msgid "System Update"
 msgstr "Tizim yangilanishi"
 
-#: templates/base.html:136
+#: templates/base.html:131
 msgid "Findle AI has been updated to version 2.1.0"
 msgstr "Findle AI 2.1.0 versiyasiga yangilandi"
 
-#: templates/base.html:137 templates/base.html:469 templates/chat/home.html:621
+#: templates/base.html:132 templates/base.html:471 templates/chat/home.html:622
 msgid "Just now"
 msgstr "Hozirgina"
 
-#: templates/base.html:143
+#: templates/base.html:138
 msgid "Model Optimized"
 msgstr "Model optimallashtirildi"
 
-#: templates/base.html:144
+#: templates/base.html:139
 #, python-format
 msgid "Response latency reduced by 15%%."
 msgstr "Javob berish vaqti 15%% qisqardi."
 
-#: templates/base.html:145
+#: templates/base.html:140
 msgid "2 hours ago"
 msgstr "2 soat oldin"
 
-#: templates/base.html:159
+#: templates/base.html:154
 msgid "Rename Chat"
 msgstr "Suhbat nomini o'zgartirish"
 
-#: templates/base.html:160
+#: templates/base.html:155
 msgid "New chat title..."
 msgstr "Yangi suhbat nomi..."
 
-#: templates/base.html:162 templates/base.html:170 templates/base.html:186
-#: templates/base.html:204 templates/chat/home.html:260
-#: templates/chat/home.html:322 templates/chat/home.html:367
-#: templates/chat/home.html:386 templates/chat/search.html:44
+#: templates/base.html:157 templates/base.html:165 templates/base.html:181
+#: templates/base.html:199 templates/chat/home.html:254
+#: templates/chat/home.html:311 templates/chat/home.html:356
+#: templates/chat/home.html:375 templates/chat/search.html:44
 msgid "Cancel"
 msgstr "Bekor qilish"
 
-#: templates/base.html:167
+#: templates/base.html:162
 msgid "Delete Chat?"
 msgstr "Suhbat o'chirilsinmi?"
 
-#: templates/base.html:168
+#: templates/base.html:163
 msgid "This will permanently delete this conversation."
 msgstr "Bu ushbu suhbatni butunlay o'chirib yuboradi."
 
-#: templates/base.html:171 templates/base.html:187 templates/base.html:484
-#: templates/chat/home.html:323 templates/chat/home.html:636
+#: templates/base.html:166 templates/base.html:182 templates/base.html:486
+#: templates/chat/home.html:312 templates/chat/home.html:637
 msgid "Delete"
 msgstr "O'chirish"
 
-#: templates/base.html:182 templates/base.html:491 templates/chat/home.html:319
-#: templates/chat/home.html:643
+#: templates/base.html:177 templates/base.html:493 templates/chat/home.html:308
+#: templates/chat/home.html:644
 msgid "Delete this alert?"
 msgstr "Ushbu bildirishnoma o'chirilsinmi?"
 
-#: templates/base.html:197 templates/chat/home.html:379
+#: templates/base.html:192 templates/chat/home.html:368
 msgid "Login Required"
 msgstr "Tizimga kirish talab etiladi"
 
-#: templates/base.html:198 templates/chat/home.html:380
+#: templates/base.html:193 templates/chat/home.html:369
 msgid "Please sign in or create an account to use this feature."
 msgstr ""
 "Iltimos, ushbu funksiyadan foydalanish uchun tizimga kiring yoki ro'yxatdan "
 "o'ting."
 
-#: templates/base.html:201 templates/chat/home.html:383
+#: templates/base.html:196 templates/chat/home.html:372
 msgid "Sign In"
 msgstr "Kirish"
 
-#: templates/base.html:203 templates/chat/home.html:385
+#: templates/base.html:198 templates/chat/home.html:374
 #: templates/users/register.html:17
 msgid "Create Account"
 msgstr "Hisob yaratish"
 
-#: templates/base.html:216 templates/base.html:439 templates/chat/home.html:286
-#: templates/chat/home.html:591
+#: templates/base.html:211 templates/base.html:429 templates/chat/home.html:280
+#: templates/chat/home.html:580
 msgid "Ask AI anything..."
 msgstr "AIdan xohlagan narsangizni so'rang..."
 
-#: templates/base.html:250 templates/base.html:268 templates/chat/home.html:397
-#: templates/chat/home.html:415
+#: templates/base.html:240 templates/base.html:258 templates/chat/home.html:386
+#: templates/chat/home.html:404
 msgid "General"
 msgstr "Umumiy"
 
-#: templates/base.html:253 templates/base.html:287 templates/chat/home.html:400
-#: templates/chat/home.html:434
+#: templates/base.html:243 templates/base.html:277 templates/chat/home.html:389
+#: templates/chat/home.html:423
 msgid "Appearance"
 msgstr "Tashqi ko'rinish"
 
-#: templates/base.html:262 templates/chat/home.html:409
+#: templates/base.html:252 templates/chat/home.html:398
 msgid "Account"
 msgstr "Hisob"
 
-#: templates/base.html:269 templates/chat/home.html:416
+#: templates/base.html:259 templates/chat/home.html:405
 msgid "Manage general application settings."
 msgstr "Ilovaning umumiy sozlamalarini boshqarish."
 
-#: templates/base.html:273 templates/chat/home.html:420
+#: templates/base.html:263 templates/chat/home.html:409
 msgid "Language"
 msgstr "Til"
 
-#: templates/base.html:274 templates/chat/home.html:421
+#: templates/base.html:264 templates/chat/home.html:410
 msgid "Select your preferred language."
 msgstr "Ma'qul ko'rilgan tilni tanlang."
 
-#: templates/base.html:288 templates/chat/home.html:435
+#: templates/base.html:278 templates/chat/home.html:424
 msgid "Customize how Findle AI looks on your device."
 msgstr "Findle AI qurilmangizda qanday ko'rinishini sozlang."
 
-#: templates/base.html:292 templates/chat/home.html:439
+#: templates/base.html:282 templates/chat/home.html:428
 msgid "Dark Mode"
 msgstr "Tungi rejim"
 
-#: templates/base.html:293 templates/chat/home.html:440
+#: templates/base.html:283 templates/chat/home.html:429
 msgid "Adjust the theme to reduce eye strain."
 msgstr "Ko'z toliqishini kamaytirish uchun mavzuni moslang."
 
-#: templates/base.html:305 templates/chat/home.html:452
+#: templates/base.html:295 templates/chat/home.html:441
 msgid "Accent Color"
 msgstr "Urg'u rangi"
 
-#: templates/base.html:306 templates/chat/home.html:453
+#: templates/base.html:296 templates/chat/home.html:442
 msgid "Choose a Highlight color for the interface."
 msgstr "Interfeys uchun ajratib ko'rsatuvchi rangni tanlang."
 
-#: templates/base.html:322 templates/chat/home.html:469
+#: templates/base.html:312 templates/chat/home.html:458
 msgid "Search Settings"
 msgstr "Qidiruv sozlamalari"
 
-#: templates/base.html:323 templates/chat/home.html:470
+#: templates/base.html:313 templates/chat/home.html:459
 msgid "Configure your search preferences."
 msgstr "Qidiruv afzalliklaringizni sozlang."
 
-#: templates/base.html:327 templates/chat/home.html:474
+#: templates/base.html:317 templates/chat/home.html:463
 msgid "Safe Search"
 msgstr "Xavfsiz qidiruv"
 
-#: templates/base.html:328 templates/chat/home.html:475
+#: templates/base.html:318 templates/chat/home.html:464
 msgid "Filter out explicit content from results."
 msgstr "Natijalardan behayo tarkibni filtrlang."
 
-#: templates/base.html:332 templates/chat/home.html:479
+#: templates/base.html:322 templates/chat/home.html:468
 msgid "Strict"
 msgstr "Qat'iy"
 
-#: templates/base.html:333 templates/chat/home.html:480
+#: templates/base.html:323 templates/chat/home.html:469
 msgid "Moderate"
 msgstr "O'rtacha"
 
-#: templates/base.html:334 templates/chat/home.html:481
+#: templates/base.html:324 templates/chat/home.html:470
 msgid "Off"
 msgstr "O'chirilgan"
 
-#: templates/base.html:341 templates/chat/home.html:238
-#: templates/chat/home.html:345 templates/chat/home.html:488
+#: templates/base.html:331 templates/chat/home.html:232
+#: templates/chat/home.html:334 templates/chat/home.html:477
 #: templates/chat/search.html:22
 msgid "Region"
 msgstr "Hudud"
 
-#: templates/base.html:342 templates/chat/home.html:489
+#: templates/base.html:332 templates/chat/home.html:478
 msgid "Localize your search results."
 msgstr "Qidiruv natijalarini mahalliylashtiring."
 
-#: templates/base.html:346 templates/chat/home.html:493
+#: templates/base.html:336 templates/chat/home.html:482
 msgid "Uzbekistan"
 msgstr "O'zbekiston"
 
-#: templates/base.html:347 templates/chat/home.html:494
+#: templates/base.html:337 templates/chat/home.html:483
 msgid "United States"
 msgstr "Amerika Qo'shma Shtatlari"
 
-#: templates/base.html:348 templates/chat/home.html:495
+#: templates/base.html:338 templates/chat/home.html:484
 msgid "Global"
 msgstr "Global"
 
-#: templates/base.html:356 templates/chat/home.html:503
+#: templates/base.html:346 templates/chat/home.html:492
 msgid "Social Media Alerts"
 msgstr "Ijtimoiy tarmoq bildirishnomalari"
 
-#: templates/base.html:357 templates/chat/home.html:504
+#: templates/base.html:347 templates/chat/home.html:493
 msgid "Receive alerts on your favorite platforms."
 msgstr "Sevimli platformalaringizda bildirishnomalar oling."
 
-#: templates/base.html:363 templates/chat/home.html:510
+#: templates/base.html:353 templates/chat/home.html:499
 msgid "Get alerts via Telegram bot."
 msgstr "Telegram bot orqali bildirishnomalar oling."
 
-#: templates/base.html:377 templates/chat/home.html:524
+#: templates/base.html:367 templates/chat/home.html:513
 msgid "Get alerts via WhatsApp message."
 msgstr "WhatsApp xabari orqali bildirishnomalar oling."
 
-#: templates/base.html:391 templates/chat/home.html:538
+#: templates/base.html:381 templates/chat/home.html:527
 msgid "Get alerts via Discord webhook."
 msgstr "Discord vebhuki orqali bildirishnomalar oling."
 
-#: templates/base.html:404 templates/chat/home.html:551
+#: templates/base.html:394 templates/chat/home.html:540
 msgid "Get alerts via Email."
 msgstr "Email orqali bildirishnomalar oling."
 
-#: templates/base.html:417 templates/chat/home.html:564
+#: templates/base.html:407 templates/chat/home.html:553
 msgid "Account info"
 msgstr "Hisob ma'lumotlari"
 
-#: templates/base.html:418 templates/chat/home.html:565
+#: templates/base.html:408 templates/chat/home.html:554
 msgid "Manage your personal information."
 msgstr "Shaxsiy ma'lumotlaringizni boshqaring."
 
-#: templates/base.html:422 templates/chat/home.html:569
+#: templates/base.html:412 templates/chat/home.html:558
 #: templates/users/login.html:20
 msgid "Username"
 msgstr "Foydalanuvchi nomi"
 
-#: templates/base.html:426 templates/chat/home.html:573
+#: templates/base.html:416 templates/chat/home.html:562
 msgid "Email Address"
 msgstr "Elektron pochta manzili"
 
-#: templates/base.html:429 templates/chat/home.html:576
+#: templates/base.html:419 templates/chat/home.html:565
 msgid "Update Profile"
 msgstr "Profilni yangilash"
 
-#: templates/base.html:441 templates/chat/home.html:593
+#: templates/base.html:431 templates/chat/home.html:582
 msgid "so'm"
 msgstr "so'm"
 
-#: templates/base.html:442 templates/chat/home.html:594
+#: templates/base.html:432 templates/chat/home.html:583
 #, python-brace-format
 msgid ""
 "\\\"{prompt}\\\" query returned {products_count} products from {sites_count} "
 "sites and {stores_count} stores. Prices may vary across sources — compare to "
 "find the best offer."
 msgstr ""
-"\"{prompt}\" so'rovi bo'yicha {products_count} ta mahsulot topildi. Natijalar "
-"{sites_count} ta saytdan va {stores_count} ta do'kondan to'plangan. Narxlar "
-"turli manbalarda farq qilishi mumkin — eng yaxshi taklifni tanlash uchun "
-"narxlarni solishtiring."
+"\"{prompt}\" so'rovi bo'yicha {products_count} ta mahsulot topildi. "
+"Natijalar {sites_count} ta saytdan va {stores_count} ta do'kondan "
+"to'plangan. Narxlar turli manbalarda farq qilishi mumkin — eng yaxshi "
+"taklifni tanlash uchun narxlarni solishtiring."
 
-#: templates/base.html:443 templates/chat/home.html:595
+#: templates/base.html:433 templates/chat/home.html:584
 #, python-brace-format
 msgid "question about {title}"
 msgstr "{title} haqida savol"
 
-#: templates/base.html:444 templates/chat/home.html:596
+#: templates/base.html:434 templates/chat/home.html:585
 msgid "Do you want to delete this notification?"
 msgstr "Ushbu bildirishnomani o'chirmoqchimisiz?"
 
-#: templates/base.html:445 templates/chat/home.html:95
-#: templates/chat/home.html:171 templates/chat/home.html:303
-#: templates/chat/home.html:597
-msgid "Discount"
-msgstr "Chegirma"
-
-#: templates/base.html:446 templates/chat/home.html:598
-msgid "Agent Mode"
-msgstr "Agent rejimi"
-
-#: templates/base.html:448 templates/chat/home.html:224
-#: templates/chat/home.html:331 templates/chat/home.html:600
+#: templates/base.html:436 templates/chat/home.html:218
+#: templates/chat/home.html:320 templates/chat/home.html:587
 #: templates/chat/search.html:8
 msgid "Filtering"
 msgstr "Filtrlash"
 
-#: templates/base.html:449 templates/chat/home.html:601
+#: templates/base.html:437 templates/chat/home.html:588
 msgid "Sorry, something went wrong."
 msgstr "Kechirasiz, xatolik yuz berdi."
 
-#: templates/base.html:450 templates/chat/home.html:602
+#: templates/base.html:438 templates/chat/home.html:589
 msgid "AI is thinking..."
 msgstr "AI o'ylayapti..."
 
-#: templates/base.html:451 templates/chat/home.html:603
+#: templates/base.html:439 templates/chat/home.html:590
 msgid "An error occurred. Please try again."
 msgstr "Xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring."
 
-#: templates/base.html:452 templates/chat/home.html:604
+#: templates/base.html:440 templates/chat/home.html:591
 msgid "Connection with server lost."
 msgstr "Server bilan aloqa uzildi."
 
-#: templates/base.html:453 templates/chat/home.html:605
+#: templates/base.html:441 templates/chat/home.html:592
 msgid "products found for query"
 msgstr "ta mahsulot topildi so'rov bo'yicha"
 
-#: templates/base.html:454 templates/chat/home.html:606
+#: templates/base.html:442 templates/chat/home.html:593
 msgid "site"
 msgstr "sayt"
 
-#: templates/base.html:455 templates/chat/home.html:607
+#: templates/base.html:443 templates/chat/home.html:594
 msgid "sites"
 msgstr "sayt"
 
-#: templates/base.html:456 templates/chat/home.html:608
+#: templates/base.html:444 templates/chat/home.html:595
 msgid "store"
 msgstr "do'kon"
 
-#: templates/base.html:457 templates/chat/home.html:609
+#: templates/base.html:445 templates/chat/home.html:596
 msgid "stores"
 msgstr "do'kon"
 
-#: templates/base.html:458 templates/chat/home.html:610
+#: templates/base.html:446 templates/chat/home.html:597
 msgid "product"
 msgstr "mahsulot"
 
-#: templates/base.html:459 templates/chat/home.html:611
+#: templates/base.html:447 templates/chat/home.html:598
 msgid "products"
 msgstr "mahsulot"
 
-#: templates/base.html:460 templates/chat/home.html:612
+#: templates/base.html:449 templates/chat/home.html:600
+msgid "Deep research is running, this may take up to a minute..."
+msgstr ""
+
+#: templates/base.html:450 templates/chat/home.html:601
+#, fuzzy
+#| msgid "No results found"
+msgid "listings found"
+msgstr "Natija topilmadi"
+
+#: templates/base.html:451 templates/chat/home.html:602
+#, fuzzy
+#| msgid "Strict"
+msgid "districts"
+msgstr "Qat'iy"
+
+#: templates/base.html:452 templates/chat/home.html:603
+msgid "View AI answer"
+msgstr ""
+
+#: templates/base.html:453 templates/chat/home.html:604
+#, fuzzy
+#| msgid "Settings"
+msgid "See listings"
+msgstr "Sozlamalar"
+
+#: templates/base.html:454 templates/chat/home.html:605
+msgid "No listings matched this search."
+msgstr ""
+
+#: templates/base.html:455 templates/chat/home.html:606
+#, fuzzy
+#| msgid "Price Increases"
+msgid "Price on request"
+msgstr "Narx ko'tarilishi"
+
+#: templates/base.html:456 templates/chat/home.html:607
+msgid "rooms"
+msgstr ""
+
+#: templates/base.html:457 templates/chat/home.html:608
+msgid "floor"
+msgstr ""
+
+#: templates/base.html:458 templates/chat/home.html:609
+msgid "Key findings"
+msgstr ""
+
+#: templates/base.html:459 templates/chat/home.html:610
+msgid "Open questions"
+msgstr ""
+
+#: templates/base.html:460 templates/chat/home.html:611
+msgid "Research steps"
+msgstr ""
+
+#: templates/base.html:461 templates/chat/home.html:612
+msgid "To narrow the search"
+msgstr ""
+
+#: templates/base.html:462 templates/chat/home.html:613
 msgid "Continue conversation"
 msgstr "Suhbatni davom ettirish"
 
-#: templates/base.html:461 templates/chat/home.html:613
+#: templates/base.html:463 templates/chat/home.html:614
 msgid "All results"
 msgstr "Barcha natijalar"
 
-#: templates/base.html:462 templates/chat/home.html:614
+#: templates/base.html:464 templates/chat/home.html:615
 msgid "Prices"
 msgstr "Narxlar"
 
-#: templates/base.html:463 templates/chat/home.html:229
-#: templates/chat/home.html:336 templates/chat/home.html:615
+#: templates/base.html:465 templates/chat/home.html:223
+#: templates/chat/home.html:325 templates/chat/home.html:616
 #: templates/chat/search.html:13
 msgid "Min"
 msgstr "Min"
 
-#: templates/base.html:464 templates/chat/home.html:616
+#: templates/base.html:466 templates/chat/home.html:617
 msgid "Average"
 msgstr "O'rtacha"
 
-#: templates/base.html:465 templates/chat/home.html:230
-#: templates/chat/home.html:337 templates/chat/home.html:617
+#: templates/base.html:467 templates/chat/home.html:224
+#: templates/chat/home.html:326 templates/chat/home.html:618
 #: templates/chat/search.html:14
 msgid "Max"
 msgstr "Maks"
 
-#: templates/base.html:466 templates/chat/home.html:618
+#: templates/base.html:468 templates/chat/home.html:619
 msgid "Sources"
 msgstr "Manbalar"
 
-#: templates/base.html:467 templates/chat/home.html:244
-#: templates/chat/home.html:351 templates/chat/home.html:619
+#: templates/base.html:469 templates/chat/home.html:238
+#: templates/chat/home.html:340 templates/chat/home.html:620
 #: templates/chat/search.html:28
 msgid "All"
 msgstr "Barchasi"
 
-#: templates/base.html:468 templates/chat/home.html:620
+#: templates/base.html:470 templates/chat/home.html:621
 msgid "No image"
 msgstr "Rasm yo'q"
 
-#: templates/base.html:470 templates/chat/home.html:622
+#: templates/base.html:472 templates/chat/home.html:623
 msgid "Recently"
 msgstr "Yaqinda"
 
-#: templates/base.html:471 templates/chat/home.html:623
+#: templates/base.html:473 templates/chat/home.html:624
 msgid "ago"
 msgstr "oldin"
 
-#: templates/base.html:472 templates/chat/home.html:624
+#: templates/base.html:474 templates/chat/home.html:625
 msgid "How can I help you explore products today?"
 msgstr "Bugun mahsulotlarni o'rganishda qanday yordam bera olaman?"
 
-#: templates/base.html:473 templates/chat/home.html:625
+#: templates/base.html:475 templates/chat/home.html:626
 msgid "Ask about laptops, accessories, or any gadgets."
 msgstr "Noutbuklar, aksessuarlar yoki boshqa gadjetlar haqida so'rang."
 
-#: templates/base.html:474 templates/chat/home.html:626
+#: templates/base.html:476 templates/chat/home.html:627
 msgid "Please search something first."
 msgstr "Iltimos, avval biror narsa qidiring."
 
-#: templates/base.html:475 templates/chat/home.html:627
+#: templates/base.html:477 templates/chat/home.html:628
 msgid "Save Error"
 msgstr "Saqlash xatosi"
 
-#: templates/base.html:476 templates/chat/home.html:628
+#: templates/base.html:478 templates/chat/home.html:629
 msgid "No alerts saved yet"
 msgstr "Hali hech qanday bildirishnoma saqlanmagan"
 
-#: templates/base.html:477 templates/chat/home.html:629
+#: templates/base.html:479 templates/chat/home.html:630
 msgid "Save search results using the bell button."
 msgstr "Qidiruv natijalarini qo'ng'iroq tugmasi yordamida saqlang."
 
-#: templates/base.html:478 templates/chat/home.html:630
+#: templates/base.html:480 templates/chat/home.html:631
 msgid "Press the 🔔 button to save the search result"
 msgstr "Qidiruv natijasini saqlash uchun 🔔 tugmasini bosing"
 
-#: templates/base.html:479 templates/chat/home.html:631
+#: templates/base.html:481 templates/chat/home.html:632
 msgid "Alerts History"
 msgstr "Bildirishnomalar tarixi"
 
-#: templates/base.html:480 templates/chat/home.html:632
+#: templates/base.html:482 templates/chat/home.html:633
 msgid "Search alerts history"
 msgstr "Bildirishnomalar tarixini qidirish"
 
-#: templates/base.html:481 templates/chat/home.html:633
+#: templates/base.html:483 templates/chat/home.html:634
 msgid "For more details"
 msgstr "Batafsil ma'lumot uchun"
 
-#: templates/base.html:482 templates/chat/home.html:634
+#: templates/base.html:484 templates/chat/home.html:635
 msgid "Select any alert history on the left"
 msgstr "Chapdagi bildirishnoma tarixidan birini tanlang"
 
-#: templates/base.html:483 templates/chat/home.html:635
+#: templates/base.html:485 templates/chat/home.html:636
 msgid "No results found"
 msgstr "Natija topilmadi"
 
-#: templates/base.html:485 templates/chat/home.html:637
+#: templates/base.html:487 templates/chat/home.html:638
 msgid "Back"
 msgstr "Orqaga"
 
-#: templates/base.html:486 templates/chat/home.html:638
+#: templates/base.html:488 templates/chat/home.html:639
 msgid "Try again discovery"
 msgstr "Qaytadan qidirish"
 
-#: templates/base.html:487 templates/chat/home.html:639
+#: templates/base.html:489 templates/chat/home.html:640
 msgid "Rediscovery"
 msgstr "Qayta qidirish"
 
-#: templates/base.html:488 templates/chat/home.html:640
+#: templates/base.html:490 templates/chat/home.html:641
 msgid "Alert turned on for"
 msgstr "Bildirishnoma yoqildi:"
 
-#: templates/base.html:489 templates/chat/home.html:641
-msgid "Img"
-msgstr "Rasm"
+#: templates/base.html:491 templates/chat/home.html:642
+msgid "File"
+msgstr ""
 
 #: templates/chat/home.html:10
 msgid ""
@@ -567,65 +614,65 @@ msgstr ""
 "Findle AI - Eng yaxshi mahsulot va xizmatlarni bir joyda qidiring, "
 "taqqoslang va toping."
 
-#: templates/chat/home.html:127
+#: templates/chat/home.html:126
 msgid "About Findle AI"
 msgstr "Findle AI haqida"
 
-#: templates/chat/home.html:128
+#: templates/chat/home.html:127
 msgid "Subscription"
 msgstr "Obuna"
 
-#: templates/chat/home.html:227 templates/chat/home.html:334
+#: templates/chat/home.html:221 templates/chat/home.html:323
 #: templates/chat/search.html:11
 msgid "Price ($)"
 msgstr "Narx ($)"
 
-#: templates/chat/home.html:234 templates/chat/home.html:341
+#: templates/chat/home.html:228 templates/chat/home.html:330
 #: templates/chat/search.html:18
 msgid "Color"
 msgstr "Rang"
 
-#: templates/chat/home.html:235 templates/chat/home.html:342
+#: templates/chat/home.html:229 templates/chat/home.html:331
 #: templates/chat/search.html:19
 msgid "For example: Black"
 msgstr "Masalan: Qora"
 
-#: templates/chat/home.html:239 templates/chat/home.html:346
+#: templates/chat/home.html:233 templates/chat/home.html:335
 #: templates/chat/search.html:23
 msgid "For example: California"
 msgstr "Masalan: Kaliforniya"
 
-#: templates/chat/home.html:242 templates/chat/home.html:349
+#: templates/chat/home.html:236 templates/chat/home.html:338
 #: templates/chat/search.html:26
 msgid "Rating"
 msgstr "Reyting"
 
-#: templates/chat/home.html:251 templates/chat/home.html:358
+#: templates/chat/home.html:245 templates/chat/home.html:347
 #: templates/chat/search.html:35
 msgid "Relevance"
 msgstr "Tegishlilik"
 
-#: templates/chat/home.html:253 templates/chat/home.html:360
+#: templates/chat/home.html:247 templates/chat/home.html:349
 #: templates/chat/search.html:37
 msgid "Recommended"
 msgstr "Tavsiya etilgan"
 
-#: templates/chat/home.html:254 templates/chat/home.html:361
+#: templates/chat/home.html:248 templates/chat/home.html:350
 #: templates/chat/search.html:38
 msgid "Cheapest"
 msgstr "Eng arzon"
 
-#: templates/chat/home.html:255 templates/chat/home.html:362
+#: templates/chat/home.html:249 templates/chat/home.html:351
 #: templates/chat/search.html:39
 msgid "Most expensive"
 msgstr "Eng qimmat"
 
-#: templates/chat/home.html:261 templates/chat/home.html:368
+#: templates/chat/home.html:255 templates/chat/home.html:357
 #: templates/chat/search.html:45
 msgid "OK"
 msgstr "OK"
 
-#: templates/chat/home.html:269 templates/chat/search.html:56
+#: templates/chat/home.html:263 templates/chat/search.html:56
 msgid "Chat with Findle AI"
 msgstr "Findle AI bilan suhbat"
 
@@ -668,12 +715,3 @@ msgstr "Findle - Ro'yxatdan o'tish"
 #: templates/users/register.html:45
 msgid "Already have an account?"
 msgstr "Hisobingiz bormi?"
-
-#~ msgid "Total Found"
-#~ msgstr "Jami topilgan"
-
-#~ msgid "Price Increases"
-#~ msgstr "Narx ko'tarilishi"
-
-#~ msgid "Stable Price"
-#~ msgstr "Barqaror narx"
