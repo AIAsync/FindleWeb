@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-18 17:55+0000\n"
+"POT-Creation-Date: 2026-09-18 18:27+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -50,9 +50,9 @@ msgstr ""
 msgid "Attach file"
 msgstr ""
 
-#: templates/base.html:53 templates/base.html:223 templates/base.html:492
+#: templates/base.html:53 templates/base.html:223 templates/base.html:494
 #: templates/chat/home.html:94 templates/chat/home.html:165
-#: templates/chat/home.html:292 templates/chat/home.html:643
+#: templates/chat/home.html:292 templates/chat/home.html:645
 msgid "Filter"
 msgstr ""
 
@@ -139,7 +139,7 @@ msgstr ""
 msgid "Findle AI has been updated to version 2.1.0"
 msgstr ""
 
-#: templates/base.html:132 templates/base.html:471 templates/chat/home.html:622
+#: templates/base.html:132 templates/base.html:473 templates/chat/home.html:624
 msgid "Just now"
 msgstr ""
 
@@ -179,13 +179,13 @@ msgstr ""
 msgid "This will permanently delete this conversation."
 msgstr ""
 
-#: templates/base.html:166 templates/base.html:182 templates/base.html:486
-#: templates/chat/home.html:312 templates/chat/home.html:637
+#: templates/base.html:166 templates/base.html:182 templates/base.html:488
+#: templates/chat/home.html:312 templates/chat/home.html:639
 msgid "Delete"
 msgstr ""
 
-#: templates/base.html:177 templates/base.html:493 templates/chat/home.html:308
-#: templates/chat/home.html:644
+#: templates/base.html:177 templates/base.html:495 templates/chat/home.html:308
+#: templates/chat/home.html:646
 msgid "Delete this alert?"
 msgstr ""
 
@@ -448,148 +448,156 @@ msgid "No listings matched this search."
 msgstr ""
 
 #: templates/base.html:455 templates/chat/home.html:606
-msgid "Price on request"
+msgid "Previous"
 msgstr ""
 
 #: templates/base.html:456 templates/chat/home.html:607
-msgid "rooms"
+msgid "Next"
 msgstr ""
 
 #: templates/base.html:457 templates/chat/home.html:608
-msgid "floor"
+msgid "Price on request"
 msgstr ""
 
 #: templates/base.html:458 templates/chat/home.html:609
-msgid "Key findings"
+msgid "rooms"
 msgstr ""
 
 #: templates/base.html:459 templates/chat/home.html:610
-msgid "Open questions"
+msgid "floor"
 msgstr ""
 
 #: templates/base.html:460 templates/chat/home.html:611
-msgid "Research steps"
+msgid "Key findings"
 msgstr ""
 
 #: templates/base.html:461 templates/chat/home.html:612
-msgid "To narrow the search"
+msgid "Open questions"
 msgstr ""
 
 #: templates/base.html:462 templates/chat/home.html:613
-msgid "Continue conversation"
+msgid "Research steps"
 msgstr ""
 
 #: templates/base.html:463 templates/chat/home.html:614
-msgid "All results"
+msgid "To narrow the search"
 msgstr ""
 
 #: templates/base.html:464 templates/chat/home.html:615
+msgid "Continue conversation"
+msgstr ""
+
+#: templates/base.html:465 templates/chat/home.html:616
+msgid "All results"
+msgstr ""
+
+#: templates/base.html:466 templates/chat/home.html:617
 msgid "Prices"
 msgstr ""
 
-#: templates/base.html:465 templates/chat/home.html:223
-#: templates/chat/home.html:325 templates/chat/home.html:616
+#: templates/base.html:467 templates/chat/home.html:223
+#: templates/chat/home.html:325 templates/chat/home.html:618
 #: templates/chat/search.html:13
 msgid "Min"
 msgstr ""
 
-#: templates/base.html:466 templates/chat/home.html:617
+#: templates/base.html:468 templates/chat/home.html:619
 msgid "Average"
 msgstr ""
 
-#: templates/base.html:467 templates/chat/home.html:224
-#: templates/chat/home.html:326 templates/chat/home.html:618
+#: templates/base.html:469 templates/chat/home.html:224
+#: templates/chat/home.html:326 templates/chat/home.html:620
 #: templates/chat/search.html:14
 msgid "Max"
 msgstr ""
 
-#: templates/base.html:468 templates/chat/home.html:619
+#: templates/base.html:470 templates/chat/home.html:621
 msgid "Sources"
 msgstr ""
 
-#: templates/base.html:469 templates/chat/home.html:238
-#: templates/chat/home.html:340 templates/chat/home.html:620
+#: templates/base.html:471 templates/chat/home.html:238
+#: templates/chat/home.html:340 templates/chat/home.html:622
 #: templates/chat/search.html:28
 msgid "All"
 msgstr ""
 
-#: templates/base.html:470 templates/chat/home.html:621
+#: templates/base.html:472 templates/chat/home.html:623
 msgid "No image"
 msgstr ""
 
-#: templates/base.html:472 templates/chat/home.html:623
+#: templates/base.html:474 templates/chat/home.html:625
 msgid "Recently"
 msgstr ""
 
-#: templates/base.html:473 templates/chat/home.html:624
+#: templates/base.html:475 templates/chat/home.html:626
 msgid "ago"
 msgstr ""
 
-#: templates/base.html:474 templates/chat/home.html:625
+#: templates/base.html:476 templates/chat/home.html:627
 msgid "How can I help you explore products today?"
 msgstr ""
 
-#: templates/base.html:475 templates/chat/home.html:626
+#: templates/base.html:477 templates/chat/home.html:628
 msgid "Ask about laptops, accessories, or any gadgets."
 msgstr ""
 
-#: templates/base.html:476 templates/chat/home.html:627
+#: templates/base.html:478 templates/chat/home.html:629
 msgid "Please search something first."
 msgstr ""
 
-#: templates/base.html:477 templates/chat/home.html:628
+#: templates/base.html:479 templates/chat/home.html:630
 msgid "Save Error"
 msgstr ""
 
-#: templates/base.html:478 templates/chat/home.html:629
+#: templates/base.html:480 templates/chat/home.html:631
 msgid "No alerts saved yet"
 msgstr ""
 
-#: templates/base.html:479 templates/chat/home.html:630
+#: templates/base.html:481 templates/chat/home.html:632
 msgid "Save search results using the bell button."
 msgstr ""
 
-#: templates/base.html:480 templates/chat/home.html:631
+#: templates/base.html:482 templates/chat/home.html:633
 msgid "Press the 🔔 button to save the search result"
 msgstr ""
 
-#: templates/base.html:481 templates/chat/home.html:632
+#: templates/base.html:483 templates/chat/home.html:634
 msgid "Alerts History"
 msgstr ""
 
-#: templates/base.html:482 templates/chat/home.html:633
+#: templates/base.html:484 templates/chat/home.html:635
 msgid "Search alerts history"
 msgstr ""
 
-#: templates/base.html:483 templates/chat/home.html:634
+#: templates/base.html:485 templates/chat/home.html:636
 msgid "For more details"
 msgstr ""
 
-#: templates/base.html:484 templates/chat/home.html:635
+#: templates/base.html:486 templates/chat/home.html:637
 msgid "Select any alert history on the left"
 msgstr ""
 
-#: templates/base.html:485 templates/chat/home.html:636
+#: templates/base.html:487 templates/chat/home.html:638
 msgid "No results found"
 msgstr ""
 
-#: templates/base.html:487 templates/chat/home.html:638
+#: templates/base.html:489 templates/chat/home.html:640
 msgid "Back"
 msgstr ""
 
-#: templates/base.html:488 templates/chat/home.html:639
+#: templates/base.html:490 templates/chat/home.html:641
 msgid "Try again discovery"
 msgstr ""
 
-#: templates/base.html:489 templates/chat/home.html:640
+#: templates/base.html:491 templates/chat/home.html:642
 msgid "Rediscovery"
 msgstr ""
 
-#: templates/base.html:490 templates/chat/home.html:641
+#: templates/base.html:492 templates/chat/home.html:643
 msgid "Alert turned on for"
 msgstr ""
 
-#: templates/base.html:491 templates/chat/home.html:642
+#: templates/base.html:493 templates/chat/home.html:644
 msgid "File"
 msgstr ""
 

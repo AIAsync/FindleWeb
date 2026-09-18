@@ -38,6 +38,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let allTabContent = chatContainer ? chatContainer.innerHTML : '';
     let alertIdToDelete = null;
 
+    // Search tab: the ranked list is paged server-side, search_id pins it so rows never shift.
+    let searchState = { query: '', page: 1, searchId: '' };
+    // Agent tab: /chat keeps no state, so the transcript travels with every message.
+    let chatHistory = [];
+    const MAX_CHAT_HISTORY = 40;
+    const MAX_CITATIONS = 8;
+    // Each answer keeps the listing set it cited, so older citations still resolve after new searches.
+    const answerSets = new Map();
+    let answerSetSeq = 0;
+
     const aiChatContainer = document.getElementById('ai-chat-container');
     const aiChatMessages = document.getElementById('ai-chat-messages');
 
@@ -169,7 +179,11 @@ document.addEventListener('DOMContentLoaded', () => {
         tab.addEventListener('click', (e) => {
             e.preventDefault(); // Don't prevent default as other logic might rely on it
             const id = tab.id;
-            
+
+            if (mainContent) tabScrollMemory[activeTabId] = mainContent.scrollTop;
+            const landing = pendingScroll;
+            pendingScroll = null;
+
             // If switching FROM 'tab-all' to another tab, save current results content
             const activeTabAll = document.querySelector('#tab-all.active');
             if (activeTabAll && id !== 'tab-all') {
@@ -208,6 +222,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             }
+
+            activeTabId = id;
+            const resume = tabScrollMemory[id] || 0;
+            applyScroll(() => (landing ? landing() : scrollMainTo(resume)));
         });
     });
 
@@ -323,6 +341,55 @@ document.addEventListener('DOMContentLoaded', () => {
             top: mainContent.scrollHeight,
             behavior: 'smooth'
         });
+    }
+
+    /* ---------------------------------------------------------------
+       Both tabs scroll inside .main-content, so each keeps its own
+       offset and a programmatic switch says where it wants to land.
+       --------------------------------------------------------------- */
+    const tabScrollMemory = {};
+    let activeTabId = 'tab-all';
+    let pendingScroll = null;
+
+    function scrollMainTo(top) {
+        if (mainContent) mainContent.scrollTo({ top: Math.max(0, top), behavior: 'auto' });
+    }
+
+    /** Switching tabs animates .content-area's padding for 300ms, which moves the scroll target
+     *  underneath us — so place the scroll once now and again once the layout has settled. */
+    function applyScroll(place) {
+        requestAnimationFrame(place);
+        setTimeout(place, 340);
+    }
+
+    /** Height of whatever is pinned over the content, so a target isn't hidden behind it. */
+    function stickyOffset() {
+        if (!mainContent) return 0;
+        return ['.topbar', '.topbar-search-tabs-container'].reduce((total, selector) => {
+            const el = mainContent.querySelector(selector);
+            const pinned = el && getComputedStyle(el).position === 'sticky';
+            return pinned ? total + el.offsetHeight : total;
+        }, 12);
+    }
+
+    function scrollToElement(el) {
+        if (!mainContent || !el) return;
+        const top = el.getBoundingClientRect().top - mainContent.getBoundingClientRect().top + mainContent.scrollTop;
+        scrollMainTo(top - stickyOffset());
+    }
+
+    /** Switch tabs and decide where the new tab lands; without `landing` it resumes where it was. */
+    function switchTab(tabId, landing) {
+        const tab = document.getElementById(tabId);
+        if (!tab) return;
+
+        if (tab.classList.contains('active')) {
+            if (landing) applyScroll(landing);
+            return;
+        }
+
+        pendingScroll = landing || null;
+        tab.click();
     }
     // scrollToBottom();
     const alertModal = document.getElementById('alert-delete-modal');
@@ -559,73 +626,73 @@ document.addEventListener('DOMContentLoaded', () => {
             prompt = activeInput ? activeInput.value.trim() : '';
         }
 
-        const isAiChatMode = document.body.classList.contains('ask-ai-mode');
-        
-        if (isAiChatMode) {
-            await sendAiChatMessage(prompt);
+        if (!prompt) return;
+
+        // The Agent tab owns both the chat API and deep research; Search only ever runs /search.
+        if (document.body.classList.contains('ask-ai-mode') || hasActiveTag('deep-research')) {
+            const agentTab = document.getElementById('tab-fast-answer');
+            if (agentTab && !agentTab.classList.contains('active')) agentTab.click();
+            await sendAgentMessage(prompt);
             return;
         }
 
         const isAutoTrigger = sendBtn && sendBtn.dataset.isAutoTrigger === 'true';
-        // const isOnSearchPage = window.location.pathname.startsWith('/search');
 
         if (!isAutoTrigger) {
             // Always refresh/redirect to update URL and state on manual search
             const isBottomActive = bottomChatContainer && bottomChatContainer.classList.contains('active');
             const tagsSelector = isBottomActive ? '#chat-search-tags .search-tag' : '#search-tags .search-tag';
             const tags = document.querySelectorAll(tagsSelector);
-            
+
             let params = new URLSearchParams();
             params.set('q', prompt);
 
             tags.forEach(tag => {
-                const id = tag.dataset.id;
-                if (id.includes('agent-mode')) params.set('agent_mode', '1');
-                if (id.includes('discount')) params.set('discount', '1');
-                if (id.includes('filter')) params.set('filter', '1');
+                if ((tag.dataset.id || '').includes('filter')) params.set('filter', '1');
             });
 
             window.history.pushState(null, '', `/?${params.toString()}`);
             // No return here, allow it to proceed dynamically
         }
 
+        currentEditingMessageId = null;
+        await runSearch(prompt, 1);
+        clearDraft();
+    }
+
+    /** Search tab — POST /search through Django. `page` walks the cached ranked list. */
+    async function runSearch(prompt, page = 1) {
+        if (!chatContainer) return;
+
+        const isNewQuery = page === 1 || prompt !== searchState.query;
+        if (isNewQuery) searchState = { query: prompt, page: 1, searchId: '' };
+
         const tabAll = document.getElementById('tab-all');
-        if (tabAll && !tabAll.classList.contains('active')) {
-            tabAll.click();
-        }
+        if (tabAll && !tabAll.classList.contains('active')) tabAll.click();
 
         if (sendBtn) {
             sendBtn.disabled = true;
             sendBtn.style.opacity = '0.5';
         }
 
-        currentEditingMessageId = null;
-
-        // Clear container for new results (fixes appending issue)
-        if (chatContainer) {
-            chatContainer.innerHTML = '';
-        }
-
         const welcome = document.querySelector('.welcome-screen');
         if (welcome) welcome.remove();
 
-        const isDeepResearch = hasActiveTag('deep-research');
-
-        // Show loading skeleton
-        chatContainer.innerHTML = buildLoadingSkeleton(isDeepResearch);
+        chatContainer.innerHTML = buildLoadingSkeleton(false);
 
         try {
             const startTime = Date.now();
 
-            const response = await fetch(isDeepResearch ? '/api/deep-research/' : '/api/chat/', {
+            const body = { prompt: prompt, page: page };
+            if (page > 1 && searchState.searchId) body.search_id = searchState.searchId;
+
+            const response = await fetch('/api/chat/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCookie('csrftoken')
                 },
-                body: JSON.stringify({
-                    prompt: prompt
-                })
+                body: JSON.stringify(body)
             });
 
             // An error page (403/500) is HTML, not JSON — don't let the parse mask the real status
@@ -634,17 +701,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error((data && data.error) || `${t('something_went_wrong', 'Sorry, something went wrong.')} (HTTP ${response.status})`);
             }
 
+            const pageInfo = data.page || {};
+            searchState = {
+                query: prompt,
+                page: pageInfo.page || page,
+                searchId: pageInfo.search_id || searchState.searchId
+            };
+
             lastResponseData = data;
             lastResponseData.prompt = prompt;
 
-            const endTime = Date.now();
-            const duration = ((endTime - startTime) / 1000).toFixed(2);
+            const duration = ((Date.now() - startTime) / 1000).toFixed(2);
 
-            // Listings render in the Search tab...
             renderSearchResults(data, prompt, duration);
-            // ...while the LLM answer (assist or deep-research report) goes to Ask AI.
-            pushAnswerToAskAI(prompt, data, isDeepResearch);
 
+            // A question routes itself to the chat layer — that answer belongs in Agent.
+            if (isNewQuery && data.assist && data.assist.answer) {
+                const questionMsg = pushAnswerToAskAI(prompt, data, false);
+
+                if (data.mode === 'chat') {
+                    chatHistory.push({ role: 'user', content: prompt }, { role: 'assistant', content: data.assist.answer });
+                    chatHistory = chatHistory.slice(-MAX_CHAT_HISTORY);
+
+                    // Open Agent on the question that was just asked, so the answer reads top-down.
+                    switchTab('tab-fast-answer', () => scrollToElement(questionMsg));
+                }
+            }
         } catch (error) {
             console.error('Search error:', error);
             chatContainer.innerHTML = `<div class="sr-error"><i class="fa-solid fa-triangle-exclamation"></i> ${escapeHTML(error.message || t('something_went_wrong', 'Sorry, something went wrong.'))}</div>`;
@@ -652,7 +734,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const activeInput = (bottomChatContainer && bottomChatContainer.classList.contains('active')) ? bottomChatInput : userInput;
         if (activeInput) {
-            // activeInput.value = ''; // Temporarily removed to preserve text as requested
             activeInput.disabled = false;
             activeInput.style.height = 'auto';
             activeInput.style.height = (activeInput.scrollHeight) + 'px';
@@ -666,12 +747,11 @@ document.addEventListener('DOMContentLoaded', () => {
             bottomChatSendBtn.disabled = false;
             bottomChatSendBtn.style.opacity = '1';
         }
-
-        clearDraft();
     }
 
-    async function sendAiChatMessage(prompt) {
-        if (!aiChatMessages) return;
+    /** Agent tab — /chat by default, /deep-research while the Deep research tag is on. */
+    async function sendAgentMessage(prompt) {
+        if (!aiChatMessages || !prompt) return;
 
         // Move input to bottom if it was centered
         if (bottomChatContainer) {
@@ -714,14 +794,21 @@ document.addEventListener('DOMContentLoaded', () => {
             bottomChatInput.style.height = 'auto';
         }
 
+        const isDeepResearch = hasActiveTag('deep-research');
+
         // Add thinking indicator
         const thinkingDiv = document.createElement('div');
         thinkingDiv.className = 'ai-msg ai-response-msg thinking';
-        thinkingDiv.innerHTML = `<div class="msg-content"><i class="fa-solid fa-ellipsis fa-fade"></i> ${t('ai_thinking', "AI is thinking...")}</div>`;
+        thinkingDiv.innerHTML = isDeepResearch
+            ? `<div class="msg-content"><i class="fa-solid fa-flask fa-fade"></i> ${t('deep_research_running', 'Deep research is running, this may take up to a minute...')}</div>`
+            : `<div class="msg-content"><i class="fa-solid fa-ellipsis fa-fade"></i> ${t('ai_thinking', "AI is thinking...")}</div>`;
         aiChatMessages.appendChild(thinkingDiv);
         scrollToBottom();
 
         const chatPayload = { prompt: prompt };
+        if (!isDeepResearch) {
+            chatPayload.history = chatHistory.slice(-MAX_CHAT_HISTORY);
+        }
         if (selectedMentionProduct) {
             chatPayload.context_product = selectedMentionProduct;
             // Clear context after sending
@@ -729,10 +816,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (replyContext) replyContext.classList.remove('active');
         }
 
-
+        if (bottomChatSendBtn) {
+            bottomChatSendBtn.disabled = true;
+            bottomChatSendBtn.style.opacity = '0.5';
+        }
 
         try {
-            const response = await fetch('/api/ai-chat/', {
+            const response = await fetch(isDeepResearch ? '/api/deep-research/' : '/api/ai-chat/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -744,20 +834,34 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json().catch(() => null);
             thinkingDiv.remove();
 
-            if (response.ok && data && data.response) {
-                let html = `<div class="msg-text">${formatAiMessage(data.response)}</div>`;
-                if (data.highlights && data.highlights.length) {
-                    html += `<ul class="sr-answer-list">${data.highlights.map(h => `<li>${escapeHTML(h)}</li>`).join('')}</ul>`;
-                }
-                if (data.questions && data.questions.length) {
-                    html += `<div class="sr-answer-subtitle">${t('to_refine_search', 'To narrow the search')}</div>`;
-                    html += `<ul class="sr-answer-list">${data.questions.map(q => `<li>${escapeHTML(q)}</li>`).join('')}</ul>`;
-                }
+            const answer = isDeepResearch ? ((data && data.report && data.report.summary) || '') : ((data && data.response) || '');
+
+            if (response.ok && data && answer) {
+                rememberAnswerSet(data, prompt);
 
                 const aiMsgDiv = document.createElement('div');
                 aiMsgDiv.className = 'ai-msg ai-response-msg';
-                aiMsgDiv.innerHTML = `<div class="msg-content">${html}</div>`;
+                aiMsgDiv.innerHTML = `<div class="msg-content">${isDeepResearch ? buildDeepResearchAnswer(data) : buildChatAnswer(data)}</div>`;
                 aiChatMessages.appendChild(aiMsgDiv);
+
+                chatHistory.push({ role: 'user', content: prompt }, { role: 'assistant', content: answer });
+                chatHistory = chatHistory.slice(-MAX_CHAT_HISTORY);
+
+                // Listings the agent found fill the Search tab, both as results and as citation targets.
+                if (chatContainer && data.products && data.products.length) {
+                    lastResponseData = data;
+                    lastResponseData.prompt = prompt;
+                    // The Search tab falls back to the landing view on an empty query box.
+                    if (userInput) userInput.value = prompt;
+                    searchState = { query: prompt, page: (data.page && data.page.page) || 1, searchId: (data.page && data.page.search_id) || '' };
+                    renderSearchResults(data, prompt, null);
+                    chatContainer.style.display = 'none';
+
+                    // Searching and deep research are about the listings, so hand the user straight
+                    // to them; a statistics or compare answer is the text itself, so stay put.
+                    // Fresh results start at the top, not wherever the chat thread was scrolled.
+                    if (isDeepResearch || data.intent === 'search') showSearchTab(() => scrollMainTo(0));
+                }
             } else {
                 const errorDiv = document.createElement('div');
                 errorDiv.className = 'ai-msg ai-response-msg error';
@@ -766,13 +870,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             scrollToBottom();
         } catch (error) {
-            console.error('AI Chat Error:', error);
+            console.error('Agent error:', error);
             thinkingDiv.remove();
             const errorDiv = document.createElement('div');
             errorDiv.className = 'ai-msg ai-response-msg error';
             errorDiv.innerHTML = `<div class="msg-content">${t('connection_lost', 'Connection with server lost.')}</div>`;
             aiChatMessages.appendChild(errorDiv);
             scrollToBottom();
+        }
+
+        if (bottomChatSendBtn) {
+            bottomChatSendBtn.disabled = false;
+            bottomChatSendBtn.style.opacity = '1';
         }
     }
 
@@ -885,6 +994,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (products.length > 0) {
             leftHTML += `<div class="sr-products-grid">${products.map(buildGridCard).join('')}</div>`;
+            leftHTML += buildPager(data.page);
         } else {
             leftHTML += `
                 <div class="sr-empty">
@@ -962,8 +1072,39 @@ document.addEventListener('DOMContentLoaded', () => {
         attachSearchResultsListeners();
     }
 
+    /** Pager for the ranked list. The API pages it from cache, so "next" costs one cheap call. */
+    function buildPager(page) {
+        if (!page || !page.pages || page.pages < 2) return '';
+
+        const current = page.page;
+        const last = page.pages;
+
+        // The ends stay reachable and the current page keeps its neighbours: 1 2 3 … 44 45 46
+        const shown = [...new Set([1, 2, 3, current - 1, current, current + 1, last - 2, last - 1, last])]
+            .filter(n => n >= 1 && n <= last)
+            .sort((a, b) => a - b);
+
+        let numbers = '';
+        shown.forEach((n, i) => {
+            if (i && n - shown[i - 1] > 1) numbers += `<span class="sr-pager-gap">…</span>`;
+            numbers += `<button type="button" class="sr-pager-num${n === current ? ' active' : ''}" data-page="${n}">${n}</button>`;
+        });
+
+        return `
+            <div class="sr-pager">
+                <button type="button" class="sr-pager-btn" data-page="${current - 1}" ${page.has_prev ? '' : 'disabled'} title="${t('previous', 'Previous')}">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                ${numbers}
+                <button type="button" class="sr-pager-btn" data-page="${current + 1}" ${page.has_next ? '' : 'disabled'} title="${t('next', 'Next')}">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        `;
+    }
+
     function attachSearchResultsListeners() {
-        // Event: Continue chat -> Ask AI tab
+        // Event: Continue chat -> Agent tab
         const continueBtn = document.getElementById('sr-continue-chat-btn');
         if (continueBtn) {
             continueBtn.addEventListener('click', () => {
@@ -971,6 +1112,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (askAiTab) askAiTab.click();
             });
         }
+
+        chatContainer.querySelectorAll('.sr-pager [data-page]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const page = parseInt(btn.dataset.page, 10);
+                if (!page || btn.disabled || page === searchState.page) return;
+                runSearch(searchState.query, page);
+                scrollMainTo(0);
+            });
+        });
 
         // Event: Show all links
         const showAllBtn = document.getElementById('sr-show-all-links');
@@ -1052,9 +1202,10 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         // Telegram-sourced listings have no public URL — render them as a plain card.
+        const attrs = `class="sr-grid-card" data-product-id="${escapeHTML(p.product_id || '')}"`;
         return url
-            ? `<div class="sr-grid-card"><a href="${escapeHTML(url)}" target="_blank" rel="noopener" class="sr-grid-card-link">${inner}</a></div>`
-            : `<div class="sr-grid-card"><div class="sr-grid-card-link">${inner}</div></div>`;
+            ? `<div ${attrs}><a href="${escapeHTML(url)}" target="_blank" rel="noopener" class="sr-grid-card-link">${inner}</a></div>`
+            : `<div ${attrs}><div class="sr-grid-card-link">${inner}</div></div>`;
     }
 
     /* =========================================================
@@ -1067,19 +1218,64 @@ document.addEventListener('DOMContentLoaded', () => {
         let html = '';
         html += `<div class="msg-text">${assist.answer
             ? formatAiMessage(assist.answer)
-            : `${total} ${t('listings_found', 'listings found')}.`}</div>`;
+            : `${total} ${t('listings_found', 'listings found')}.`}${buildCitations(data)}</div>`;
 
         if (assist.highlights && assist.highlights.length) {
             html += `<ul class="sr-answer-list">${assist.highlights.map(h => `<li>${escapeHTML(h)}</li>`).join('')}</ul>`;
         }
 
-        if (assist.questions && assist.questions.length) {
-            html += `<div class="sr-answer-subtitle">${t('to_refine_search', 'To narrow the search')}</div>`;
-            html += `<ul class="sr-answer-list">${assist.questions.map(q => `<li>${escapeHTML(q)}</li>`).join('')}</ul>`;
-        }
-
+        html += buildSuggestions(assist.questions);
         html += buildBackToSearchLink(total);
         return html;
+    }
+
+    /** Tie an answer to the listings behind it, so its citations resolve even after a later search. */
+    function rememberAnswerSet(data, prompt) {
+        if (!data.products || !data.products.length) return;
+        data.citeGroup = String(++answerSetSeq);
+        answerSets.set(data.citeGroup, { data: data, prompt: prompt });
+    }
+
+    /** Numbered links from a claim to the listings it stands on. Clicking one reveals that card. */
+    function buildCitations(data) {
+        const cited = (data.products || []).slice(0, MAX_CITATIONS);
+        if (!cited.length) return '';
+
+        const chips = cited.map((p, i) => {
+            const price = p.price ? `${formatPrice(p.price)} ${p.currency || ''}`.trim() : t('price_not_listed', 'Price on request');
+            const label = `${p.title || ''} — ${price}`;
+            return `<button type="button" class="sr-cite" data-cite="${escapeHTML(p.product_id)}" data-cite-group="${escapeHTML(data.citeGroup || '')}" title="${escapeHTML(label)}">${i + 1}</button>`;
+        }).join('');
+
+        return `<span class="sr-cites">${chips}</span>`;
+    }
+
+    /** One /chat turn: the reply, the facts behind it, its listings and the follow-ups it offers. */
+    function buildChatAnswer(data) {
+        const products = data.products || [];
+
+        let html = `<div class="msg-text">${formatAiMessage(data.response)}${buildCitations(data)}</div>`;
+
+        if (data.highlights && data.highlights.length) {
+            html += `<ul class="sr-answer-list">${data.highlights.map(h => `<li>${escapeHTML(h)}</li>`).join('')}</ul>`;
+        }
+        html += buildSuggestions(data.questions);
+        if (products.length) {
+            html += buildBackToSearchLink((data.sources && data.sources.total_count) || products.length);
+        }
+        return html;
+    }
+
+    /** Follow-ups the model wrote for this answer — one click asks the next question. */
+    function buildSuggestions(questions) {
+        if (!questions || !questions.length) return '';
+
+        const chips = questions
+            .map(q => `<button type="button" class="sr-suggestion">${escapeHTML(q)}</button>`)
+            .join('');
+
+        return `<div class="sr-answer-subtitle">${t('to_refine_search', 'To narrow the search')}</div>
+                <div class="sr-suggestions">${chips}</div>`;
     }
 
     function buildDeepResearchAnswer(data) {
@@ -1093,7 +1289,7 @@ document.addEventListener('DOMContentLoaded', () => {
             html += `<div class="sr-answer-goal">${escapeHTML(report.goal)}</div>`;
         }
         if (report.summary) {
-            html += `<div class="msg-text">${formatAiMessage(report.summary)}</div>`;
+            html += `<div class="msg-text">${formatAiMessage(report.summary)}${buildCitations(data)}</div>`;
         }
         if (report.findings && report.findings.length) {
             html += `<div class="sr-answer-subtitle">${t('key_findings', 'Key findings')}</div>`;
@@ -1129,6 +1325,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function pushAnswerToAskAI(prompt, data, isDeepResearch) {
         if (!aiChatMessages) return;
 
+        rememberAnswerSet(data, prompt);
+
         const welcome = aiChatMessages.querySelector('.ai-chat-welcome');
         if (welcome) welcome.remove();
 
@@ -1147,15 +1345,60 @@ document.addEventListener('DOMContentLoaded', () => {
         if (askAiTab && !askAiTab.classList.contains('active')) {
             askAiTab.classList.add('has-unread');
         }
+
+        return userMsg;
     }
 
-    // "See listings" inside an Ask AI answer jumps back to the Search tab
+    function showSearchTab(landing) {
+        switchTab('tab-all', landing);
+    }
+
+    /** Follow a citation: open Search on the cited listing and flash it so the eye lands on it. */
+    function focusCitedCard(productId, group) {
+        if (!chatContainer) return;
+
+        const selector = `.sr-grid-card[data-product-id="${CSS.escape(productId)}"]`;
+        const answerSet = answerSets.get(group);
+
+        // A later search may have replaced the grid — put this answer's listings back first.
+        if (!chatContainer.querySelector(selector) && answerSet) {
+            const page = answerSet.data.page || {};
+            if (userInput) userInput.value = answerSet.prompt;
+            searchState = { query: answerSet.prompt, page: page.page || 1, searchId: page.search_id || '' };
+            lastResponseData = answerSet.data;
+            lastResponseData.prompt = answerSet.prompt;
+            renderSearchResults(answerSet.data, answerSet.prompt, null);
+        }
+
+        // The tab switch re-renders the grid from the saved markup, so look the card up after it.
+        showSearchTab(() => {
+            const card = chatContainer.querySelector(selector);
+            if (!card) return;
+
+            card.scrollIntoView({ block: 'center' });
+            if (card.classList.contains('sr-card-flash')) return;
+
+            card.classList.add('sr-card-flash');
+            setTimeout(() => card.classList.remove('sr-card-flash'), 2000);
+        });
+    }
+
+    // Inside an Agent answer: citations and "See listings" open Search, suggestions ask the next question
     if (aiChatMessages) {
         aiChatMessages.addEventListener('click', (e) => {
-            const link = e.target.closest('[data-goto-search]');
-            if (!link) return;
-            const searchTab = document.getElementById('tab-all');
-            if (searchTab) searchTab.click();
+            const cite = e.target.closest('.sr-cite');
+            if (cite) {
+                focusCitedCard(cite.dataset.cite, cite.dataset.citeGroup);
+                return;
+            }
+
+            if (e.target.closest('[data-goto-search]')) {
+                showSearchTab(() => scrollMainTo(0));
+                return;
+            }
+
+            const suggestion = e.target.closest('.sr-suggestion');
+            if (suggestion) sendAgentMessage(suggestion.textContent.trim());
         });
     }
 

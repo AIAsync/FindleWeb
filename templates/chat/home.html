@@ -603,6 +603,8 @@
             "view_ai_answer": "{% translate 'View AI answer' %}",
             "see_listings": "{% translate 'See listings' %}",
             "no_results_found": "{% translate 'No listings matched this search.' %}",
+            "previous": "{% translate 'Previous' %}",
+            "next": "{% translate 'Next' %}",
             "price_not_listed": "{% translate 'Price on request' %}",
             "rooms_short": "{% translate 'rooms' %}",
             "floor_short": "{% translate 'floor' %}",
@@ -732,7 +734,7 @@
                         targetTab.click();
                     }
 
-                    // If search query, trigger search
+                    // If search query, trigger it on whichever tab the user came in on
                     if (query && tabId === 'tab-all') {
                         setTimeout(() => {
                             const sendBtn = document.getElementById('send-btn');
@@ -740,6 +742,15 @@
                                 sendBtn.dataset.isAutoTrigger = 'true';
                                 sendBtn.click();
                                 delete sendBtn.dataset.isAutoTrigger;
+                            }
+                        }, 200);
+                    } else if (query && tabId === 'tab-fast-answer') {
+                        setTimeout(() => {
+                            const chatInput = document.getElementById('chat-bottom-input');
+                            const chatSendBtn = document.getElementById('chat-send-btn');
+                            if (chatInput && chatSendBtn) {
+                                chatInput.value = query;
+                                chatSendBtn.click();
                             }
                         }, 200);
                     }
