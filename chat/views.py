@@ -1,6 +1,8 @@
+import codecs
 import json
+import re
 from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse
+from django.http import JsonResponse, StreamingHttpResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import ensure_csrf_cookie
 from .models import Conversation, Message
@@ -17,12 +19,26 @@ FINDLE_API_BASE = os.getenv('FINDLE_API_BASE', 'http://api.findle.uz:8001').rstr
 SEARCH_TIMEOUT = 25
 CHAT_TIMEOUT = 60
 DEEP_RESEARCH_TIMEOUT = 180
+MEMORY_TIMEOUT = 10
 
 # Cards per Search-tab page. The API caps per_page at 50.
 SEARCH_PER_PAGE = 24
 
 # /chat keeps no state — the client replays the transcript, capped by the API at 40 turns.
 MAX_HISTORY = 40
+
+# The API keeps the last 10 messages per session_id and drops a session after an
+# hour idle, so this is conversation context, not an archive.
+SESSION_ID_MAX = 64
+_SESSION_ID_OK = re.compile(r'^[A-Za-z0-9_.:-]+$')
+
+
+def _clean_session_id(value):
+    """Session ids go into a URL path, so keep them to an opaque, printable token."""
+    value = (value or '').strip()
+    if not value or len(value) > SESSION_ID_MAX or not _SESSION_ID_OK.match(value):
+        return ''
+    return value
 
 
 def _findle_post(path, payload, timeout):
@@ -48,6 +64,133 @@ def _findle_post(path, payload, timeout):
     except ValueError as e:
         print(f"[findle-api] {url} returned non-JSON body: {e}")
         return None
+
+
+def _findle_delete(path, timeout):
+    """DELETE against the Findle API. Returns (ok, status_code)."""
+    url = f"{FINDLE_API_BASE}{path}"
+    try:
+        res = requests.delete(url, headers={'accept': 'application/json'}, timeout=timeout)
+    except Exception as e:
+        print(f"[findle-api] DELETE {url} failed: {e}")
+        return False, 0
+    if res.status_code not in (200, 204, 404):
+        print(f"[findle-api] DELETE {url} returned HTTP {res.status_code}: {res.text[:200]}")
+    return res.status_code in (200, 204), res.status_code
+
+
+def _findle_stream(path, payload, timeout):
+    """Open an SSE stream on the Findle API.
+
+    Returns the live response, or None when the endpoint is missing or refuses —
+    callers fall back to the blocking endpoint in that case.
+    """
+    url = f"{FINDLE_API_BASE}{path}"
+    try:
+        res = requests.post(
+            url,
+            json=payload,
+            stream=True,
+            headers={'accept': 'text/event-stream', 'Content-Type': 'application/json'},
+            timeout=timeout,
+        )
+    except Exception as e:
+        print(f"[findle-api] stream {url} failed: {e}")
+        return None
+
+    if res.status_code != 200:
+        # 404 is the expected answer from an API build without the stream routes.
+        print(f"[findle-api] stream {url} returned HTTP {res.status_code}")
+        res.close()
+        return None
+    return res
+
+
+def _iter_sse(response):
+    """Yield (event, data) pairs from an SSE response, as each frame arrives.
+
+    Frames are `event: <name>\\ndata: <json>\\n\\n`; a frame may carry several
+    data lines, which the spec says to join with newlines.
+
+    Reading this by hand rather than with requests' helpers, because both of the
+    obvious ones defeat streaming: iter_lines() blocks until its 512-byte chunk
+    is full, and iter_content(chunk_size=None) bottoms out in urllib3's
+    read(amt=None), which reads to EOF. Either way every frame lands in one
+    batch when the connection closes. read1() returns whatever one socket read
+    produced, which is exactly a frame boundary in practice; iter_content(1) is
+    the fallback for urllib3 builds without it. Decoding is incremental because
+    a UTF-8 character can straddle two reads.
+    """
+    decoder = codecs.getincrementaldecoder('utf-8')(errors='replace')
+    buffer = ''
+    event, data_lines = '', []
+
+    raw = getattr(response, 'raw', None)
+    if raw is not None and hasattr(raw, 'read1'):
+        def chunks():
+            while True:
+                block = raw.read1(8192)
+                if not block:
+                    return
+                yield block
+    else:
+        def chunks():
+            return response.iter_content(chunk_size=1)
+
+    def flush_frame():
+        if not data_lines:
+            return None
+        body = '\n'.join(data_lines)
+        try:
+            return event or 'message', json.loads(body)
+        except ValueError:
+            return event or 'message', {'raw': body}
+
+    try:
+        for chunk in chunks():
+            if not chunk:
+                continue
+            buffer += decoder.decode(chunk)
+            while '\n' in buffer:
+                line, buffer = buffer.split('\n', 1)
+                line = line.rstrip('\r')
+                if line == '':
+                    frame = flush_frame()
+                    if frame:
+                        yield frame
+                    event, data_lines = '', []
+                elif line.startswith(':'):
+                    continue  # keep-alive comment
+                elif line.startswith('event:'):
+                    event = line[6:].strip()
+                elif line.startswith('data:'):
+                    data_lines.append(line[5:].lstrip())
+        frame = flush_frame()  # a final frame with no trailing blank line
+        if frame:
+            yield frame
+    finally:
+        response.close()
+
+
+def _sse(event, payload):
+    """Encode one frame for the browser."""
+    return f"event: {event}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
+
+
+def _unwrap(body, key):
+    """Take the payload out of its envelope.
+
+    The stream wraps several frames one level deep — `assist` arrives as
+    {"assist": {...}}, `done` as {"result": {...}}, a research `step` as
+    {"index": n, "step": {...}} — while the docs describe the inner object.
+    Accepts either form so a change on the API side does not break this.
+    """
+    if isinstance(body, dict):
+        inner = body.get(key)
+        if isinstance(inner, dict):
+            return inner
+        return body
+    return {}
 
 
 def _to_float(value):
@@ -178,6 +321,36 @@ def _chat_listings(chat, prompt):
     return chat.get('results') or [], None
 
 
+def _build_citations(raw_sources):
+    """Normalize the `sources` list that backs the [1], [2] markers in an answer.
+
+    The marker number is `ref`, not the position, because the API drops any
+    marker it could not ground (it records that in meta.dropped) — so the list
+    can legitimately run 1, 2, 4. Telegram listings have no public page and
+    come back with `url: null`; those stay in the list and the UI reveals the
+    card instead of opening a link.
+    """
+    citations = []
+    for i, src in enumerate(raw_sources or []):
+        if not isinstance(src, dict):
+            continue
+        try:
+            ref = int(src.get('ref'))
+        except (TypeError, ValueError):
+            ref = i + 1
+        citations.append({
+            'ref': ref,
+            'product_id': str(src.get('product_id') or ''),
+            'title': src.get('title') or '',
+            'url': src.get('url') or None,
+            'price': _to_float(src.get('price')),
+            'currency': src.get('currency') or '',
+            'site_name': src.get('site_name') or '',
+            'district': src.get('district') or '',
+        })
+    return citations
+
+
 def _llm_questions(questions, source):
     """Follow-ups are only worth showing when the model wrote them — rule text is canned filler."""
     if source != 'llm':
@@ -193,6 +366,7 @@ def _build_assist(assist):
         'highlights': assist.get('highlights') or [],
         'questions': _llm_questions(assist.get('questions'), assist.get('source')),
         'language': assist.get('language') or '',
+        'citations': _build_citations(assist.get('sources')),
     }
 
 
@@ -241,10 +415,19 @@ def chat_api(request):
     if search_id:
         payload['search_id'] = search_id
 
+    session_id = _clean_session_id(data.get('session_id'))
+    if session_id:
+        payload['session_id'] = session_id
+
     api_data = _findle_post('/search', payload, SEARCH_TIMEOUT)
     if api_data is None:
         return JsonResponse({'error': 'Search service is unavailable'}, status=502)
 
+    return JsonResponse(_search_response(api_data, prompt))
+
+
+def _search_response(api_data, prompt):
+    """Shape a /search payload for the UI. Shared by the blocking and streaming views."""
     # A question routes itself to the chat layer; the answer and its listings come back in `chat`.
     chat = api_data.get('chat') or {}
     results = api_data.get('results') or []
@@ -264,11 +447,13 @@ def chat_api(request):
             'highlights': chat.get('highlights') or [],
             'questions': _llm_questions(chat.get('suggestions'), chat.get('source')),
             'language': chat.get('language') or assist['language'],
+            # The handed-off answer cites through the chat block's own source list.
+            'citations': _build_citations(chat.get('sources')) or assist['citations'],
         }
 
     total = page_info['total'] or api_data.get('total_count')
 
-    return JsonResponse({
+    return {
         'query': prompt,
         'mode': api_data.get('mode') or 'search',
         'handoff': api_data.get('handoff') or None,
@@ -278,7 +463,7 @@ def chat_api(request):
         'sources': _build_sources(cards, total, api_data.get('retrieval')),
         'category': api_data.get('category') or '',
         'extracted_data': api_data.get('extracted_data') or {},
-    })
+    }
 
 
 def deep_research_api(request):
@@ -309,43 +494,279 @@ def deep_research_api(request):
     if research is None:
         return JsonResponse({'error': 'Deep research service is unavailable'}, status=502)
 
-    # /deep-research answers with aggregates only, so pull the listings themselves from /search.
-    search_data = _findle_post(
+    return JsonResponse(_research_response(research, prompt))
+
+
+def _research_listings(prompt):
+    """/deep-research answers with aggregates only, so pull the listings from /search."""
+    return _findle_post(
         '/search',
         {'query': prompt, 'assist': 'off', 'route': 'search', 'per_page': SEARCH_PER_PAGE},
         SEARCH_TIMEOUT,
     ) or {}
-    cards = _build_cards(search_data.get('results'))
-    page_info = _build_page(search_data.get('page'))
 
-    report = research.get('report') or {}
-    steps = [
+
+def _build_steps(raw_steps):
+    return [
         {
             'question': s.get('question') or '',
             'query': s.get('query') or '',
             'total': s.get('total'),
+            'round': s.get('round'),
         }
-        for s in (research.get('steps') or [])
+        for s in (raw_steps or [])
         if isinstance(s, dict)
     ]
 
-    return JsonResponse({
+
+def _research_response(research, prompt, search_data=None):
+    """Shape a /deep-research payload for the UI. Shared by the blocking and streaming views."""
+    if search_data is None:
+        search_data = _research_listings(prompt)
+
+    cards = _build_cards(search_data.get('results'))
+    page_info = _build_page(search_data.get('page'))
+    report = research.get('report') or {}
+
+    return {
         'query': prompt,
         'products': cards,
         'page': page_info,
         'sources': _build_sources(cards, page_info['total'] or search_data.get('total_count'),
                                   search_data.get('retrieval')),
+        # Every round's listings are merged into one list, so [3] means the same
+        # listing wherever it appears in the report.
+        'citations': _build_citations(research.get('sources')),
         'report': {
             'goal': research.get('goal') or '',
             'summary': report.get('summary') or '',
             'findings': report.get('findings') or [],
             'gaps': report.get('gaps') or [],
         },
-        'steps': steps,
+        'steps': _build_steps(research.get('steps')),
         'status': research.get('status') or '',
         'rounds': research.get('rounds'),
         'total_seen': research.get('total_seen'),
-    })
+    }
+
+
+def chat_memory_api(request, session_id):
+    """Agent tab memory: read what the server kept, or wipe it.
+
+    The wipe is what the bin button in the chat input calls. A 404 from the API
+    means the session had already expired or the build has no memory routes —
+    either way the next turn starts clean, so report success.
+    """
+    session_id = _clean_session_id(session_id)
+    if not session_id:
+        return JsonResponse({'error': 'Invalid session id'}, status=400)
+
+    if request.method == 'DELETE':
+        ok, status = _findle_delete(f'/chat/memory/{session_id}', MEMORY_TIMEOUT)
+        if not ok and status not in (404, 0):
+            return JsonResponse({'error': 'Could not clear the conversation'}, status=502)
+        return JsonResponse({'cleared': True, 'session_id': session_id,
+                             'supported': status not in (404, 0)})
+
+    if request.method == 'GET':
+        url = f"{FINDLE_API_BASE}/chat/memory/{session_id}"
+        try:
+            res = requests.get(url, headers={'accept': 'application/json'}, timeout=MEMORY_TIMEOUT)
+        except Exception as e:
+            print(f"[findle-api] GET {url} failed: {e}")
+            return JsonResponse({'messages': [], 'supported': False})
+        if res.status_code != 200:
+            return JsonResponse({'messages': [], 'supported': False})
+        try:
+            body = res.json()
+        except ValueError:
+            return JsonResponse({'messages': [], 'supported': False})
+        messages = body.get('messages') if isinstance(body, dict) else body
+        return JsonResponse({'messages': messages or [], 'supported': True})
+
+    return JsonResponse({'error': 'Invalid request'}, status=405)
+
+
+def _stream_response(generator):
+    """Wrap a frame generator as an SSE response.
+
+    X-Accel-Buffering matters behind nginx: without it nginx buffers the whole
+    stream and the client sees nothing until the end, which defeats the point.
+    """
+    response = StreamingHttpResponse(generator, content_type='text/event-stream')
+    response['Cache-Control'] = 'no-cache, no-transform'
+    response['X-Accel-Buffering'] = 'no'
+    return response
+
+
+def search_stream_api(request):
+    """Search tab, streamed: listings land in ~0.3s, the written answer follows.
+
+    The browser always gets the same SSE contract. When the API build has no
+    /search/stream, this synthesizes the same frames around one blocking call,
+    so the front end never needs a second code path.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid request'}, status=400)
+
+    try:
+        data = json.loads(request.body)
+    except ValueError:
+        return JsonResponse({'error': 'Invalid JSON body'}, status=400)
+
+    prompt = (data.get('prompt') or '').strip()
+    if not prompt:
+        return JsonResponse({'error': 'No prompt provided'}, status=400)
+
+    try:
+        page = max(1, int(data.get('page') or 1))
+    except (TypeError, ValueError):
+        page = 1
+
+    payload = {'query': prompt, 'assist': 'auto', 'page': page, 'per_page': SEARCH_PER_PAGE}
+    search_id = (data.get('search_id') or '').strip()
+    if search_id:
+        payload['search_id'] = search_id
+    session_id = _clean_session_id(data.get('session_id'))
+    if session_id:
+        payload['session_id'] = session_id
+
+    def frames():
+        upstream = _findle_stream('/search/stream', payload, SEARCH_TIMEOUT)
+
+        if upstream is None:
+            # No streaming upstream — same frames, one blocking call.
+            yield _sse('start', {'query': prompt, 'streamed': False})
+            api_data = _findle_post('/search', payload, SEARCH_TIMEOUT)
+            if api_data is None:
+                yield _sse('error', {'message': 'Search service is unavailable'})
+                return
+            shaped = _search_response(api_data, prompt)
+            yield _sse('results', {'products': shaped['products'], 'page': shaped['page'],
+                                   'sources': shaped['sources']})
+            if shaped['assist']['answer']:
+                yield _sse('assist', shaped['assist'])
+            yield _sse('done', shaped)
+            return
+
+        yield _sse('start', {'query': prompt, 'streamed': True})
+        final = None
+        try:
+            for event, body in _iter_sse(upstream):
+                if event == 'results':
+                    rows = body.get('results') if isinstance(body, dict) else body
+                    cards = _build_cards(rows)
+                    page_block = _build_page((body or {}).get('page') if isinstance(body, dict) else None)
+                    yield _sse('results', {
+                        'products': cards,
+                        'page': page_block,
+                        'sources': _build_sources(cards, page_block['total'],
+                                                  (body or {}).get('retrieval') if isinstance(body, dict) else None),
+                    })
+                elif event == 'stage':
+                    yield _sse('stage', body if isinstance(body, dict) else {'name': str(body)})
+                elif event == 'delta':
+                    # Whole sentences, not raw tokens: the API only releases text
+                    # that has been checked against the facts.
+                    text = body.get('text') if isinstance(body, dict) else str(body)
+                    if text:
+                        yield _sse('delta', {'text': text})
+                elif event == 'assist':
+                    yield _sse('assist', _build_assist(_unwrap(body, 'assist')))
+                elif event == 'done':
+                    final = _search_response(_unwrap(body, 'result'), prompt)
+                    yield _sse('done', final)
+                elif event == 'error':
+                    yield _sse('error', body if isinstance(body, dict) else {'message': str(body)})
+        except Exception as e:
+            print(f"[findle-api] search stream broke: {e}")
+            yield _sse('error', {'message': 'The search stream ended early'})
+            return
+
+        if final is None:
+            # Upstream closed without `done`; nothing usable was assembled.
+            yield _sse('error', {'message': 'The search stream ended early'})
+
+    return _stream_response(frames())
+
+
+def deep_research_stream_api(request):
+    """Agent tab, Deep research on: each round is shown the moment it lands."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid request'}, status=400)
+
+    try:
+        data = json.loads(request.body)
+    except ValueError:
+        return JsonResponse({'error': 'Invalid JSON body'}, status=400)
+
+    prompt = (data.get('prompt') or '').strip()
+    if not prompt:
+        return JsonResponse({'error': 'No prompt provided'}, status=400)
+
+    try:
+        max_steps = int(data.get('max_steps') or 6)
+    except (TypeError, ValueError):
+        max_steps = 6
+    max_steps = max(1, min(max_steps, 12))
+
+    payload = {'query': prompt, 'max_steps': max_steps}
+
+    def frames():
+        upstream = _findle_stream('/deep-research/stream', payload, DEEP_RESEARCH_TIMEOUT)
+
+        if upstream is None:
+            yield _sse('start', {'query': prompt, 'streamed': False})
+            research = _findle_post('/deep-research', payload, DEEP_RESEARCH_TIMEOUT)
+            if research is None:
+                yield _sse('error', {'message': 'Deep research service is unavailable'})
+                return
+            shaped = _research_response(research, prompt)
+            for step in shaped['steps']:
+                yield _sse('step', step)
+            yield _sse('done', shaped)
+            return
+
+        yield _sse('start', {'query': prompt, 'streamed': True})
+        final = None
+        try:
+            for event, body in _iter_sse(upstream):
+                if event == 'plan':
+                    yield _sse('plan', {
+                        'goal': (body or {}).get('goal') or '',
+                        'steps': _build_steps((body or {}).get('steps')),
+                    })
+                elif event == 'step':
+                    step = _build_steps([_unwrap(body, 'step')])
+                    if step:
+                        # `index` rides on the envelope, not the step itself.
+                        step[0]['index'] = (body or {}).get('index')
+                        yield _sse('step', step[0])
+                elif event == 'round':
+                    yield _sse('round', body if isinstance(body, dict) else {'round': body})
+                elif event == 'report':
+                    report = _unwrap(body, 'report')
+                    yield _sse('report', {
+                        'goal': (body or {}).get('goal') or '',
+                        'summary': report.get('summary') or '',
+                        'findings': report.get('findings') or [],
+                        'gaps': report.get('gaps') or [],
+                        'citations': _build_citations((body or {}).get('sources')),
+                    })
+                elif event == 'done':
+                    final = _research_response(_unwrap(body, 'result'), prompt)
+                    yield _sse('done', final)
+                elif event == 'error':
+                    yield _sse('error', body if isinstance(body, dict) else {'message': str(body)})
+        except Exception as e:
+            print(f"[findle-api] deep research stream broke: {e}")
+            yield _sse('error', {'message': 'The research stream ended early'})
+            return
+
+        if final is None:
+            yield _sse('error', {'message': 'The research stream ended early'})
+
+    return _stream_response(frames())
 
 
 def _openai_answer(prompt, context_product, tagged_products):
@@ -417,11 +838,16 @@ def ai_chat_api(request):
     tagged_products = data.get('tagged_products', [])
 
     # 1. Findle chat — grounded in the real listing data
-    chat = _findle_post(
-        '/chat',
-        {'message': prompt[:2000], 'history': _build_history(data.get('history'))},
-        CHAT_TIMEOUT,
-    )
+    payload = {'message': prompt[:2000], 'history': _build_history(data.get('history'))}
+    # With a session the API remembers the last 10 messages itself. The replayed
+    # history stays in the payload: it is the authoritative copy, and it keeps
+    # the turn correct if the session has expired or the request lands on a
+    # replica that never saw it.
+    session_id = _clean_session_id(data.get('session_id'))
+    if session_id:
+        payload['session_id'] = session_id
+
+    chat = _findle_post('/chat', payload, CHAT_TIMEOUT)
     if chat and chat.get('reply'):
         listings, page_info = _chat_listings(chat, prompt)
         cards = _build_cards(listings)
@@ -432,9 +858,11 @@ def ai_chat_api(request):
             'products': cards,
             'page': page_info,
             'sources': _build_sources(cards, (page_info or {}).get('total') or len(cards)),
+            'citations': _build_citations(chat.get('sources')),
             'intent': chat.get('intent') or '',
             'tools': [c.get('name') for c in (chat.get('tool_calls') or []) if isinstance(c, dict)],
             'source': chat.get('source') or 'findle',
+            'session_id': session_id,
         })
 
     # 2. OpenAI fallback — keeps @mention questions answerable when the chat API is down

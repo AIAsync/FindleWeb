@@ -43,19 +43,34 @@ body {
     overflow-y: auto;
 }
 
+/* Topbar and search tabs are pinned together: the tabs are how you switch
+   between Search / Agent / Alerts, so they have to stay reachable no matter
+   how far the results have been scrolled. .main-content is the scroll
+   container, and this is its first child. */
+.app-header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    flex-shrink: 0;
+    background: #ffffff;
+}
+
 .topbar {
-    min-height: 80px;
+    /* Kept deliberately shallow: this row and the tabs below it are pinned, so
+       every pixel here is a pixel of results that never shows. */
+    min-height: 0;
     height: auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 2rem;
+    padding: 10px 2rem;
     gap: 20px;
     background: #ffffff;
     flex-shrink: 0;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+    /* Static, not sticky: nested inside the sticky .app-header it would pin
+       to that wrapper rather than to the viewport, and the tabs below it
+       would scroll away again. */
+    position: static;
 }
 
 .topbar-brand {
@@ -1499,7 +1514,9 @@ body.auth-page {
 .topbar-search-container {
     position: relative;
     flex: 0 1 720px;
-    margin: 12px auto 0 auto;
+    /* The topbar centres its children; the old 12px top margin pushed this one
+       off that centre line and made the whole pinned header taller. */
+    margin: 0 auto;
     z-index: 100;
     display: flex;
     flex-direction: column;
@@ -1514,6 +1531,12 @@ body.auth-page {
     padding: 0 2rem;
     display: flex;
     justify-content: center;
+}
+
+/* The landing hero reuses this container inside its centred search block,
+   where it must not pick up the pinned header's background or border. */
+.landing-search-wrapper .topbar-search-tabs-container {
+    border-bottom: none;
 }
 
 /* Search Tabs (Google Style) */
@@ -1532,7 +1555,7 @@ body.auth-page {
     text-decoration: none;
     color: var(--text-muted);
     font-size: 0.9rem;
-    padding: 12px 0;
+    padding: 9px 0;
     border-bottom: 3px solid transparent;
     transition: all 0.2s;
     font-weight: 500;
@@ -1825,8 +1848,10 @@ body.auth-page {
 /* Profile Dropdown */
 .profile-dropdown {
     position: absolute;
-    top: 70px;
-    /* Below topbar */
+    /* 100% of .app-header, so the menu clears the whole pinned header instead
+       of the fixed 70px it used to assume — the topbar is taller than that on
+       desktop and is two rows tall on mobile. */
+    top: calc(100% + 8px);
     right: 20px;
     width: 250px;
     background: #ffffff;
@@ -2207,6 +2232,10 @@ body.dark-mode {
 }
 
 /* --- Topbar --- */
+body.dark-mode .app-header {
+    background: #0f172a;
+}
+
 body.dark-mode .topbar {
     background: #0f172a;
     border-bottom: 1px solid #1e293b;
@@ -3502,7 +3531,7 @@ body.dark-mode .sr-skeleton {
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
 }
 
-.chat-plus-btn, .chat-send-btn {
+.chat-plus-btn, .chat-send-btn, .chat-clear-btn {
     background: transparent;
     border: none;
     width: 40px;
@@ -3514,6 +3543,28 @@ body.dark-mode .sr-skeleton {
     cursor: pointer;
     transition: all 0.2s;
     color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+/* Sits beside send, and only appears once there is a conversation to clear.
+   [hidden] needs the explicit none here to beat the display:flex above. */
+.chat-clear-btn[hidden] {
+    display: none;
+}
+
+.chat-clear-btn:hover {
+    background: rgba(220, 38, 38, 0.08);
+    color: #dc2626;
+}
+
+.chat-clear-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+body.dark-mode .chat-clear-btn:hover {
+    background: rgba(248, 113, 113, 0.12);
+    color: #f87171;
 }
 
 .chat-plus-btn:hover {
@@ -3604,10 +3655,31 @@ body.dark-mode .sr-skeleton {
 }
 
 
+/* .bottom-chat-container is a centred, floating wrapper (90% wide, max 650px),
+   not a bar docked across the viewport. Styling it as a bar — opaque fill,
+   border-top, upward shadow — painted a square panel directly behind the
+   rounded input, and its corners and top edge stuck out around the pill.
+   The surface belongs to .chat-input-wrapper, which already has the fill,
+   border, 20px radius, blur and shadow. */
 .ask-ai-mode .bottom-chat-container {
-    background: rgba(255, 255, 255, 0.95);
-    border-top: 1px solid var(--border-color);
-    box-shadow: 0 -10px 40px rgba(0,0,0,0.05);
+    background: transparent;
+    border-top: none;
+    box-shadow: none;
+}
+
+/* The fill the container used to provide, moved onto the pill so it masks the
+   messages passing behind it while keeping the rounded shape. Nearly opaque:
+   at 0.8 the text underneath still read through the blur. */
+.ask-ai-mode .chat-input-wrapper {
+    background: rgba(255, 255, 255, 0.97);
+}
+
+/* Higher specificity than `.dark-mode .chat-input-wrapper`, which would
+   otherwise be overridden by the light rule above purely on source order. */
+.ask-ai-mode.dark-mode .chat-input-wrapper {
+    /* Light text on a dark field reads through more than the reverse, so this
+       sits a little higher than the light-mode value. */
+    background: rgba(15, 23, 42, 0.98);
 }
 
 /* Chatbot Mode refinements */
@@ -4430,4 +4502,195 @@ body.dark-mode .sr-price-stats-inline {
 
 body.dark-mode .sr-price-stat-divider {
     color: #475569;
+}
+
+/* =====================================================
+   Citations, streaming progress and the research log
+   ===================================================== */
+
+/* An inline [n] marker, rendered as a superscript link to the listing it cites. */
+.sr-ref {
+    display: inline-block;
+    min-width: 16px;
+    padding: 0 4px;
+    margin: 0 1px;
+    border: none;
+    border-radius: 5px;
+    background: #eef2f7;
+    color: #334155;
+    font-family: inherit;
+    font-size: 0.68em;
+    font-weight: 600;
+    line-height: 1.5;
+    text-align: center;
+    text-decoration: none;
+    vertical-align: super;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sr-ref:hover {
+    background: #0f172a;
+    color: #ffffff;
+}
+
+/* A telegram listing has no public page, so its marker reveals the card instead
+   of opening a link — dotted to say the destination is different. */
+.sr-ref-nolink {
+    border-bottom: 1px dotted #94a3b8;
+}
+
+.sr-sources {
+    margin-top: 12px;
+    font-size: 0.85rem;
+}
+
+.sr-sources > summary {
+    cursor: pointer;
+    color: var(--text-muted);
+    font-weight: 500;
+    list-style: none;
+}
+
+.sr-sources > summary::-webkit-details-marker {
+    display: none;
+}
+
+.sr-sources > summary::before {
+    content: "▸";
+    display: inline-block;
+    margin-right: 6px;
+    transition: transform 0.15s ease;
+}
+
+.sr-sources[open] > summary::before {
+    transform: rotate(90deg);
+}
+
+.sr-source-list {
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.sr-source-list li a,
+.sr-source-list li .sr-source-offsite {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text-main);
+}
+
+.sr-source-list li a:hover {
+    background: #f1f5f9;
+}
+
+.sr-source-list li .sr-source-offsite {
+    color: var(--text-muted);
+    cursor: default;
+}
+
+.sr-source-num {
+    flex-shrink: 0;
+    min-width: 18px;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.sr-source-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sr-source-meta {
+    flex-shrink: 0;
+    color: var(--text-muted);
+    font-size: 0.76rem;
+}
+
+/* The stage line under the skeleton, rewritten as each stage of the search lands. */
+.sr-stage-count {
+    margin-left: 6px;
+    padding: 1px 6px;
+    border-radius: 20px;
+    background: #f1f5f9;
+    color: var(--text-muted);
+    font-size: 0.82em;
+}
+
+/* Deep research: the thinking bubble becomes a live log of the plan's steps. */
+.sr-research-live {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sr-research-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.sr-research-progress {
+    margin-left: auto;
+    padding: 1px 8px;
+    border-radius: 20px;
+    background: #f1f5f9;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.sr-research-steps {
+    margin: 0;
+    padding: 0 0 0 2px;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.9rem;
+}
+
+.sr-research-steps li {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    color: var(--text-muted);
+    animation: fadeIn 0.25s ease;
+}
+
+.sr-research-steps li i {
+    color: #10b981;
+    font-size: 0.8em;
+}
+
+/* Dark mode */
+body.dark-mode .sr-ref {
+    background: #334155;
+    color: #e2e8f0;
+}
+
+body.dark-mode .sr-ref:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+body.dark-mode .sr-source-list li a:hover {
+    background: #1e293b;
+}
+
+body.dark-mode .sr-stage-count,
+body.dark-mode .sr-research-progress {
+    background: #1e293b;
 }

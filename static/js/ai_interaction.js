@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const bottomChatContainer = document.getElementById('bottom-chat-container');
     const bottomChatInput = document.getElementById('chat-bottom-input');
     const bottomChatSendBtn = document.getElementById('chat-send-btn');
+    const chatClearBtn = document.getElementById('chat-clear-btn');
     const chatPlusBtn = document.getElementById('chat-plus-btn');
     const chatDropdown = document.getElementById('chat-dropdown');
     const chatSearchTagsContainer = document.getElementById('chat-search-tags');
@@ -40,16 +41,176 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Search tab: the ranked list is paged server-side, search_id pins it so rows never shift.
     let searchState = { query: '', page: 1, searchId: '' };
-    // Agent tab: /chat keeps no state, so the transcript travels with every message.
+    // Agent tab: the transcript travels with every message as the authoritative
+    // copy; the session id lets the server keep its own short memory alongside it.
     let chatHistory = [];
     const MAX_CHAT_HISTORY = 40;
     const MAX_CITATIONS = 8;
+
+    /** Stable per-browser id for the server-side conversation memory.
+     *  The server keeps the last 10 messages for an hour, so this is context,
+     *  not an archive — losing it costs nothing. */
+    const SESSION_KEY = 'findle.chat.session';
+    let chatSessionId = (function () {
+        try {
+            const saved = localStorage.getItem(SESSION_KEY);
+            if (saved) return saved;
+        } catch (e) { /* private mode, or storage blocked */ }
+        const fresh = 'w-' + Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+        try { localStorage.setItem(SESSION_KEY, fresh); } catch (e) { /* not fatal */ }
+        return fresh;
+    })();
+
+    /** Start a new conversation locally: a fresh id is all the server needs. */
+    function resetChatSession() {
+        chatSessionId = 'w-' + Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+        try { localStorage.setItem(SESSION_KEY, chatSessionId); } catch (e) { /* not fatal */ }
+    }
+
+    /** A yes/no dialog for destructive actions.
+     *  Its own node rather than the alert-delete modal, which carries that
+     *  flow's own state; the classes are shared so the styling stays one thing. */
+    function showConfirm({ title, text, confirmLabel, onConfirm }) {
+        let overlay = document.getElementById('generic-confirm-modal');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.className = 'alert-modal-overlay';
+            overlay.id = 'generic-confirm-modal';
+            overlay.innerHTML = `
+                <div class="alert-modal-box">
+                    <div class="alert-modal-icon"><i class="fa-regular fa-trash-can"></i></div>
+                    <div class="alert-modal-title"></div>
+                    <div class="alert-modal-text"></div>
+                    <div class="alert-modal-actions">
+                        <button class="alert-modal-btn alert-modal-btn-cancel" data-confirm-cancel></button>
+                        <button class="alert-modal-btn alert-modal-btn-confirm" data-confirm-ok></button>
+                    </div>
+                </div>`;
+            document.body.appendChild(overlay);
+        }
+
+        overlay.querySelector('.alert-modal-title').textContent = title || '';
+        overlay.querySelector('.alert-modal-text').textContent = text || '';
+        const okBtn = overlay.querySelector('[data-confirm-ok]');
+        const cancelBtn = overlay.querySelector('[data-confirm-cancel]');
+        okBtn.textContent = confirmLabel || t('confirm', 'Confirm');
+        cancelBtn.textContent = t('cancel', 'Cancel');
+
+        const close = () => {
+            overlay.classList.remove('show');
+            document.removeEventListener('keydown', onKey);
+        };
+        const onKey = (e) => { if (e.key === 'Escape') close(); };
+
+        // Fresh handlers each time, so an earlier caller's callback cannot fire.
+        okBtn.onclick = () => { close(); if (onConfirm) onConfirm(); };
+        cancelBtn.onclick = close;
+        overlay.onclick = (e) => { if (e.target === overlay) close(); };
+        document.addEventListener('keydown', onKey);
+
+        overlay.classList.add('show');
+    }
+
+    /** The bin only earns its place in the input once there is something to bin. */
+    function updateClearButton() {
+        if (!chatClearBtn) return;
+        const hasThread = !!(aiChatMessages && aiChatMessages.querySelector('.ai-msg'));
+        chatClearBtn.hidden = !hasThread;
+    }
+
+    /** Forget the conversation: the server's copy, the replayed transcript and
+     *  the thread on screen. A fresh session id means the next message starts
+     *  clean even if the delete never reached the API. */
+    async function clearConversation() {
+        const sessionId = chatSessionId;
+
+        if (chatClearBtn) chatClearBtn.disabled = true;
+        try {
+            await fetch(`/api/chat/memory/${encodeURIComponent(sessionId)}/`, {
+                method: 'DELETE',
+                headers: { 'X-CSRFToken': getCookie('csrftoken') }
+            });
+        } catch (e) {
+            // The local reset below still gives the user a clean slate.
+            console.warn('Could not clear server memory', e);
+        }
+        if (chatClearBtn) chatClearBtn.disabled = false;
+
+        resetChatSession();
+        chatHistory = [];
+        answerSets.clear();
+
+        if (aiChatMessages) {
+            aiChatMessages.innerHTML = `<div class="ai-chat-welcome"><h2>${t('chat_with_findle', 'Chat with Findle AI')}</h2></div>`;
+        }
+        if (bottomChatContainer) {
+            bottomChatContainer.classList.add('centered');
+            document.body.classList.add('chat-initial-state');
+        }
+        updateClearButton();
+    }
+
+    /** Read an SSE response frame by frame, calling onEvent(name, data) for each.
+     *  Written against the response body rather than EventSource because these
+     *  are POSTs, and EventSource can only issue GETs. */
+    async function readEventStream(response, onEvent) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+
+            // Frames are separated by a blank line; keep the trailing partial.
+            let split;
+            while ((split = buffer.indexOf('\n\n')) !== -1) {
+                const frame = buffer.slice(0, split);
+                buffer = buffer.slice(split + 2);
+
+                let name = 'message';
+                const dataLines = [];
+                frame.split('\n').forEach(line => {
+                    line = line.replace(/\r$/, '');
+                    if (line.startsWith('event:')) name = line.slice(6).trim();
+                    else if (line.startsWith('data:')) dataLines.push(line.slice(5).replace(/^ /, ''));
+                });
+                if (!dataLines.length) continue;
+                try {
+                    onEvent(name, JSON.parse(dataLines.join('\n')));
+                } catch (e) {
+                    console.warn('Bad SSE frame', e);
+                }
+            }
+        }
+    }
     // Each answer keeps the listing set it cited, so older citations still resolve after new searches.
     const answerSets = new Map();
     let answerSetSeq = 0;
 
     const aiChatContainer = document.getElementById('ai-chat-container');
     const aiChatMessages = document.getElementById('ai-chat-messages');
+
+    if (chatClearBtn && aiChatMessages) {
+        // One observer instead of a call at every point that touches the thread —
+        // answers also arrive from the Search tab handing one over.
+        new MutationObserver(updateClearButton).observe(aiChatMessages, { childList: true });
+        updateClearButton();
+    }
+
+    if (chatClearBtn) {
+        chatClearBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showConfirm({
+                title: t('clear_conversation_q', 'Clear this conversation?'),
+                text: t('clear_conversation_text', 'The messages and what the assistant remembers are deleted. Your search results stay.'),
+                confirmLabel: t('clear', 'Clear'),
+                onConfirm: clearConversation
+            });
+        });
+    }
+
 
     // Tab Switching Logic
     function setChatMode(isChatMode) {
@@ -683,10 +844,10 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const startTime = Date.now();
 
-            const body = { prompt: prompt, page: page };
+            const body = { prompt: prompt, page: page, session_id: chatSessionId };
             if (page > 1 && searchState.searchId) body.search_id = searchState.searchId;
 
-            const response = await fetch('/api/chat/', {
+            const response = await fetch('/api/search/stream/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -695,11 +856,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(body)
             });
 
-            // An error page (403/500) is HTML, not JSON — don't let the parse mask the real status
-            const data = await response.json().catch(() => null);
-            if (!response.ok || !data) {
-                throw new Error((data && data.error) || `${t('something_went_wrong', 'Sorry, something went wrong.')} (HTTP ${response.status})`);
+            if (!response.ok || !response.body) {
+                // An error page (403/500) is HTML, not JSON — don't let the parse mask the status.
+                const failed = await response.json().catch(() => null);
+                throw new Error((failed && failed.error) || `${t('something_went_wrong', 'Sorry, something went wrong.')} (HTTP ${response.status})`);
             }
+
+            let data = null;
+            let streamError = null;
+
+            await readEventStream(response, (event, payload) => {
+                if (event === 'stage') {
+                    setSearchProgress(payload);
+                } else if (event === 'results') {
+                    // The whole point of streaming: listings are ready long before
+                    // the written answer, so put them on screen now.
+                    data = Object.assign({}, payload, { query: prompt });
+                    renderSearchResults(data, prompt, null);
+                } else if (event === 'done') {
+                    data = payload;
+                } else if (event === 'error') {
+                    streamError = (payload && payload.message) || null;
+                }
+            });
+
+            if (streamError) throw new Error(streamError);
+            if (!data) throw new Error(t('something_went_wrong', 'Sorry, something went wrong.'));
 
             const pageInfo = data.page || {};
             searchState = {
@@ -713,6 +895,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const duration = ((Date.now() - startTime) / 1000).toFixed(2);
 
+            // Re-render once the full payload is in: same grid, now with the
+            // final counts and timing. `rendered` only tells us the grid is
+            // already up, so this never flashes an empty state.
             renderSearchResults(data, prompt, duration);
 
             // A question routes itself to the chat layer — that answer belongs in Agent.
@@ -807,7 +992,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const chatPayload = { prompt: prompt };
         if (!isDeepResearch) {
+            // Both: the replayed transcript is authoritative, the session id lets
+            // the server keep its own short memory of the same conversation.
             chatPayload.history = chatHistory.slice(-MAX_CHAT_HISTORY);
+            chatPayload.session_id = chatSessionId;
         }
         if (selectedMentionProduct) {
             chatPayload.context_product = selectedMentionProduct;
@@ -822,7 +1010,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const response = await fetch(isDeepResearch ? '/api/deep-research/' : '/api/ai-chat/', {
+            const response = await fetch(isDeepResearch ? '/api/deep-research/stream/' : '/api/ai-chat/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -831,7 +1019,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(chatPayload)
             });
 
-            const data = await response.json().catch(() => null);
+            let data = null;
+            if (isDeepResearch && response.ok && response.body) {
+                // Research runs for ~11s. Showing the plan and then each step as
+                // it finishes is the difference between a progress bar and a
+                // blank wait, so the thinking bubble becomes a live log.
+                let streamError = null;
+                await readEventStream(response, (event, payload) => {
+                    if (event === 'plan') {
+                        renderResearchProgress(thinkingDiv, payload, []);
+                    } else if (event === 'step') {
+                        renderResearchProgress(thinkingDiv, null, [payload]);
+                    } else if (event === 'done') {
+                        data = payload;
+                    } else if (event === 'error') {
+                        streamError = (payload && payload.message) || null;
+                    }
+                });
+                if (streamError) data = { error: streamError };
+            } else {
+                data = await response.json().catch(() => null);
+            }
             thinkingDiv.remove();
 
             const answer = isDeepResearch ? ((data && data.report && data.report.summary) || '') : ((data && data.response) || '');
@@ -894,6 +1102,28 @@ document.addEventListener('DOMContentLoaded', () => {
         return formatted;
     }
 
+    /** Name the stage the search is on, so the skeleton says something true.
+     *  Unknown stage names are ignored rather than printed raw — the API adds
+     *  stages (it already emits `cache`) and a raw identifier is not a label. */
+    function setSearchProgress(payload) {
+        const note = document.querySelector('.sr-loading-note');
+        if (!note) return;
+
+        const labels = {
+            cache: t('stage_cache', 'Checking earlier results'),
+            extract: t('stage_extract', 'Reading the query'),
+            retrieve: t('stage_retrieve', 'Searching listings'),
+            rank: t('stage_rank', 'Ranking matches'),
+            assist: t('stage_assist', 'Writing the answer')
+        };
+        const label = labels[(payload && payload.name) || ''];
+        if (!label) return;
+
+        const found = payload && (payload.total || payload.found);
+        note.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> ${escapeHTML(label)}` +
+            (found ? ` <span class="sr-stage-count">${escapeHTML(String(found))}</span>` : '');
+    }
+
     function buildLoadingSkeleton(isDeepResearch) {
         const cards = Array.from({ length: 8 }, () => `
             <div class="sr-grid-card sr-grid-card-skeleton">
@@ -906,9 +1136,10 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `).join('');
 
+        // Always present: setSearchProgress() rewrites it as each stage lands.
         const note = isDeepResearch
             ? `<div class="sr-loading-note"><i class="fa-solid fa-flask fa-fade"></i> ${t('deep_research_running', 'Deep research is running, this may take up to a minute...')}</div>`
-            : '';
+            : `<div class="sr-loading-note"><i class="fa-solid fa-circle-notch fa-spin"></i> ${t('searching', 'Searching...')}</div>`;
 
         return `
             <div class="search-results-layout">
@@ -1214,16 +1445,24 @@ document.addEventListener('DOMContentLoaded', () => {
     function buildAssistAnswer(data) {
         const assist = data.assist || {};
         const total = (data.sources && data.sources.total_count) || (data.products || []).length;
+        const citations = assist.citations || [];
 
-        let html = '';
-        html += `<div class="msg-text">${assist.answer
-            ? formatAiMessage(assist.answer)
-            : `${total} ${t('listings_found', 'listings found')}.`}${buildCitations(data)}</div>`;
+        let body;
+        if (!assist.answer) {
+            body = `${total} ${t('listings_found', 'listings found')}.`;
+        } else if (citations.length) {
+            body = linkCitations(formatAiMessage(assist.answer), citations, data.citeGroup);
+        } else {
+            body = formatAiMessage(assist.answer) + buildCitations(data);
+        }
+
+        let html = `<div class="msg-text">${body}</div>`;
 
         if (assist.highlights && assist.highlights.length) {
             html += `<ul class="sr-answer-list">${assist.highlights.map(h => `<li>${escapeHTML(h)}</li>`).join('')}</ul>`;
         }
 
+        html += buildSourceList(citations);
         html += buildSuggestions(assist.questions);
         html += buildBackToSearchLink(total);
         return html;
@@ -1234,6 +1473,64 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!data.products || !data.products.length) return;
         data.citeGroup = String(++answerSetSeq);
         answerSets.set(data.citeGroup, { data: data, prompt: prompt });
+    }
+
+    /** Turn the [1], [2] markers the API writes into links to the listing each one cites.
+     *
+     *  Matching is by `ref`, not by position: the API drops any marker it could
+     *  not ground, so the list legitimately runs 1, 2, 4. A marker with no
+     *  matching source is left as plain text rather than pointing somewhere
+     *  wrong. Telegram listings have no public page (`url: null`) — those
+     *  become buttons that reveal the card in the Search tab instead.
+     */
+    function linkCitations(html, citations, citeGroup) {
+        if (!citations || !citations.length) return html;
+
+        const byRef = new Map(citations.map(c => [Number(c.ref), c]));
+
+        return html.replace(/\[(\d{1,3})\]/g, (whole, digits) => {
+            const cite = byRef.get(Number(digits));
+            if (!cite) return whole;
+
+            const price = cite.price
+                ? `${formatPrice(cite.price)} ${cite.currency || ''}`.trim()
+                : t('price_not_listed', 'Price on request');
+            const label = `${cite.title || ''} — ${price}`;
+
+            if (cite.url) {
+                return `<a class="sr-ref" href="${escapeHTML(cite.url)}" target="_blank" rel="noopener"
+                           title="${escapeHTML(label)}">${digits}</a>`;
+            }
+            return `<button type="button" class="sr-ref sr-ref-nolink"
+                        data-cite="${escapeHTML(cite.product_id)}"
+                        data-cite-group="${escapeHTML(citeGroup || '')}"
+                        title="${escapeHTML(label)}">${digits}</button>`;
+        });
+    }
+
+    /** The listings behind an answer, listed under it so the [n] markers have a legend. */
+    function buildSourceList(citations) {
+        if (!citations || !citations.length) return '';
+
+        // Not truncated: the list is collapsed by default, and these are the
+        // listings the answer stands on — hiding some while the summary counts
+        // them all would misstate what was checked.
+        const rows = citations.map(c => {
+            const price = c.price ? `${formatPrice(c.price)} ${c.currency || ''}`.trim() : '';
+            const meta = [c.site_name, c.district, price].filter(Boolean).join(' · ');
+            const title = escapeHTML(c.title || t('listing', 'Listing'));
+            const body = `<span class="sr-source-num">${c.ref}</span>
+                          <span class="sr-source-title">${title}</span>
+                          ${meta ? `<span class="sr-source-meta">${escapeHTML(meta)}</span>` : ''}`;
+            return c.url
+                ? `<li><a href="${escapeHTML(c.url)}" target="_blank" rel="noopener">${body}</a></li>`
+                : `<li><span class="sr-source-offsite" title="${escapeHTML(t('no_public_link', 'No public link'))}">${body}</span></li>`;
+        }).join('');
+
+        return `<details class="sr-sources">
+                    <summary>${t('sources', 'Sources')} (${citations.length})</summary>
+                    <ol class="sr-source-list">${rows}</ol>
+                </details>`;
     }
 
     /** Numbered links from a claim to the listings it stands on. Clicking one reveals that card. */
@@ -1253,12 +1550,20 @@ document.addEventListener('DOMContentLoaded', () => {
     /** One /chat turn: the reply, the facts behind it, its listings and the follow-ups it offers. */
     function buildChatAnswer(data) {
         const products = data.products || [];
+        const citations = data.citations || [];
 
-        let html = `<div class="msg-text">${formatAiMessage(data.response)}${buildCitations(data)}</div>`;
+        // Real [n] markers win; the positional chips stay for answers the API
+        // returned without a source list.
+        const body = citations.length
+            ? linkCitations(formatAiMessage(data.response), citations, data.citeGroup)
+            : formatAiMessage(data.response) + buildCitations(data);
+
+        let html = `<div class="msg-text">${body}</div>`;
 
         if (data.highlights && data.highlights.length) {
             html += `<ul class="sr-answer-list">${data.highlights.map(h => `<li>${escapeHTML(h)}</li>`).join('')}</ul>`;
         }
+        html += buildSourceList(citations);
         html += buildSuggestions(data.questions);
         if (products.length) {
             html += buildBackToSearchLink((data.sources && data.sources.total_count) || products.length);
@@ -1278,6 +1583,46 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="sr-suggestions">${chips}</div>`;
     }
 
+    /** Turn the thinking bubble into a live research log: the plan first, then
+     *  each step as it completes. State rides on the element so successive
+     *  frames accumulate instead of replacing each other. */
+    function renderResearchProgress(bubble, plan, newSteps) {
+        if (!bubble) return;
+        if (!bubble._research) bubble._research = { goal: '', planned: 0, steps: [] };
+        const state = bubble._research;
+
+        if (plan) {
+            state.goal = plan.goal || '';
+            state.planned = (plan.steps || []).length;
+        }
+        (newSteps || []).forEach(s => {
+            if (s && (s.question || s.query)) state.steps.push(s);
+        });
+
+        const done = state.steps.length;
+        const total = Math.max(state.planned, done);
+
+        const rows = state.steps.map(s => `
+            <li>
+                <i class="fa-solid fa-check"></i>
+                <span>${escapeHTML(s.question || s.query || '')}</span>
+                ${s.total ? `<span class="sr-step-count">${escapeHTML(String(s.total))}</span>` : ''}
+            </li>`).join('');
+
+        bubble.innerHTML = `
+            <div class="msg-content">
+                <div class="sr-research-live">
+                    <div class="sr-research-head">
+                        <i class="fa-solid fa-flask fa-fade"></i>
+                        <span>${escapeHTML(state.goal || t('deep_research_running', 'Deep research is running...'))}</span>
+                        ${total ? `<span class="sr-research-progress">${done}/${total}</span>` : ''}
+                    </div>
+                    ${rows ? `<ol class="sr-research-steps">${rows}</ol>` : ''}
+                </div>
+            </div>`;
+        scrollToBottom();
+    }
+
     function buildDeepResearchAnswer(data) {
         const report = data.report || {};
         const steps = data.steps || [];
@@ -1288,17 +1633,28 @@ document.addEventListener('DOMContentLoaded', () => {
         if (report.goal) {
             html += `<div class="sr-answer-goal">${escapeHTML(report.goal)}</div>`;
         }
+        const citations = data.citations || [];
+        // Every round's listings are merged into one list, so [3] means the same
+        // listing wherever it turns up in the report.
+        const cite = (text) => citations.length
+            ? linkCitations(escapeHTML(text), citations, data.citeGroup)
+            : escapeHTML(text);
+
         if (report.summary) {
-            html += `<div class="msg-text">${formatAiMessage(report.summary)}${buildCitations(data)}</div>`;
+            const summary = citations.length
+                ? linkCitations(formatAiMessage(report.summary), citations, data.citeGroup)
+                : formatAiMessage(report.summary) + buildCitations(data);
+            html += `<div class="msg-text">${summary}</div>`;
         }
         if (report.findings && report.findings.length) {
             html += `<div class="sr-answer-subtitle">${t('key_findings', 'Key findings')}</div>`;
-            html += `<ul class="sr-answer-list">${report.findings.map(f => `<li>${escapeHTML(f)}</li>`).join('')}</ul>`;
+            html += `<ul class="sr-answer-list">${report.findings.map(f => `<li>${cite(f)}</li>`).join('')}</ul>`;
         }
         if (report.gaps && report.gaps.length) {
             html += `<div class="sr-answer-subtitle">${t('open_questions', 'Open questions')}</div>`;
-            html += `<ul class="sr-answer-list">${report.gaps.map(g => `<li>${escapeHTML(g)}</li>`).join('')}</ul>`;
+            html += `<ul class="sr-answer-list">${report.gaps.map(g => `<li>${cite(g)}</li>`).join('')}</ul>`;
         }
+        html += buildSourceList(citations);
         if (steps.length) {
             html += `
                 <details class="sr-answer-steps">

@@ -132,83 +132,85 @@
     <!-- ========== APP VIEW (Search / Ask AI / Alerts) — hidden by default ========== -->
     <div class="app-container app-view-container" id="app-view" style="display: none;">
         <main class="main-content">
-            <header class="topbar">
-                <div class="topbar-brand" id="app-topbar-brand" style="cursor: pointer;">
-                    <img src="{% static 'images/findle-logo-new.png' %}" alt="Findle"
-                        style="width: 70px; height: auto;">
-                    <span>{% translate "Findle AI" %}</span>
-                </div>
-                <div class="topbar-search-container" id="top-search-container">
-                    <div class="search-input-wrapper">
-                        <button class="search-plus-btn" id="search-plus-btn" type="button">
-                            <i class="fa-solid fa-plus"></i>
-                        </button>
-                        <input type="hidden" id="conversation-id" value="">
-                        <textarea id="user-input" placeholder="{% translate 'Describe anything...' %}" class="topbar-search-input"
-                            rows="1"></textarea>
-                        <button class="search-icon-btn auth-required" id="alert-btn" type="button"
-                            style="margin-right: 8px;" title="{% translate 'Save' %}">
-                            <i class="fa-regular fa-bell"></i>
-                        </button>
-                        <button class="search-icon-btn" id="send-btn" type="button">
-                            <i class="fa-solid fa-magnifying-glass"></i>
-                        </button>
-                        <div id="search-tags" class="search-tags"></div>
+            <!-- Topbar and search tabs scroll as one sticky header. -->
+            <div class="app-header">
+                <header class="topbar">
+                    <div class="topbar-brand" id="app-topbar-brand" style="cursor: pointer;">
+                        <img src="{% static 'images/findle-logo-new.png' %}" alt="Findle">
+                        <span>{% translate "Findle AI" %}</span>
                     </div>
-                    <div class="search-options-dropdown" id="search-dropdown">
-                        <div class="dropdown-option" id="btn-attach-file">
-                            <div class="option-icon attach-icon"><i class="fa-solid fa-paperclip"></i></div>
-                            <span>{% translate "Attach file" %}</span>
+                    <div class="topbar-search-container" id="top-search-container">
+                        <div class="search-input-wrapper">
+                            <button class="search-plus-btn" id="search-plus-btn" type="button">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                            <input type="hidden" id="conversation-id" value="">
+                            <textarea id="user-input" placeholder="{% translate 'Describe anything...' %}" class="topbar-search-input"
+                                rows="1"></textarea>
+                            <button class="search-icon-btn auth-required" id="alert-btn" type="button"
+                                style="margin-right: 8px;" title="{% translate 'Save' %}">
+                                <i class="fa-regular fa-bell"></i>
+                            </button>
+                            <button class="search-icon-btn" id="send-btn" type="button">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </button>
+                            <div id="search-tags" class="search-tags"></div>
                         </div>
-                        <div class="dropdown-option" id="btn-filter">
-                            <div class="option-icon filter-icon"><i class="fa-solid fa-filter"></i></div>
-                            <span>{% translate "Filter" %}</span>
-                        </div>
-                        <div class="dropdown-option" id="btn-deep-research">
-                            <div class="option-icon research-icon"><i class="fa-solid fa-flask"></i></div>
-                            <span>{% translate "Deep research" %}</span>
-                        </div>
-                        <input type="file" id="attach-file-input" accept=".pdf,.docx,.pptx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation" style="display: none;">
-                    </div>
-                </div>
-                <div class="right-controls">
-                    {% if user.is_authenticated %}
-                    <div class="topbar-profile" id="topbar-profile" title="{% translate 'Profile' %}">
-                        <div class="avatar-small">{{ user.username|first|upper }}</div>
-                    </div>
-                    <div class="profile-dropdown" id="profile-dropdown">
-                        <div class="profile-header">
-                            <div class="avatar-large">{{ user.username|first|upper }}</div>
-                            <div class="profile-info">
-                                <span class="profile-username">{{ user.username }}</span>
-                                <span class="profile-email">{{ user.email }}</span>
+                        <div class="search-options-dropdown" id="search-dropdown">
+                            <div class="dropdown-option" id="btn-attach-file">
+                                <div class="option-icon attach-icon"><i class="fa-solid fa-paperclip"></i></div>
+                                <span>{% translate "Attach file" %}</span>
                             </div>
+                            <div class="dropdown-option" id="btn-filter">
+                                <div class="option-icon filter-icon"><i class="fa-solid fa-filter"></i></div>
+                                <span>{% translate "Filter" %}</span>
+                            </div>
+                            <div class="dropdown-option" id="btn-deep-research">
+                                <div class="option-icon research-icon"><i class="fa-solid fa-flask"></i></div>
+                                <span>{% translate "Deep research" %}</span>
+                            </div>
+                            <input type="file" id="attach-file-input" accept=".pdf,.docx,.pptx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation" style="display: none;">
                         </div>
-                        <hr>
-                        <a href="#" class="dropdown-item btn-settings"><i class="fa-solid fa-gear"></i> {% translate "Settings" %}</a>
-                        <a href="#" class="dropdown-item"><i class="fa-solid fa-circle-question"></i> {% translate "Help" %}</a>
-                        <a href="#" class="dropdown-item"><i class="fa-solid fa-file-contract"></i> {% translate "Terms of Service" %}</a>
-                        <hr>
-                        <a href="{% url 'logout' %}" class="dropdown-item logout"><i
-                                class="fa-solid fa-right-from-bracket"></i> {% translate "Logout" %}</a>
                     </div>
-                    {% else %}
-                    <a href="{% url 'login' %}" class="topbar-auth-btn topbar-signin-btn">{% translate "Sign in" %}</a>
-                    <a href="{% url 'register' %}" class="topbar-auth-btn topbar-signup-btn">{% translate "Sign up" %}</a>
-                    {% endif %}
-                </div>
-            </header>
-            <div class="topbar-search-tabs-container">
-                <div class="topbar-search-tabs">
-                    <a href="#" class="search-tab active" id="tab-all">
-                        <i class="fa-solid fa-magnifying-glass"></i> {% translate "Search" %}
-                    </a>
-                    <a href="#" class="search-tab" id="tab-fast-answer">
-                        <i class="fa-solid fa-bolt"></i> {% translate "Agent" %}
-                    </a>
-                    <a href="#" class="search-tab auth-required" id="tab-alert">
-                        <i class="fa-solid fa-bell"></i> {% translate "Alerts" %}
-                    </a>
+                    <div class="right-controls">
+                        {% if user.is_authenticated %}
+                        <div class="topbar-profile" id="topbar-profile" title="{% translate 'Profile' %}">
+                            <div class="avatar-small">{{ user.username|first|upper }}</div>
+                        </div>
+                        <div class="profile-dropdown" id="profile-dropdown">
+                            <div class="profile-header">
+                                <div class="avatar-large">{{ user.username|first|upper }}</div>
+                                <div class="profile-info">
+                                    <span class="profile-username">{{ user.username }}</span>
+                                    <span class="profile-email">{{ user.email }}</span>
+                                </div>
+                            </div>
+                            <hr>
+                            <a href="#" class="dropdown-item btn-settings"><i class="fa-solid fa-gear"></i> {% translate "Settings" %}</a>
+                            <a href="#" class="dropdown-item"><i class="fa-solid fa-circle-question"></i> {% translate "Help" %}</a>
+                            <a href="#" class="dropdown-item"><i class="fa-solid fa-file-contract"></i> {% translate "Terms of Service" %}</a>
+                            <hr>
+                            <a href="{% url 'logout' %}" class="dropdown-item logout"><i
+                                    class="fa-solid fa-right-from-bracket"></i> {% translate "Logout" %}</a>
+                        </div>
+                        {% else %}
+                        <a href="{% url 'login' %}" class="topbar-auth-btn topbar-signin-btn">{% translate "Sign in" %}</a>
+                        <a href="{% url 'register' %}" class="topbar-auth-btn topbar-signup-btn">{% translate "Sign up" %}</a>
+                        {% endif %}
+                    </div>
+                </header>
+                <div class="topbar-search-tabs-container">
+                    <div class="topbar-search-tabs">
+                        <a href="#" class="search-tab active" id="tab-all">
+                            <i class="fa-solid fa-magnifying-glass"></i> {% translate "Search" %}
+                        </a>
+                        <a href="#" class="search-tab" id="tab-fast-answer">
+                            <i class="fa-solid fa-bolt"></i> {% translate "Agent" %}
+                        </a>
+                        <a href="#" class="search-tab auth-required" id="tab-alert">
+                            <i class="fa-solid fa-bell"></i> {% translate "Alerts" %}
+                        </a>
+                    </div>
                 </div>
             </div>
             <div class="content-area">
@@ -278,6 +280,11 @@
                 <i class="fa-solid fa-plus"></i>
             </button>
             <textarea id="chat-bottom-input" placeholder="{% translate 'Ask AI anything...' %}" rows="1"></textarea>
+            <button class="chat-clear-btn" id="chat-clear-btn" type="button" hidden
+                title="{% translate 'Clear conversation' %}"
+                aria-label="{% translate 'Clear conversation' %}">
+                <i class="fa-regular fa-trash-can"></i>
+            </button>
             <button class="chat-send-btn" id="chat-send-btn">
                 <i class="fa-solid fa-paper-plane"></i>
             </button>
