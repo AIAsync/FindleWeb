@@ -715,23 +715,9 @@ body.dark-mode .alert-detail-actions {
 
 /* ===================== MOBILE RESPONSIVE ===================== */
 @media (max-width: 768px) {
-    .alerts-page-container {
-        flex-direction: column;
-        height: auto;
-        min-height: calc(100vh - 130px);
-    }
-
-    .alerts-sidebar {
-        width: 100%;
-        min-width: 100%;
-        max-height: 40vh;
-        border-right: none;
-        border-bottom: 1px solid #e8ecf1;
-    }
-
-    .alert-detail-view {
-        min-height: 60vh;
-    }
+    /* The mobile master/detail layout (sidebar OR detail, never stacked) lives
+       in mobile_responsive.css, together with the .mobile-detail-active class
+       that ai_interaction.js toggles. Stacking rules must not be re-added here. */
 
     .alert-detail-content-wrapper {
         padding: 1.25rem;
@@ -760,9 +746,6 @@ body.dark-mode .alert-detail-actions {
         grid-template-columns: 1fr;
     }
 
-    .alerts-sidebar {
-        max-height: 35vh;
-    }
 }
 
 /* =============================================

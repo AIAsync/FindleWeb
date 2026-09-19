@@ -194,7 +194,10 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 ACCOUNT_LOGIN_METHODS = {'username'}
-ACCOUNT_SIGNUP_FIELDS = ['username*', 'password1*', 'password2*']
+# 'email' must stay in this list even though it is optional: allauth's social
+# signup form always resolves an 'email' field, and raises ImproperlyConfigured
+# (HTTP 500) when it is missing from ACCOUNT_SIGNUP_FIELDS.
+ACCOUNT_SIGNUP_FIELDS = ['username*', 'email', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 
 # Auto signup for social accounts without showing form

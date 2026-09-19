@@ -546,6 +546,68 @@ body {
     margin-bottom: 1.5rem;
 }
 
+/* Feedback from the Google sign-in flow lands here: the adapter redirects to
+   this page with a message rather than letting the error page through. */
+.auth-messages {
+    list-style: none;
+    margin: 0 0 1.25rem;
+    padding: 0;
+    text-align: left;
+}
+
+.auth-message {
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    line-height: 1.4;
+    border: 1px solid transparent;
+}
+
+.auth-message + .auth-message {
+    margin-top: 8px;
+}
+
+.auth-message.error {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #b91c1c;
+}
+
+.auth-message.success {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #15803d;
+}
+
+.auth-message.info,
+.auth-message.warning,
+.auth-message.debug {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+    color: var(--text-main);
+}
+
+/* The rules either side of the "or" label. */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border-color);
+}
+
+.auth-divider span {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
 .auth-form input {
     width: 100%;
     background: #f1f5f9;
@@ -875,37 +937,6 @@ body {
         opacity: 1;
     }
 
-    /* 2. Top Bar */
-    .topbar {
-        padding: 0 1rem;
-        justify-content: flex-start;
-        gap: 10px;
-    }
-
-    .topbar-brand {
-        margin-right: auto;
-    }
-
-    .topbar-brand span {
-        font-size: 1.2rem;
-    }
-
-    .topbar-brand img {
-        height: 36px;
-        width: 36px;
-    }
-
-    .right-controls.mobile-hidden {
-        display: flex !important;
-        gap: 5px;
-    }
-
-    .right-controls .icon-btn {
-        width: 42px;
-        height: 42px;
-        font-size: 1.2rem;
-    }
-
     .mobile-menu-btn {
         display: flex;
         /* Show hamburger */
@@ -917,80 +948,6 @@ body {
         padding: 8px;
         z-index: 20;
         /* Ensure clickable */
-    }
-
-    /* 3. Main Content */
-    .main-content {
-        margin-left: 0;
-        width: 100%;
-    }
-
-    .content-area {
-        padding: 1rem;
-        /* Padding bottom for fixed input area */
-        padding-bottom: 160px;
-    }
-
-    .products-grid {
-        display: grid !important;
-        grid-template-columns: repeat(3, 1fr) !important;
-        gap: 0.6rem !important;
-        margin-top: 1rem !important;
-    }
-
-    .product-card {
-        min-width: 0 !important;
-        flex: none !important;
-        border-radius: 8px !important;
-        display: flex !important;
-        flex-direction: column !important;
-        height: 100% !important;
-    }
-
-    .product-img {
-        height: 90px !important;
-        min-height: 90px !important;
-    }
-
-    .product-info {
-        padding: 8px !important;
-        display: flex !important;
-        flex-direction: column !important;
-        flex: 1 !important;
-    }
-
-    .product-title {
-        font-size: 0.75rem !important;
-        line-height: 1.2 !important;
-        height: 2rem !important;
-        /* Adjusted for mobile */
-        display: -webkit-box !important;
-        -webkit-line-clamp: 2 !important;
-        line-clamp: 2 !important;
-        -webkit-box-orient: vertical !important;
-        overflow: hidden !important;
-    }
-
-    .product-price {
-        font-size: 0.85rem !important;
-        font-weight: 700 !important;
-        margin-top: 2px !important;
-    }
-
-    .product-rating {
-        margin-top: auto !important;
-        font-size: 0.7rem !important;
-    }
-
-    .product-who-by {
-        font-size: 0.65rem !important;
-    }
-
-    .chat-container {
-        padding-top: 5px !important;
-        /* Minimize top gap on mobile */
-        padding-bottom: 20px;
-        max-width: 100%;
     }
 
     /* 4. Input Area (Search Interface) */
@@ -1058,55 +1015,10 @@ body {
         /* Slightly more visible */
     }
 
-    /* 5. Message Styles */
-    .message {
-        max-width: 95%;
-    }
-
-    .message-content {
-        padding: 14px;
-        font-size: 0.95rem;
-    }
-
     .reasoning-container {
         padding: 10px;
         margin-top: -10px !important;
         /* Pull text higher */
-    }
-
-    /* 6. Products Grid */
-    .products-grid {
-        display: grid !important;
-        grid-template-columns: repeat(3, 1fr) !important;
-        gap: 0.6rem !important;
-        margin-top: 1rem !important;
-    }
-
-    .product-card {
-        min-width: 0 !important;
-        flex: none !important;
-        border-radius: 8px !important;
-    }
-
-    .product-img {
-        height: 100px !important;
-    }
-
-    .product-info {
-        padding: 8px !important;
-    }
-
-    .product-title {
-        font-size: 0.75rem !important;
-        line-height: 1.2 !important;
-        height: 1.8rem !important;
-        overflow: hidden !important;
-    }
-
-    .product-price {
-        font-size: 0.85rem !important;
-        font-weight: 700 !important;
-        margin-top: 4px !important;
     }
 
     /* Workbench on Mobile - Full Screen + High Z-Index */
@@ -1121,8 +1033,11 @@ body {
         /* Above search interface (500) */
         border-left: none !important;
         border-top: 1px solid rgba(0, 0, 0, 0.1) !important;
+        /* Kept visible rather than toggled with display, so the open/close
+           transform can animate. */
         display: flex !important;
-        /* Ensure it stays flex */
+        visibility: visible !important;
+        opacity: 1 !important;
     }
 
     .workbench-panel.open {
@@ -1132,21 +1047,6 @@ body {
     /* Hide desktop-specifics */
     #sidebar-toggle-btn {
         display: none !important;
-    }
-}
-
-@media (max-width: 480px) {
-    .products-grid {
-        grid-template-columns: 1fr;
-        /* 1 col on small screens */
-    }
-
-    .topbar-brand span {
-        font-size: 1.2rem;
-    }
-
-    .message {
-        max-width: 100%;
     }
 }
 
@@ -1301,51 +1201,10 @@ body {
     .controls-area {
         display: none;
     }
-
-    .content-area {
-        padding-bottom: 300px !important;
-        /* Baseline room */
-    }
 }
 
-/* Mobile Optimizations for Auth Pages */
-@media (max-width: 768px) {
-    .auth-container {
-        padding: 1rem;
-    }
-
-    .auth-box {
-        padding: 1.5rem;
-        max-width: 100%;
-        margin: 0 auto;
-    }
-
-    .auth-box h2 {
-        font-size: 1.5rem;
-        margin-bottom: 1.25rem;
-    }
-
-    .auth-form input {
-        padding: 14px 12px;
-        font-size: 16px;
-        /* Prevent iOS zoom on focus */
-    }
-
-    .auth-form button {
-        padding: 14px 12px;
-        font-size: 16px;
-        font-weight: 600;
-    }
-
-    .google-login-btn {
-        padding: 14px 12px;
-        font-size: 16px;
-    }
-
-    .google-login-btn i {
-        margin-right: 8px;
-    }
-}
+/* Auth page mobile rules now live in mobile_responsive.css, which login.html
+   and register.html load alongside this file. */
 
 /* Right Controls (Desktop Only) */
 .right-controls {
@@ -1533,13 +1392,6 @@ body {
 @media (max-width: 768px) {
     .mobile-hidden {
         display: none !important;
-    }
-
-    /* Workbench on Mobile - Fixed Visibility */
-    .workbench-panel {
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
     }
 
     .maximize-btn {
@@ -1852,12 +1704,6 @@ body {
     color: #60a5fa;
 }
 
-/* Mobile Responsiveness */
-@media (max-width: 768px) {
-    .topbar-search-container {
-        display: none;
-    }
-}
 
 .dropdown-option:hover .option-icon.filter-icon {
     background: rgba(16, 185, 129, 0.2);
@@ -2123,6 +1969,15 @@ body {
     flex: 1;
     padding: 30px;
     overflow-y: auto;
+}
+
+.settings-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border-color);
+    flex-shrink: 0;
 }
 
 .settings-section {
@@ -2516,6 +2371,10 @@ body.dark-mode .settings-modal,
 body.dark-mode .settings-sidebar {
     background: #1e293b;
     border-color: #334155;
+}
+
+body.dark-mode .settings-footer {
+    border-top-color: #334155;
 }
 
 body.dark-mode .settings-nav-item.active {
@@ -3356,6 +3215,13 @@ body.dark-mode .alert-modal-btn-cancel:hover {
         gap: 16px;
     }
 
+    /* Long unbroken URLs are the usual cause of a sideways scroll here. */
+    .sr-source-preview,
+    .sr-links-section {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+    }
+
     .sr-ai-action-row {
         flex-direction: column;
         align-items: stretch;
@@ -3369,13 +3235,59 @@ body.dark-mode .alert-modal-btn-cancel:hover {
 }
 
 @media (max-width: 480px) {
+    /* Two columns stay down to ~360px: one full-bleed listing per screen is
+       too little to compare against. The card shrinks instead of the grid. */
+    .sr-products-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .sr-grid-card-img,
+    .sr-skeleton-img {
+        height: 118px;
+    }
+
+    .sr-grid-card-body {
+        padding: 10px 10px 12px;
+        gap: 4px;
+    }
+
+    .sr-grid-card-title {
+        font-size: 0.78rem;
+    }
+
+    .sr-grid-card-specs {
+        font-size: 0.7rem;
+    }
+
+    .sr-grid-card-price {
+        font-size: 0.88rem;
+    }
+
+    .sr-grid-card-footer {
+        font-size: 0.68rem;
+        gap: 4px;
+    }
+
+    .sr-accuracy-badge {
+        font-size: 0.66rem;
+        padding: 2px 6px;
+    }
+}
+
+/* Below ~360px two columns stop being legible, so fall back to one. */
+@media (max-width: 359px) {
     .sr-products-grid {
         grid-template-columns: 1fr;
     }
 
     .sr-grid-card-img,
     .sr-skeleton-img {
-        height: 190px;
+        height: 170px;
+    }
+
+    .sr-grid-card-title {
+        font-size: 0.85rem;
     }
 }
 

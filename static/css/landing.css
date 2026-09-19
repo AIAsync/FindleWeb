@@ -257,6 +257,30 @@ body.landing-page {
         max-width: 100%;
     }
 
+    /* Every pixel the gutter gives back goes to the input, which otherwise
+       gets squeezed narrow enough to wrap its own placeholder. */
+    .landing-center {
+        padding: 0 16px;
+    }
+
+    .landing-search-input-wrapper {
+        padding: 6px 12px !important;
+    }
+
+    .landing-footer {
+        padding: 16px 16px;
+    }
+
+    .landing-footer-links {
+        flex-wrap: wrap;
+        gap: 8px 20px;
+    }
+
+    .landing-footer-link {
+        /* Wrap between links, never inside one. */
+        white-space: nowrap;
+    }
+
     .landing-suggestions {
         gap: 8px;
     }
@@ -279,6 +303,32 @@ body.landing-page {
 @media (max-width: 480px) {
     .landing-title {
         font-size: 1.7rem;
+    }
+
+    .landing-center {
+        padding: 0 12px;
+    }
+
+    .landing-search-input-wrapper {
+        padding: 5px 10px !important;
+    }
+
+    .landing-search-input-wrapper .search-plus-btn,
+    .landing-search-input-wrapper .search-icon-btn {
+        width: 32px;
+        height: 32px;
+    }
+
+    .landing-search-input-wrapper .search-icon-btn#landing-alert-btn {
+        margin-right: 2px !important;
+    }
+
+    .landing-footer-links {
+        gap: 8px 16px;
+    }
+
+    .landing-footer-link {
+        font-size: 0.82rem;
     }
 
     .landing-suggestions {
