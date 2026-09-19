@@ -525,11 +525,24 @@ body {
 }
 
 /* Login/Register Pages */
+/* The app shell sets `body { height: 100vh; overflow: hidden }` so the chat
+   view can own its own scrolling. On the auth pages that combination clipped
+   the card on short laptop screens with no way to scroll to the rest of it,
+   so those pages opt out. */
+body.auth-page {
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+}
+
 .auth-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    /* min-height, not height: the card is free to be taller than the viewport
+       (extra fields, validation errors, a flash message) and the page scrolls. */
+    min-height: 100vh;
+    padding: 2.5rem 1rem;
 }
 
 .auth-box {
@@ -540,6 +553,46 @@ body {
     max-width: 400px;
     text-align: center;
     border: var(--glass-border);
+}
+
+.auth-field {
+    /* Wider than the gap between a field and its own error, so each message
+       reads as belonging to the field above it. */
+    margin-bottom: 1rem;
+    text-align: left;
+}
+
+/* The wrapper owns the spacing, so the input must not add its own on top.
+   Qualified with .auth-form so it outranks `.auth-form input` regardless of
+   which rule the file happens to list first. */
+.auth-form .auth-field input {
+    margin-bottom: 0;
+}
+
+.auth-field-errors {
+    margin-top: 6px;
+    color: #b91c1c;
+    font-size: 0.8rem;
+    line-height: 1.35;
+}
+
+.auth-field-errors ul {
+    margin: 0;
+    padding-left: 1.1rem;
+}
+
+/* Present for screen readers and the `for`/`id` pairing, invisible on screen —
+   the placeholder carries the label. */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
 
 .auth-box h2 {
@@ -609,6 +662,10 @@ body {
 }
 
 .auth-form input {
+    /* block, not the default inline-block: an inline input sits on a text line
+       and drags a descender gap along under it, which makes the space between
+       a field and its error message unpredictable. */
+    display: block;
     width: 100%;
     background: #f1f5f9;
     border: 1px solid #e2e8f0;

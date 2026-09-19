@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
-<body>
+<body class="auth-page">
     <div class="auth-container">
         <div class="auth-box">
             <h2>{% translate "Create Account" %}</h2>
@@ -26,14 +26,16 @@
             {% endif %}
             <form method="post" class="auth-form">
                 {% csrf_token %}
-                <!-- Simple rendering of form fields for demo, or loop through form -->
+                {% if form.non_field_errors %}
+                <div class="auth-field-errors">{{ form.non_field_errors }}</div>
+                {% endif %}
                 {% for field in form %}
-                <div style="margin-bottom: 10px;">
-                    {{ field.label_tag }}
-                    <input type="{{ field.field.widget.input_type }}" name="{{ field.name }}"
-                        placeholder="{{ field.label }}" style="margin-top: 5px;">
+                <div class="auth-field">
+                    {# The placeholder carries the label visually; this keeps it for screen readers. #}
+                    <label class="visually-hidden" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
                     {% if field.errors %}
-                    <div style="color: red; font-size: 0.8rem;">{{ field.errors }}</div>
+                    <div class="auth-field-errors">{{ field.errors }}</div>
                     {% endif %}
                 </div>
                 {% endfor %}
