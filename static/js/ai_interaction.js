@@ -192,10 +192,91 @@ document.addEventListener('DOMContentLoaded', () => {
     const aiChatContainer = document.getElementById('ai-chat-container');
     const aiChatMessages = document.getElementById('ai-chat-messages');
 
-    if (chatClearBtn && aiChatMessages) {
+    /* ---------------------------------------------------------------
+       The Agent thread outlives the page. localStorage holds both the
+       rendered transcript — so answers, citations and suggestions come
+       back exactly as they were — and the plain-text history that is
+       replayed to the API with the next message.
+       --------------------------------------------------------------- */
+    const TRANSCRIPT_KEY = 'findle.chat.transcript';
+    const HISTORY_KEY = 'findle.chat.history';
+    const CITE_SEQ_KEY = 'findle.chat.citeseq';
+
+    /** Persist the thread as it should come back: the welcome screen is
+     *  scaffolding and an in-flight bubble is not an answer, so neither is
+     *  part of what gets stored. */
+    function saveChatThread() {
+        if (!aiChatMessages) return;
+
+        const copy = aiChatMessages.cloneNode(true);
+        copy.querySelectorAll('.ai-msg.thinking, .ai-chat-welcome').forEach(el => el.remove());
+
+        try {
+            if (!copy.querySelector('.ai-msg')) {
+                [TRANSCRIPT_KEY, HISTORY_KEY, CITE_SEQ_KEY].forEach(key => localStorage.removeItem(key));
+                return;
+            }
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(chatHistory));
+            localStorage.setItem(CITE_SEQ_KEY, String(answerSetSeq));
+
+            // A long run of listing answers can outgrow the quota. The recent
+            // exchanges are the ones worth keeping, so shed from the top until
+            // it fits rather than losing the thread altogether.
+            for (;;) {
+                try {
+                    localStorage.setItem(TRANSCRIPT_KEY, copy.innerHTML);
+                    return;
+                } catch (e) {
+                    const oldest = copy.querySelector('.ai-msg');
+                    if (!oldest || copy.querySelectorAll('.ai-msg').length <= 2) throw e;
+                    oldest.remove();
+                }
+            }
+        } catch (e) {
+            // Private mode, blocked storage, or still too large: the thread on
+            // screen is unaffected, only its survival past this page is.
+            console.warn('Could not save the chat thread', e);
+        }
+    }
+
+    /** Put the saved thread back, so the Agent tab opens where it was left. */
+    function restoreChatThread() {
+        if (!aiChatMessages) return;
+
+        let markup = '';
+        let saved = null;
+        let seq = 0;
+        try {
+            markup = localStorage.getItem(TRANSCRIPT_KEY) || '';
+            saved = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            seq = parseInt(localStorage.getItem(CITE_SEQ_KEY) || '0', 10);
+        } catch (e) {
+            return; // Nothing to restore is the same as no storage at all.
+        }
+        if (!markup) return;
+
+        aiChatMessages.innerHTML = markup;
+        if (Array.isArray(saved)) chatHistory = saved.slice(-MAX_CHAT_HISTORY);
+
+        // The listing sets behind the restored citations did not survive the
+        // reload, so number new answers above them instead of reusing — and
+        // hijacking — the markers the old ones still point at.
+        if (seq > 0) answerSetSeq = seq;
+
+        // A thread is already on screen, so the input belongs at the bottom.
+        if (bottomChatContainer) bottomChatContainer.classList.remove('centered');
+        document.body.classList.remove('chat-initial-state');
+    }
+
+    restoreChatThread();
+
+    if (aiChatMessages) {
         // One observer instead of a call at every point that touches the thread —
         // answers also arrive from the Search tab handing one over.
-        new MutationObserver(updateClearButton).observe(aiChatMessages, { childList: true });
+        new MutationObserver(() => {
+            updateClearButton();
+            saveChatThread();
+        }).observe(aiChatMessages, { childList: true });
         updateClearButton();
     }
 
@@ -552,6 +633,53 @@ document.addEventListener('DOMContentLoaded', () => {
         pendingScroll = landing || null;
         tab.click();
     }
+
+    /** Going home starts the workspace over. Everything tied to the last visit
+     *  goes — the results, the query, the plus-menu tags, the tab that was open
+     *  — and only the Agent thread carries across. */
+    function resetWorkspace() {
+        // Leave Ask-AI mode first: .bottom-chat-container is fixed to the
+        // viewport and lives outside #app-view, so hiding the app view does
+        // not take the chat input with it.
+        setChatMode(false);
+        if (bottomChatContainer) bottomChatContainer.classList.remove('active', 'centered');
+        document.body.classList.remove('ask-ai-mode', 'chat-initial-state');
+
+        // The Search tab and everything pinned to the query behind it.
+        if (chatContainer) {
+            chatContainer.innerHTML = '';
+            chatContainer.style.display = 'block';
+        }
+        allTabContent = '';
+        searchState = { query: '', page: 1, searchId: '' };
+        lastResponseData = null;
+        selectedMentionProduct = null;
+        if (replyContext) replyContext.classList.remove('active');
+        hideMentionPopup();
+        if (userInput) {
+            userInput.value = '';
+            userInput.style.height = 'auto';
+        }
+        document.querySelectorAll('#search-tags .search-tag, #chat-search-tags .search-tag')
+            .forEach(tag => tag.remove());
+        document.querySelectorAll('#search-dropdown .dropdown-option.active, #chat-dropdown .dropdown-option.active')
+            .forEach(option => option.classList.remove('active'));
+        [document.getElementById('attach-file-input'), document.getElementById('chat-attach-file-input')]
+            .forEach(input => { if (input) input.value = ''; });
+
+        // Back on Search, set directly rather than through the tab handler:
+        // that one answers an empty query by returning to the landing view,
+        // which is exactly where we already are.
+        searchTabs.forEach(t => t.classList.remove('active'));
+        const searchTab = document.getElementById('tab-all');
+        if (searchTab) searchTab.classList.add('active');
+        activeTabId = 'tab-all';
+        Object.keys(tabScrollMemory).forEach(key => delete tabScrollMemory[key]);
+        pendingScroll = null;
+    }
+
+    // The landing view owns the transition; it calls this on the way back.
+    window.resetWorkspace = resetWorkspace;
     // scrollToBottom();
     const alertModal = document.getElementById('alert-delete-modal');
     const alertModalConfirm = document.getElementById('alert-modal-confirm');

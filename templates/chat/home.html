@@ -783,14 +783,32 @@
                         landingContainer.style.transform = 'scale(1)';
                     });
 
+                    // Home is a clean slate: the app view's results, query and
+                    // chat input all go, and only the Agent thread carries over.
+                    if (typeof window.resetWorkspace === 'function') {
+                        window.resetWorkspace();
+                    }
+
                     // Reset landing tabs
                     const landingTabs = document.querySelectorAll('#landing-tab-all, #landing-tab-fast-answer, #landing-tab-alert');
                     landingTabs.forEach(t => t.classList.remove('active'));
                     const allTab = document.getElementById('landing-tab-all');
                     if (allTab) allTab.classList.add('active');
 
+                    // The landing search bar starts over too, tags included.
+                    const landingTagsBox = document.getElementById('landing-search-tags');
+                    if (landingTagsBox) landingTagsBox.innerHTML = '';
+                    document.querySelectorAll('#landing-search-dropdown .dropdown-option.active')
+                        .forEach(option => option.classList.remove('active'));
+                    const landingFile = document.getElementById('landing-attach-file-input');
+                    if (landingFile) landingFile.value = '';
+
                     // Focus search
-                    if (searchInput) searchInput.focus();
+                    if (searchInput) {
+                        searchInput.value = '';
+                        searchInput.style.height = 'auto';
+                        searchInput.focus();
+                    }
                 }, 250);
             }
 
