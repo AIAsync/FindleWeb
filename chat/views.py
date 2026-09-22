@@ -358,6 +358,21 @@ def _build_citations(raw_sources):
     return citations
 
 
+def _build_tool_calls(raw_calls):
+    """Normalize /chat's `tool_calls` down to what the "Thoughts for" panel shows —
+    which tool ran and how many listings it turned up, not its raw arguments/data."""
+    calls = []
+    for c in raw_calls or []:
+        if not isinstance(c, dict) or not c.get('name'):
+            continue
+        calls.append({
+            'name': c.get('name'),
+            'total': c.get('total'),
+            'ok': c.get('ok', True),
+        })
+    return calls
+
+
 def _llm_questions(questions, source):
     """Follow-ups are only worth showing when the model wrote them — rule text is canned filler."""
     if source != 'llm':
@@ -867,7 +882,7 @@ def ai_chat_api(request):
             'sources': _build_sources(cards, (page_info or {}).get('total') or len(cards)),
             'citations': _build_citations(chat.get('sources')),
             'intent': chat.get('intent') or '',
-            'tools': [c.get('name') for c in (chat.get('tool_calls') or []) if isinstance(c, dict)],
+            'tools': _build_tool_calls(chat.get('tool_calls')),
             'source': chat.get('source') or 'findle',
             'session_id': session_id,
         })

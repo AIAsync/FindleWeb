@@ -2712,62 +2712,6 @@ body.dark-mode .alert-modal-btn-cancel:hover {
     margin-bottom: 4px;
 }
 
-/* --- Source Preview --- */
-.sr-source-preview {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 8px 0;
-}
-
-/* Coverage pills sit on a line of their own, under the headline and the button. */
-.sr-result-header .sr-source-preview {
-    flex: 0 0 100%;
-}
-
-.sr-source-pill {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: #f1f5f9;
-    padding: 4px 12px;
-    border-radius: 100px;
-    font-size: 0.78rem;
-    color: var(--text-main);
-    border: 1px solid #e2e8f0;
-    transition: all 0.2s;
-}
-
-.sr-source-pill i {
-    color: var(--text-muted);
-    font-size: 0.75rem;
-}
-
-.sr-source-pill:hover {
-    background: #e2e8f0;
-}
-
-/* --- Continue Chat Button --- */
-.sr-continue-btn {
-    display: inline-block;
-    padding: 8px 18px;
-    background: transparent;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-family: 'Outfit', sans-serif;
-    text-align: center;
-}
-
-.sr-continue-btn:hover {
-    background: #f1f5f9;
-    color: var(--text-main);
-}
-
 /* --- Result header (Search tab) --- */
 .sr-result-header {
     display: flex;
@@ -2793,9 +2737,50 @@ body.dark-mode .alert-modal-btn-cancel:hover {
     color: var(--text-main);
 }
 
-.sr-result-time {
-    font-size: 0.78rem;
+.sr-result-thoughts summary {
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+}
+
+.sr-result-thoughts summary::-webkit-details-marker {
+    display: none;
+}
+
+.sr-thoughts-caret {
+    font-size: 0.65rem;
+    margin-right: 2px;
+    transition: transform 0.15s ease;
+}
+
+.sr-result-thoughts[open] .sr-thoughts-caret {
+    transform: rotate(180deg);
+}
+
+.sr-thoughts-steps {
+    list-style: none;
+    margin: 8px 0 0;
+    padding-left: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 0.82rem;
+    font-weight: 400;
     color: var(--text-muted);
+}
+
+.sr-thoughts-steps i {
+    color: #16a34a;
+    margin-right: 4px;
+}
+
+/* Always visible under the headline, never behind a click. */
+.sr-search-answer {
+    flex: 0 0 100%;
+    margin-top: 10px;
+    font-size: 0.88rem;
+    line-height: 1.65;
+    color: var(--text-main);
 }
 
 .sr-mode-chip {
@@ -2810,12 +2795,6 @@ body.dark-mode .alert-modal-btn-cancel:hover {
     font-weight: 600;
 }
 
-.sr-result-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-}
 
 /* --- Product grid: every card the same width, a little taller --- */
 .sr-products-grid {
@@ -3130,6 +3109,57 @@ body.dark-mode .alert-modal-btn-cancel:hover {
     text-align: right;
 }
 
+/* --- Sidebar: Coverage panel — sites/districts/pages/results, below Prices --- */
+.sr-coverage-panel {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 16px;
+}
+
+.sr-coverage-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 14px;
+}
+
+.sr-coverage-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: rgba(241, 245, 249, 0.6);
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-size: 0.8rem;
+}
+
+.sr-coverage-row:last-child {
+    margin-bottom: 0;
+}
+
+.sr-coverage-row-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+}
+
+.sr-coverage-row-label i {
+    width: 14px;
+    text-align: center;
+}
+
+.sr-coverage-row-value {
+    font-weight: 600;
+    color: var(--text-main);
+}
+
 /* --- Sidebar: Links List --- */
 .sr-links-section {
     background: #f8fafc;
@@ -3324,24 +3354,14 @@ body.dark-mode .alert-modal-btn-cancel:hover {
         min-width: 100%;
     }
 
-    .sr-source-preview {
-        gap: 16px;
-    }
-
-    .sr-source-preview {
-        max-width: 100%;
-        overflow-wrap: anywhere;
+    .sr-coverage-panel {
+        min-width: 100%;
     }
 
     .sr-ai-action-row {
         flex-direction: column;
         align-items: stretch;
         gap: 4px;
-    }
-
-    .sr-continue-btn {
-        width: 100%;
-        margin-bottom: 12px;
     }
 }
 
@@ -3414,33 +3434,18 @@ body.dark-mode .sr-ai-summary {
 body.dark-mode .sr-ai-action-row {
     border-bottom-color: #334155;
 }
-body.dark-mode .sr-source-preview {
-    border-bottom: none;
-}
-
-body.dark-mode .sr-source-pill {
-    background: #1e293b;
-    border-color: #334155;
-    color: #f1f5f9;
-}
-
-body.dark-mode .sr-source-pill i {
-    color: #94a3b8;
-}
-
-body.dark-mode .sr-continue-btn {
-    background: transparent;
-    border: 1px solid #334155;
-    color: var(--text-muted);
-}
-
-body.dark-mode .sr-continue-btn:hover {
-    background: #334155;
-    color: #f1f5f9;
-}
 
 body.dark-mode .sr-result-header {
     border-bottom-color: #334155;
+}
+
+body.dark-mode .sr-coverage-panel {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+body.dark-mode .sr-coverage-row {
+    background: rgba(15, 23, 42, 0.6);
 }
 
 body.dark-mode .sr-mode-chip {
@@ -4677,27 +4682,79 @@ body.dark-mode .sr-price-stat-divider {
     font-variant-numeric: tabular-nums;
 }
 
-.sr-research-steps {
+/* Indeterminate "still working" line — deep research and the Agent turn it
+   logs give no real progress fraction, so this sweeps rather than fills. */
+.sr-research-loadbar {
+    position: relative;
+    height: 3px;
+    border-radius: 3px;
+    background: #e2e8f0;
+    overflow: hidden;
+}
+
+.sr-research-loadbar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 40%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, transparent, #10b981, transparent);
+    animation: sr-loadbar-sweep 1.3s ease-in-out infinite;
+}
+
+@keyframes sr-loadbar-sweep {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(350%); }
+}
+
+/* Shared step timeline — a dot before each step's text, a line connecting it
+   down to the next one. Used by deep research's live log and by the Agent
+   chat's "Thoughts for" panel (which intent/tool ran). */
+.sr-step-timeline {
     margin: 0;
-    padding: 0 0 0 2px;
+    padding: 0;
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    font-size: 0.9rem;
 }
 
-.sr-research-steps li {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
+.sr-step-timeline li {
+    position: relative;
+    padding: 0 0 14px 20px;
+    font-size: 0.9rem;
     color: var(--text-muted);
     animation: fadeIn 0.25s ease;
 }
 
-.sr-research-steps li i {
-    color: #10b981;
-    font-size: 0.8em;
+.sr-step-timeline li:last-child {
+    padding-bottom: 0;
+}
+
+.sr-step-timeline li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 6px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+}
+
+.sr-step-timeline li::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 15px;
+    bottom: 2px;
+    width: 1px;
+    background: #e2e8f0;
+}
+
+.sr-step-timeline li:last-child::after {
+    display: none;
 }
 
 /* Dark mode */
@@ -4718,4 +4775,12 @@ body.dark-mode .sr-source-list li a:hover {
 body.dark-mode .sr-stage-count,
 body.dark-mode .sr-research-progress {
     background: #1e293b;
+}
+
+body.dark-mode .sr-research-loadbar {
+    background: #334155;
+}
+
+body.dark-mode .sr-step-timeline li::after {
+    background: #334155;
 }

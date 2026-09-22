@@ -604,22 +604,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(place, 340);
     }
 
-    /** Height of whatever is pinned over the content, so a target isn't hidden behind it. */
-    function stickyOffset() {
-        if (!mainContent) return 0;
-        return ['.topbar', '.topbar-search-tabs-container'].reduce((total, selector) => {
-            const el = mainContent.querySelector(selector);
-            const pinned = el && getComputedStyle(el).position === 'sticky';
-            return pinned ? total + el.offsetHeight : total;
-        }, 12);
-    }
-
-    function scrollToElement(el) {
-        if (!mainContent || !el) return;
-        const top = el.getBoundingClientRect().top - mainContent.getBoundingClientRect().top + mainContent.scrollTop;
-        scrollMainTo(top - stickyOffset());
-    }
-
     /** Switch tabs and decide where the new tab lands; without `landing` it resumes where it was. */
     function switchTab(tabId, landing) {
         const tab = document.getElementById(tabId);
@@ -992,15 +976,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let data = null;
             let streamError = null;
+            const stages = [];
 
             await readEventStream(response, (event, payload) => {
                 if (event === 'stage') {
+                    stages.push(payload);
                     setSearchProgress(payload);
                 } else if (event === 'results') {
                     // The whole point of streaming: listings are ready long before
                     // the written answer, so put them on screen now.
                     data = Object.assign({}, payload, { query: prompt });
-                    renderSearchResults(data, prompt, null);
+                    renderSearchResults(data, prompt, null, stages);
                 } else if (event === 'done') {
                     data = payload;
                 } else if (event === 'error') {
@@ -1026,19 +1012,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // Re-render once the full payload is in: same grid, now with the
             // final counts and timing. `rendered` only tells us the grid is
             // already up, so this never flashes an empty state.
-            renderSearchResults(data, prompt, duration);
+            renderSearchResults(data, prompt, duration, stages);
 
-            // A question routes itself to the chat layer — that answer belongs in Agent.
-            if (isNewQuery && data.assist && data.assist.answer) {
-                const questionMsg = pushAnswerToAskAI(prompt, data, false);
-
-                if (data.mode === 'chat') {
-                    chatHistory.push({ role: 'user', content: prompt }, { role: 'assistant', content: data.assist.answer });
-                    chatHistory = chatHistory.slice(-MAX_CHAT_HISTORY);
-
-                    // Open Agent on the question that was just asked, so the answer reads top-down.
-                    switchTab('tab-fast-answer', () => scrollToElement(questionMsg));
-                }
+            // A question can self-route to the chat layer — its answer now lives inline
+            // under "Thoughts for" in Search (renderSearchResults already rendered it),
+            // but the turn still joins Agent's memory so a later follow-up there has context.
+            if (isNewQuery && data.mode === 'chat' && data.assist && data.assist.answer) {
+                chatHistory.push({ role: 'user', content: prompt }, { role: 'assistant', content: data.assist.answer });
+                chatHistory = chatHistory.slice(-MAX_CHAT_HISTORY);
             }
         } catch (error) {
             console.error('Search error:', error);
@@ -1138,6 +1119,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
+            const startTime = Date.now();
             const response = await fetch(isDeepResearch ? '/api/deep-research/stream/' : '/api/ai-chat/', {
                 method: 'POST',
                 headers: {
@@ -1170,6 +1152,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             thinkingDiv.remove();
 
+            const duration = ((Date.now() - startTime) / 1000).toFixed(2);
             const answer = isDeepResearch ? ((data && data.report && data.report.summary) || '') : ((data && data.response) || '');
 
             if (response.ok && data && answer) {
@@ -1177,7 +1160,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const aiMsgDiv = document.createElement('div');
                 aiMsgDiv.className = 'ai-msg ai-response-msg';
-                aiMsgDiv.innerHTML = `<div class="msg-content">${isDeepResearch ? buildDeepResearchAnswer(data) : buildChatAnswer(data)}</div>`;
+                aiMsgDiv.innerHTML = `<div class="msg-content">${isDeepResearch ? buildDeepResearchAnswer(data) : buildChatAnswer(data, duration)}</div>`;
                 aiChatMessages.appendChild(aiMsgDiv);
 
                 chatHistory.push({ role: 'user', content: prompt }, { role: 'assistant', content: answer });
@@ -1190,7 +1173,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // The Search tab falls back to the landing view on an empty query box.
                     if (userInput) userInput.value = prompt;
                     searchState = { query: prompt, page: (data.page && data.page.page) || 1, searchId: (data.page && data.page.search_id) || '' };
-                    renderSearchResults(data, prompt, null);
+                    renderSearchResults(data, prompt, duration);
                     chatContainer.style.display = 'none';
 
                     // Searching and deep research are about the listings, so hand the user straight
@@ -1230,13 +1213,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return formatted;
     }
 
-    /** Name the stage the search is on, so the skeleton says something true.
-     *  Unknown stage names are ignored rather than printed raw — the API adds
-     *  stages (it already emits `cache`) and a raw identifier is not a label. */
-    function setSearchProgress(payload) {
-        const note = document.querySelector('.sr-loading-note');
-        if (!note) return;
-
+    /** Name a stage the search stream can be on. Unknown stage names return
+     *  null rather than a raw identifier — the API adds stages over time
+     *  (it already emits `cache`) and a raw name is not a label. */
+    function stageLabel(name) {
         const labels = {
             cache: t('stage_cache', 'Checking earlier results'),
             extract: t('stage_extract', 'Reading the query'),
@@ -1244,12 +1224,72 @@ document.addEventListener('DOMContentLoaded', () => {
             rank: t('stage_rank', 'Ranking matches'),
             assist: t('stage_assist', 'Writing the answer')
         };
-        const label = labels[(payload && payload.name) || ''];
+        return labels[name || ''] || null;
+    }
+
+    /** Live "Searching..." note above the skeleton grid, rewritten as each stage lands. */
+    function setSearchProgress(payload) {
+        const note = document.querySelector('.sr-loading-note');
+        if (!note) return;
+
+        const label = stageLabel(payload && payload.name);
         if (!label) return;
 
         const found = payload && (payload.total || payload.found);
         note.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> ${escapeHTML(label)}` +
             (found ? ` <span class="sr-stage-count">${escapeHTML(String(found))}</span>` : '');
+    }
+
+    /** The router's intent enum is exactly search / compare / statistics — an
+     *  unmapped value is hidden rather than printed raw, same as stageLabel. */
+    function intentLabel(intent) {
+        const labels = {
+            search: t('intent_search', 'Search'),
+            compare: t('intent_compare', 'Compare'),
+            statistics: t('intent_statistics', 'Statistics'),
+        };
+        return labels[intent || ''] || null;
+    }
+
+    /** Same enum as intentLabel, for the tool that actually ran. */
+    function toolLabel(name) {
+        const labels = {
+            search: t('tool_search', 'Searched listings'),
+            compare: t('tool_compare', 'Compared listings'),
+            statistics: t('tool_statistics', 'Computed statistics'),
+        };
+        return labels[name || ''] || null;
+    }
+
+    /** Which intent the router picked and which tool(s) ran for one Agent chat
+     *  turn — the same process-steps story Search and deep research already tell. */
+    function buildChatProcessSteps(data) {
+        const steps = [];
+        const intent = intentLabel(data.intent);
+        if (intent) steps.push({ label: `${t('intent_detected', 'Intent')}: ${intent}`, count: null });
+        (data.tools || []).forEach(tool => {
+            const label = tool && toolLabel(tool.name);
+            if (label) steps.push({ label, count: tool.total || null });
+        });
+        return steps;
+    }
+
+    /** Turn the stream's raw events (search `stage`s, or a deep-research answer's
+     *  `steps`) into one uniform {label, count} list for the "Thoughts for" panel. */
+    function normalizeThoughtSteps(rawStages, data) {
+        if (rawStages && rawStages.length) {
+            return rawStages
+                .map(s => {
+                    const label = stageLabel(s && s.name);
+                    if (!label) return null;
+                    return { label, count: (s.total || s.found) || null };
+                })
+                .filter(Boolean);
+        }
+        const steps = (data && data.steps) || [];
+        return steps
+            .map(s => ({ label: (s && (s.question || s.query)) || '', count: (s && s.total) || null }))
+            .filter(s => s.label);
     }
 
     function buildLoadingSkeleton(isDeepResearch) {
@@ -1343,7 +1383,7 @@ document.addEventListener('DOMContentLoaded', () => {
     /* =========================================================
        SEARCH TAB — listings only. Every LLM answer lives in Ask AI.
        ========================================================= */
-    function renderSearchResults(data, prompt, duration) {
+    function renderSearchResults(data, prompt, duration, stages) {
         const products = data.products || [];
         const sources = data.sources || {};
         const isDeepResearch = !!data.report;
@@ -1353,39 +1393,73 @@ document.addEventListener('DOMContentLoaded', () => {
         const sitesCount = sources.sites_count || 0;
         const sitesLabel = sitesCount === 1 ? t('site', 'site') : t('sites', 'sites');
         const districtsCount = sources.stores_count || 0;
-        const pagesCount = sources.pages_count || 0;
+        // The retrieval pool: everything the filter/vector stages went through
+        // on the way to the ranked list — how wide the search actually looked,
+        // not just how many made the final cut.
+        const checkedCount = sources.pages_count || 0;
         const totalCount = sources.total_count || products.length;
-        // Deep research matches far more than it renders — say how many are on screen
-        const countText = (totalCount > products.length)
-            ? `${products.length} / ${totalCount}`
-            : `${totalCount}`;
+
+        // The steps the search stream went through (cache, retrieve, rank, ...),
+        // or a deep-research answer's own steps — shown collapsed behind "Thoughts for Xs".
+        const thoughtSteps = normalizeThoughtSteps(stages, data);
+        const thoughtsLabel = duration
+            ? `${t('thoughts_for', 'Thoughts for')} ${duration}s`
+            : t('thinking_label', 'Thinking…');
+        const thoughtsRows = thoughtSteps.map(s => `
+            <li>
+                <i class="fa-solid fa-check"></i>
+                <span>${escapeHTML(s.label)}</span>
+                ${s.count ? `<span class="sr-step-count">${escapeHTML(String(s.count))}</span>` : ''}
+            </li>`).join('');
+
+        // "Thoughts for" only ever expands to the search process itself — the
+        // stage steps, nothing else.
+        const thoughtsBlock = thoughtsRows
+            ? `
+                <details class="sr-result-thoughts">
+                    <summary class="sr-result-count"><i class="fa-solid fa-chevron-down sr-thoughts-caret"></i> ${escapeHTML(thoughtsLabel)}</summary>
+                    <ol class="sr-thoughts-steps">${thoughtsRows}</ol>
+                </details>`
+            : `<span class="sr-result-count">${escapeHTML(thoughtsLabel)}</span>`;
+
+        // The written answer lives here now, not in the Agent tab — always visible
+        // on its own, never folded behind a click. No source list: just the summary.
+        const assist = data.assist || {};
+        const assistCitations = assist.citations || [];
+        if (assist.answer) rememberAnswerSet(data, prompt);
+        const answerHTML = assist.answer
+            ? `
+                <div class="sr-search-answer">
+                    ${assistCitations.length && hasCitationMarkers(assist.answer)
+                        ? linkCitations(formatAiMessage(assist.answer), assistCitations, data.citeGroup)
+                        : formatAiMessage(assist.answer) + buildCitations(data)}
+                </div>
+                ${assist.highlights && assist.highlights.length
+                    ? `<ul class="sr-answer-list">${assist.highlights.map(h => `<li>${escapeHTML(h)}</li>`).join('')}</ul>`
+                    : ''}
+            `
+            : '';
 
         // How wide the search looked, above the cards it ended up with. A single
-        // district says nothing about coverage; neither does a pool that is just
-        // the result list counted twice, which is what a plain filter search
-        // returns — so each of those only appears when it adds something.
+        // district says nothing about coverage, so that one only appears when it
+        // adds something — but "checked" is worth showing even when it equals
+        // the result count, since that itself says the search found everything.
         const resultsLabel = totalCount === 1 ? t('result', 'result') : t('results', 'results');
-        const coveragePills = [
-            sitesCount ? `<div class="sr-source-pill"><i class="fa-solid fa-globe"></i><span>${formatCount(sitesCount)} ${sitesLabel}</span></div>` : '',
-            districtsCount > 1 ? `<div class="sr-source-pill"><i class="fa-solid fa-location-dot"></i><span>${formatCount(districtsCount)} ${t('districts', 'districts')}</span></div>` : '',
-            pagesCount > 1 && pagesCount > totalCount ? `<div class="sr-source-pill"><i class="fa-solid fa-file-lines"></i><span>${formatCount(pagesCount)} ${t('pages', 'pages')}</span></div>` : '',
-            totalCount ? `<div class="sr-source-pill"><i class="fa-solid fa-list"></i><span>${formatCount(totalCount)} ${resultsLabel}</span></div>` : '',
-        ].filter(Boolean).join('');
+        const coverageRows = [
+            sitesCount ? { icon: 'fa-globe', label: sitesLabel, value: formatCount(sitesCount) } : null,
+            districtsCount > 1 ? { icon: 'fa-location-dot', label: t('districts', 'districts'), value: formatCount(districtsCount) } : null,
+            totalCount ? { icon: 'fa-list', label: resultsLabel, value: formatCount(totalCount) } : null,
+            checkedCount > 0 ? { icon: 'fa-layer-group', label: t('checked', 'Checked'), value: formatCount(checkedCount) } : null,
+        ].filter(Boolean);
 
         // ---- Left column: result header + one uniform grid ----
         let leftHTML = `
             <div class="sr-result-header">
                 <div class="sr-result-headline">
+                    ${thoughtsBlock}
                     ${isDeepResearch ? `<span class="sr-mode-chip"><i class="fa-solid fa-flask"></i> ${t('deep_research', 'Deep research')}</span>` : ''}
-                    <span class="sr-result-count">${countText} ${t('listings_found', 'listings found')}</span>
-                    ${duration ? `<span class="sr-result-time">${duration}s</span>` : ''}
                 </div>
-                <div class="sr-result-actions">
-                    <button class="sr-continue-btn" id="sr-continue-chat-btn">
-                        <i class="fa-solid fa-bolt"></i> ${t('view_ai_answer', 'View AI answer')}
-                    </button>
-                </div>
-                ${coveragePills ? `<div class="sr-source-preview">${coveragePills}</div>` : ''}
+                ${answerHTML}
             </div>
         `;
 
@@ -1419,6 +1493,20 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span class="sr-price-stat-item" title="${t('average', 'Average')}">${formatPriceShort(line.avg)}</span>
                             <span class="sr-price-stat-divider">·</span>
                             <span class="sr-price-stat-item" title="${t('max', 'Max')}">${formatPriceShort(line.max)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        if (coverageRows.length) {
+            rightHTML += `
+                <div class="sr-coverage-panel">
+                    <div class="sr-coverage-title">${t('coverage', 'Coverage')}</div>
+                    ${coverageRows.map(row => `
+                        <div class="sr-coverage-row">
+                            <span class="sr-coverage-row-label"><i class="fa-solid ${row.icon}"></i> ${escapeHTML(row.label)}</span>
+                            <span class="sr-coverage-row-value">${escapeHTML(row.value)}</span>
                         </div>
                     `).join('')}
                 </div>
@@ -1470,15 +1558,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function attachSearchResultsListeners() {
-        // Event: Continue chat -> Agent tab
-        const continueBtn = document.getElementById('sr-continue-chat-btn');
-        if (continueBtn) {
-            continueBtn.addEventListener('click', () => {
-                const askAiTab = document.getElementById('tab-fast-answer');
-                if (askAiTab) askAiTab.click();
-            });
-        }
-
         chatContainer.querySelectorAll('.sr-pager [data-page]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const page = parseInt(btn.dataset.page, 10);
@@ -1546,39 +1625,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /* =========================================================
-       ASK AI TAB — assist answers and deep-research reports
+       ASK AI TAB — deep-research reports
        ========================================================= */
-    function buildAssistAnswer(data) {
-        const assist = data.assist || {};
-        const total = (data.sources && data.sources.total_count) || (data.products || []).length;
-        const citations = assist.citations || [];
-
-        let body;
-        if (!assist.answer) {
-            body = `${total} ${t('listings_found', 'listings found')}.`;
-        } else if (citations.length) {
-            body = linkCitations(formatAiMessage(assist.answer), citations, data.citeGroup);
-        } else {
-            body = formatAiMessage(assist.answer) + buildCitations(data);
-        }
-
-        let html = `<div class="msg-text">${body}</div>`;
-
-        if (assist.highlights && assist.highlights.length) {
-            html += `<ul class="sr-answer-list">${assist.highlights.map(h => `<li>${escapeHTML(h)}</li>`).join('')}</ul>`;
-        }
-
-        html += buildSourceList(citations);
-        html += buildSuggestions(assist.questions);
-        html += buildBackToSearchLink(total);
-        return html;
-    }
 
     /** Tie an answer to the listings behind it, so its citations resolve even after a later search. */
     function rememberAnswerSet(data, prompt) {
         if (!data.products || !data.products.length) return;
         data.citeGroup = String(++answerSetSeq);
         answerSets.set(data.citeGroup, { data: data, prompt: prompt });
+    }
+
+    /** A stats-only answer ("419 listings found, avg price...") comes back with
+     *  `sources` but no `[n]` markers in the text — that's the API leaving nothing
+     *  to link, not a bug. Callers use this to fall back to plain numbered chips
+     *  instead of silently dropping the citations on the floor. */
+    function hasCitationMarkers(text) {
+        return /\[\d{1,3}\]/.test(text || '');
     }
 
     /** Turn the [1], [2] markers the API writes into links to the listing each one cites.
@@ -1654,17 +1716,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /** One /chat turn: the reply, the facts behind it, its listings and the follow-ups it offers. */
-    function buildChatAnswer(data) {
+    function buildChatAnswer(data, duration) {
         const products = data.products || [];
         const citations = data.citations || [];
 
+        // Which intent the router picked and which tool ran — folded behind
+        // "Thoughts for Xs", same story the Search tab and deep research tell.
+        const processSteps = buildChatProcessSteps(data);
+        const processRows = processSteps.map(s => `
+            <li>
+                <span>${escapeHTML(s.label)}</span>
+                ${s.count ? `<span class="sr-step-count">${escapeHTML(String(s.count))}</span>` : ''}
+            </li>`).join('');
+        const thoughtsLabel = duration
+            ? `${t('thoughts_for', 'Thoughts for')} ${duration}s`
+            : t('thinking_label', 'Thinking…');
+        let html = processRows
+            ? `
+                <details class="sr-result-thoughts">
+                    <summary class="sr-result-count"><i class="fa-solid fa-chevron-down sr-thoughts-caret"></i> ${escapeHTML(thoughtsLabel)}</summary>
+                    <ol class="sr-step-timeline">${processRows}</ol>
+                </details>`
+            : '';
+
         // Real [n] markers win; the positional chips stay for answers the API
-        // returned without a source list.
-        const body = citations.length
+        // returned without markers in the text (a stats summary) or without a source list.
+        const body = citations.length && hasCitationMarkers(data.response)
             ? linkCitations(formatAiMessage(data.response), citations, data.citeGroup)
             : formatAiMessage(data.response) + buildCitations(data);
 
-        let html = `<div class="msg-text">${body}</div>`;
+        html += `<div class="msg-text">${body}</div>`;
 
         if (data.highlights && data.highlights.length) {
             html += `<ul class="sr-answer-list">${data.highlights.map(h => `<li>${escapeHTML(h)}</li>`).join('')}</ul>`;
@@ -1708,9 +1789,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const done = state.steps.length;
         const total = Math.max(state.planned, done);
 
+        // Dot before the text, a connecting line down to the next one after it —
+        // a timeline, not a checklist.
         const rows = state.steps.map(s => `
             <li>
-                <i class="fa-solid fa-check"></i>
                 <span>${escapeHTML(s.question || s.query || '')}</span>
                 ${s.total ? `<span class="sr-step-count">${escapeHTML(String(s.total))}</span>` : ''}
             </li>`).join('');
@@ -1723,7 +1805,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span>${escapeHTML(state.goal || t('deep_research_running', 'Deep research is running...'))}</span>
                         ${total ? `<span class="sr-research-progress">${done}/${total}</span>` : ''}
                     </div>
-                    ${rows ? `<ol class="sr-research-steps">${rows}</ol>` : ''}
+                    <div class="sr-research-loadbar"></div>
+                    ${rows ? `<ol class="sr-step-timeline">${rows}</ol>` : ''}
                 </div>
             </div>`;
         scrollToBottom();
@@ -1781,34 +1864,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${t('see_listings', 'See listings')}${total ? ` (${total})` : ''}
             </button>
         `;
-    }
-
-    /** Mirror the query into the Ask AI tab and render the LLM answer there. */
-    function pushAnswerToAskAI(prompt, data, isDeepResearch) {
-        if (!aiChatMessages) return;
-
-        rememberAnswerSet(data, prompt);
-
-        const welcome = aiChatMessages.querySelector('.ai-chat-welcome');
-        if (welcome) welcome.remove();
-
-        const userMsg = document.createElement('div');
-        userMsg.className = 'ai-msg user-msg';
-        userMsg.innerHTML = `<div class="msg-content"><div class="msg-text">${escapeHTML(prompt)}</div></div>`;
-        aiChatMessages.appendChild(userMsg);
-
-        const aiMsg = document.createElement('div');
-        aiMsg.className = 'ai-msg ai-response-msg';
-        aiMsg.innerHTML = `<div class="msg-content">${isDeepResearch ? buildDeepResearchAnswer(data) : buildAssistAnswer(data)}</div>`;
-        aiChatMessages.appendChild(aiMsg);
-
-        // Hint that an answer is waiting on the other tab
-        const askAiTab = document.getElementById('tab-fast-answer');
-        if (askAiTab && !askAiTab.classList.contains('active')) {
-            askAiTab.classList.add('has-unread');
-        }
-
-        return userMsg;
     }
 
     function showSearchTab(landing) {
@@ -1943,6 +1998,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     chatContainer.addEventListener('click', (e) => {
+        // Citations inside the "Thoughts for" answer — same targets the Agent tab uses.
+        const cite = e.target.closest('.sr-cite, .sr-ref-nolink');
+        if (cite && cite.dataset.cite) {
+            focusCitedCard(cite.dataset.cite, cite.dataset.citeGroup);
+            return;
+        }
+
         const editBtn = e.target.closest('.edit-msg-btn');
         if (editBtn) {
             currentEditingMessageId = editBtn.dataset.messageId;
