@@ -287,6 +287,13 @@ def _build_sources(cards, total_count, retrieval=None):
     return {
         'sites_count': retrieval.get('sites_checked') or len({c['site_name'] for c in cards if c.get('site_name')}),
         'stores_count': len(districts),
+        # The retrieval pool: everything the filter and vector stages went through
+        # on the way to the ranked list. `checked` counts only what those stages
+        # kept, which on a plain filter search is the result list itself — the
+        # vector stage is the one that says how wide the search actually looked.
+        'pages_count': max(retrieval.get('vector_scanned') or 0,
+                           retrieval.get('filter_matched') or 0,
+                           retrieval.get('checked') or 0),
         'products_count': len(cards),
         'total_count': total_count if total_count is not None else len(cards),
     }

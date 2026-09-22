@@ -435,6 +435,21 @@ msgstr ""
 msgid "districts"
 msgstr ""
 
+msgid "M"
+msgstr ""
+
+msgid "B"
+msgstr ""
+
+msgid "pages"
+msgstr ""
+
+msgid "result"
+msgstr ""
+
+msgid "results"
+msgstr ""
+
 #: templates/base.html:452 templates/chat/home.html:603
 msgid "View AI answer"
 msgstr ""

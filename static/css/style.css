@@ -2684,7 +2684,7 @@ body.dark-mode .alert-modal-btn-cancel:hover {
 }
 
 .search-results-sidebar {
-    width: 340px;
+    width: 380px;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
@@ -2715,8 +2715,14 @@ body.dark-mode .alert-modal-btn-cancel:hover {
 /* --- Source Preview --- */
 .sr-source-preview {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     padding: 8px 0;
+}
+
+/* Coverage pills sit on a line of their own, under the headline and the button. */
+.sr-result-header .sr-source-preview {
+    flex: 0 0 100%;
 }
 
 .sr-source-pill {
@@ -3016,13 +3022,28 @@ body.dark-mode .alert-modal-btn-cancel:hover {
     padding: 20px;
 }
 
+/* Title on the left, the legend the currency lines read against on the right. */
+.sr-price-viz-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
 .sr-price-viz-title {
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--text-main);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 16px;
+}
+
+.sr-price-legend {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    white-space: nowrap;
 }
 
 .sr-price-stats {
@@ -3032,17 +3053,25 @@ body.dark-mode .alert-modal-btn-cancel:hover {
     gap: 8px;
 }
 
+/* One currency per line. Min/average/max stay unbroken, but the row itself may
+   wrap inside the panel — so'm figures run long and used to spill past its edge. */
 .sr-price-stats-inline {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px 8px;
     background: rgba(241, 245, 249, 0.6);
-    padding: 10px 14px;
+    padding: 10px 12px;
     border-radius: 8px;
-    margin-bottom: 16px;
-    font-size: 0.88rem;
+    margin-bottom: 10px;
+    font-size: 0.8rem;
     color: var(--text-main);
     white-space: nowrap;
+}
+
+/* One line per currency — the last one closes the panel, so it drops the gap. */
+.sr-price-stats-inline:last-child {
+    margin-bottom: 0;
 }
 
 .sr-price-stat-item strong {
@@ -3252,8 +3281,7 @@ body.dark-mode .alert-modal-btn-cancel:hover {
         flex-wrap: wrap;
     }
 
-    .sr-price-viz,
-    .sr-links-section {
+    .sr-price-viz {
         flex: 1;
         min-width: 280px;
     }
@@ -3292,8 +3320,7 @@ body.dark-mode .alert-modal-btn-cancel:hover {
         flex-direction: column;
     }
 
-    .sr-price-viz,
-    .sr-links-section {
+    .sr-price-viz {
         min-width: 100%;
     }
 
@@ -3301,9 +3328,7 @@ body.dark-mode .alert-modal-btn-cancel:hover {
         gap: 16px;
     }
 
-    /* Long unbroken URLs are the usual cause of a sideways scroll here. */
-    .sr-source-preview,
-    .sr-links-section {
+    .sr-source-preview {
         max-width: 100%;
         overflow-wrap: anywhere;
     }

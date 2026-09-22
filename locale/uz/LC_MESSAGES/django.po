@@ -439,10 +439,17 @@ msgid "listings found"
 msgstr "Natija topilmadi"
 
 #: templates/base.html:451 templates/chat/home.html:602
-#, fuzzy
-#| msgid "Strict"
 msgid "districts"
-msgstr "Qat'iy"
+msgstr "tuman"
+
+msgid "pages"
+msgstr "sahifa"
+
+msgid "result"
+msgstr "natija"
+
+msgid "results"
+msgstr "natija"
 
 #: templates/base.html:452 templates/chat/home.html:603
 msgid "View AI answer"
@@ -517,6 +524,14 @@ msgstr "Min"
 #: templates/base.html:468 templates/chat/home.html:619
 msgid "Average"
 msgstr "O'rtacha"
+
+#. Short form of "million", as in "6 mln so'm"
+msgid "M"
+msgstr "mln"
+
+#. Short form of "billion", as in "1.2 mlrd so'm"
+msgid "B"
+msgstr "mlrd"
 
 #: templates/base.html:469 templates/chat/home.html:224
 #: templates/chat/home.html:326 templates/chat/home.html:620

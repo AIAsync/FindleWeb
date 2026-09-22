@@ -1293,6 +1293,53 @@ document.addEventListener('DOMContentLoaded', () => {
         return num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     }
 
+    /** Thousands separators for counts — 9,035 pages reads faster than 9035. */
+    function formatCount(n) {
+        return Number(n || 0).toLocaleString('en-US');
+    }
+
+    /** Prices in the summary panel. Full figures while they stay short, millions
+     *  and billions shortened above that — three seven-digit numbers will not
+     *  fit on one line, and that line is the whole point of the panel. */
+    function formatPriceShort(value) {
+        const num = Number(value) || 0;
+        if (num >= 1e9) return `${trimZero(num / 1e9)} ${t('billion_short', 'B')}`;
+        if (num >= 1e6) return `${trimZero(num / 1e6)} ${t('million_short', 'M')}`;
+        return formatPrice(num);
+    }
+
+    /** Two decimals, then the trailing zeros go: 1.01, 6, 1.2 — never "1" for 1,008,390. */
+    function trimZero(num) {
+        return num.toFixed(2).replace(/\.?0+$/, '');
+    }
+
+    /* The currencies listings are priced in. Anything else has no line of its own. */
+    const PRICE_CURRENCIES = ['USD', 'UZS'];
+
+    /** Min/average/max, one line per currency.
+     *
+     *  Averaging dollars together with so'm produces a number that describes
+     *  nothing — so each currency keeps its own line, and a currency with no
+     *  priced listing on this page gets none.
+     */
+    function buildPriceLines(products) {
+        return PRICE_CURRENCIES.map(code => {
+            const prices = products
+                .filter(p => (p.currency || '').toUpperCase() === code)
+                .map(p => parseFloat(p.price))
+                .filter(p => p > 0 && !isNaN(p));
+
+            if (!prices.length) return null;
+
+            return {
+                label: code === 'UZS' ? t('som', "so'm") : code,
+                min: Math.min(...prices),
+                avg: prices.reduce((a, b) => a + b, 0) / prices.length,
+                max: Math.max(...prices),
+            };
+        }).filter(Boolean);
+    }
+
     /* =========================================================
        SEARCH TAB — listings only. Every LLM answer lives in Ask AI.
        ========================================================= */
@@ -1301,35 +1348,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const sources = data.sources || {};
         const isDeepResearch = !!data.report;
 
-        // Price calculations
-        const prices = products.map(p => parseFloat(p.price)).filter(p => p > 0 && !isNaN(p));
-        const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-        const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
-        const avgPrice = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
-
-        // Determine dominant currency for price visualization
-        const currencyCounts = {};
-        products.forEach(p => { if (p.currency) { currencyCounts[p.currency] = (currencyCounts[p.currency] || 0) + 1; } });
-        const dominantCurrency = Object.keys(currencyCounts).sort((a, b) => currencyCounts[b] - currencyCounts[a])[0] || t('som', "so'm");
-
-        const priceRanges = buildPriceRanges(prices, minPrice, maxPrice);
-
-        // Links from all products
-        const allLinks = products.filter(p => p.product_url).map(p => ({
-            title: p.title || '',
-            url: p.product_url,
-            crawled_at: p.listed_at || '',
-            site: p.site_name || ''
-        }));
+        const priceLines = buildPriceLines(products);
 
         const sitesCount = sources.sites_count || 0;
         const sitesLabel = sitesCount === 1 ? t('site', 'site') : t('sites', 'sites');
         const districtsCount = sources.stores_count || 0;
+        const pagesCount = sources.pages_count || 0;
         const totalCount = sources.total_count || products.length;
         // Deep research matches far more than it renders — say how many are on screen
         const countText = (totalCount > products.length)
             ? `${products.length} / ${totalCount}`
             : `${totalCount}`;
+
+        // How wide the search looked, above the cards it ended up with. A single
+        // district says nothing about coverage; neither does a pool that is just
+        // the result list counted twice, which is what a plain filter search
+        // returns — so each of those only appears when it adds something.
+        const resultsLabel = totalCount === 1 ? t('result', 'result') : t('results', 'results');
+        const coveragePills = [
+            sitesCount ? `<div class="sr-source-pill"><i class="fa-solid fa-globe"></i><span>${formatCount(sitesCount)} ${sitesLabel}</span></div>` : '',
+            districtsCount > 1 ? `<div class="sr-source-pill"><i class="fa-solid fa-location-dot"></i><span>${formatCount(districtsCount)} ${t('districts', 'districts')}</span></div>` : '',
+            pagesCount > 1 && pagesCount > totalCount ? `<div class="sr-source-pill"><i class="fa-solid fa-file-lines"></i><span>${formatCount(pagesCount)} ${t('pages', 'pages')}</span></div>` : '',
+            totalCount ? `<div class="sr-source-pill"><i class="fa-solid fa-list"></i><span>${formatCount(totalCount)} ${resultsLabel}</span></div>` : '',
+        ].filter(Boolean).join('');
 
         // ---- Left column: result header + one uniform grid ----
         let leftHTML = `
@@ -1340,14 +1381,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${duration ? `<span class="sr-result-time">${duration}s</span>` : ''}
                 </div>
                 <div class="sr-result-actions">
-                    <div class="sr-source-preview">
-                        <div class="sr-source-pill"><i class="fa-solid fa-globe"></i><span>${sitesCount} ${sitesLabel}</span></div>
-                        ${districtsCount ? `<div class="sr-source-pill"><i class="fa-solid fa-location-dot"></i><span>${districtsCount} ${t('districts', 'districts')}</span></div>` : ''}
-                    </div>
                     <button class="sr-continue-btn" id="sr-continue-chat-btn">
                         <i class="fa-solid fa-bolt"></i> ${t('view_ai_answer', 'View AI answer')}
                     </button>
                 </div>
+                ${coveragePills ? `<div class="sr-source-preview">${coveragePills}</div>` : ''}
             </div>
         `;
 
@@ -1363,57 +1401,26 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
 
-        // ---- Right column: price distribution + sources ----
+        // ---- Right column: what the prices look like, one line per currency ----
         let rightHTML = '';
 
-        if (prices.length > 0) {
+        if (priceLines.length) {
             rightHTML += `
                 <div class="sr-price-viz">
                     <div class="sr-price-viz-header">
-                        <div class="sr-price-viz-title">${t('prices', 'Prices')} <span class="sr-price-currency-label">${escapeHTML(dominantCurrency)}</span></div>
+                        <div class="sr-price-viz-title">${t('prices', 'Prices')}</div>
+                        <div class="sr-price-legend">${t('min', 'Min')} · ${t('average', 'Average')} · ${t('max', 'Max')}</div>
                     </div>
-                    <div class="sr-price-stats-inline">
-                        <span class="sr-price-stat-item"><strong>${t('min', 'Min')}:</strong> ${formatPrice(minPrice)}</span>
-                        <span class="sr-price-stat-divider">•</span>
-                        <span class="sr-price-stat-item"><strong>${t('average', 'Average')}:</strong> ${formatPrice(avgPrice)}</span>
-                        <span class="sr-price-stat-divider">•</span>
-                        <span class="sr-price-stat-item"><strong>${t('max', 'Max')}:</strong> ${formatPrice(maxPrice)}</span>
-                    </div>
-                    <div class="sr-price-bars">
-                        ${priceRanges.map(r => `
-                            <div class="sr-price-bar-item">
-                                <span class="sr-price-bar-label">${r.label}</span>
-                                <div class="sr-price-bar-track">
-                                    <div class="sr-price-bar-fill ${r.colorClass}" style="width: ${r.percent}%"></div>
-                                </div>
-                                <span class="sr-price-bar-count">${r.count}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
-
-        if (allLinks.length > 0) {
-            const defaultShow = 10;
-            const hasMore = allLinks.length > defaultShow;
-
-            rightHTML += `
-                <div class="sr-links-section">
-                    <div class="sr-links-title">
-                        ${t('sources', 'Sources')} (${allLinks.length})
-                        <span class="sr-links-collapse-btn" id="sr-collapse-links"><i class="fa-solid fa-xmark"></i></span>
-                    </div>
-                    <div class="sr-links-list ${hasMore ? 'collapsed' : ''}" id="sr-links-list">
-                        ${allLinks.map((link, i) => `
-                            <div class="sr-link-item" ${hasMore && i >= defaultShow ? 'style="display:none" data-hidden-link' : ''}>
-                                <span class="sr-link-item-title">${escapeHTML(link.title)}</span>
-                                <a href="${escapeHTML(link.url)}" target="_blank" rel="noopener" class="sr-link-item-url">${escapeHTML(link.url)}</a>
-                                ${link.crawled_at ? `<span class="sr-link-item-meta">${timeAgo(link.crawled_at)}</span>` : ''}
-                            </div>
-                        `).join('')}
-                    </div>
-                    ${hasMore ? `<button class="sr-links-show-all" id="sr-show-all-links">${t('all', 'All')} (${allLinks.length})</button>` : ''}
+                    ${priceLines.map(line => `
+                        <div class="sr-price-stats-inline">
+                            <span class="sr-price-currency-label">${escapeHTML(line.label)}</span>
+                            <span class="sr-price-stat-item" title="${t('min', 'Min')}">${formatPriceShort(line.min)}</span>
+                            <span class="sr-price-stat-divider">·</span>
+                            <span class="sr-price-stat-item" title="${t('average', 'Average')}">${formatPriceShort(line.avg)}</span>
+                            <span class="sr-price-stat-divider">·</span>
+                            <span class="sr-price-stat-item" title="${t('max', 'Max')}">${formatPriceShort(line.max)}</span>
+                        </div>
+                    `).join('')}
                 </div>
             `;
         }
@@ -1480,35 +1487,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 scrollMainTo(0);
             });
         });
-
-        // Event: Show all links
-        const showAllBtn = document.getElementById('sr-show-all-links');
-        const collapseBtn = document.getElementById('sr-collapse-links');
-        const linksList = document.getElementById('sr-links-list');
-
-        if (showAllBtn && linksList && collapseBtn) {
-            showAllBtn.addEventListener('click', () => {
-                linksList.classList.remove('collapsed');
-                linksList.querySelectorAll('[data-hidden-link]').forEach(el => {
-                    el.style.display = '';
-                });
-                linksList.style.maxHeight = '600px';
-                linksList.style.overflowY = 'auto';
-                showAllBtn.style.display = 'none';
-                collapseBtn.style.display = 'inline-block';
-            });
-
-            collapseBtn.addEventListener('click', () => {
-                linksList.classList.add('collapsed');
-                linksList.querySelectorAll('[data-hidden-link]').forEach(el => {
-                    el.style.display = 'none';
-                });
-                linksList.style.maxHeight = '';
-                linksList.style.overflowY = '';
-                showAllBtn.style.display = 'block';
-                collapseBtn.style.display = 'none';
-            });
-        }
     }
 
     function escapeHTML(str) {
@@ -1886,75 +1864,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function buildPriceRanges(prices, minPrice, maxPrice) {
-        if (prices.length === 0) return [];
-
-        const range = maxPrice - minPrice;
-        if (range === 0) {
-            return [{
-                label: formatPrice(minPrice),
-                count: prices.length,
-                percent: 100,
-                colorClass: 'low'
-            }];
-        }
-
-        const step = range / 4;
-        const ranges = [];
-        const classes = ['low', 'low', 'mid', 'high'];
-
-        for (let i = 0; i < 4; i++) {
-            const from = minPrice + (step * i);
-            const to = i === 3 ? maxPrice + 1 : minPrice + (step * (i + 1));
-            const count = prices.filter(p => p >= from && p < to).length;
-            ranges.push({
-                label: `${formatPrice(from)} - ${formatPrice(to > maxPrice ? maxPrice : to)}`,
-                count: count,
-                percent: prices.length > 0 ? Math.round((count / prices.length) * 100) : 0,
-                colorClass: classes[i]
-            });
-        }
-
-        return ranges;
-    }
-
-    function timeAgo(date) {
-        if (!date) return '';
-        const d = new Date(date);
-        if (isNaN(d.getTime())) return date; // Return original if invalid
-
-        const seconds = Math.floor((new Date() - d) / 1000);
-        if (seconds < 60) return t('just_now', 'Just now');
-
-        const intervals = {
-            year: 31536000,
-            month: 2592000,
-            day: 86400,
-            hour: 3600,
-            minute: 60
-        };
-
-        for (let unit in intervals) {
-            const count = Math.floor(seconds / intervals[unit]);
-            if (count >= 1) {
-                const isUz = t('ago', 'ago') !== 'ago';
-                if (isUz) {
-                    const uzUnits = {
-                        year: 'yil',
-                        month: 'oy',
-                        day: 'kun',
-                        hour: 'soat',
-                        minute: 'daqiqa'
-                    };
-                    return `${count} ${uzUnits[unit]} ${t('ago', 'oldin')}`;
-                } else {
-                    return `${count} ${unit}${count > 1 ? 's' : ''} ${t('ago', 'ago')}`;
-                }
-            }
-        }
-        return t('recently', 'Recently');
-    }
-
     sendBtn.addEventListener('click', () => {
         const mode = sendBtn.dataset.mode;
 
@@ -2063,6 +1972,7 @@ document.addEventListener('DOMContentLoaded', () => {
             newChatBtn.click();
         }
     });
+
 
     function deleteChat(chatId) {
         currentChatId = chatId;
