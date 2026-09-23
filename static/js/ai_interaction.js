@@ -933,15 +933,20 @@ document.addEventListener('DOMContentLoaded', () => {
         clearDraft();
     }
 
-    /** Search tab — POST /search through Django. `page` walks the cached ranked list. */
-    async function runSearch(prompt, page = 1) {
+    /** Search tab — POST /search through Django. `page` walks the cached ranked list.
+     *  Search never answers a question: the API returns `redirect` to chat instead,
+     *  and the question moves to the Agent tab. `opts.filters` carries the conditions
+     *  a chat gathered, so a chat→search hop keeps them exactly. */
+    async function runSearch(prompt, page = 1, opts = {}) {
         if (!chatContainer) return;
 
+        const previousState = searchState;
         const isNewQuery = page === 1 || prompt !== searchState.query;
         if (isNewQuery) searchState = { query: prompt, page: 1, searchId: '' };
 
         const tabAll = document.getElementById('tab-all');
         if (tabAll && !tabAll.classList.contains('active')) tabAll.click();
+        const previousHTML = chatContainer.innerHTML;
 
         if (sendBtn) {
             sendBtn.disabled = true;
@@ -956,8 +961,10 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const startTime = Date.now();
 
-            const body = { prompt: prompt, page: page, session_id: chatSessionId };
+            const body = { prompt: prompt, page: page };
             if (page > 1 && searchState.searchId) body.search_id = searchState.searchId;
+            if (opts.route) body.route = opts.route;
+            if (opts.filters) body.filters = opts.filters;
 
             const response = await fetch('/api/search/stream/', {
                 method: 'POST',
@@ -976,10 +983,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let data = null;
             let streamError = null;
+            let redirect = null;
             const stages = [];
 
             await readEventStream(response, (event, payload) => {
-                if (event === 'stage') {
+                if (event === 'redirect') {
+                    redirect = payload;
+                } else if (event === 'stage') {
                     stages.push(payload);
                     setSearchProgress(payload);
                 } else if (event === 'results') {
@@ -997,6 +1007,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (streamError) throw new Error(streamError);
             if (!data) throw new Error(t('something_went_wrong', 'Sorry, something went wrong.'));
 
+            // A question: /search ran nothing and the Agent tab answers it.
+            // Leave the Search tab as it was and hand the text over.
+            redirect = redirect || data.redirect;
+            if (redirect && redirect.to === 'chat') {
+                chatContainer.innerHTML = previousHTML;
+                searchState = previousState;
+                restoreSearchControls();
+                handoffToAgent(redirect, prompt);
+                return;
+            }
+
             const pageInfo = data.page || {};
             searchState = {
                 query: prompt,
@@ -1013,19 +1034,15 @@ document.addEventListener('DOMContentLoaded', () => {
             // final counts and timing. `rendered` only tells us the grid is
             // already up, so this never flashes an empty state.
             renderSearchResults(data, prompt, duration, stages);
-
-            // A question can self-route to the chat layer — its answer now lives inline
-            // under "Thoughts for" in Search (renderSearchResults already rendered it),
-            // but the turn still joins Agent's memory so a later follow-up there has context.
-            if (isNewQuery && data.mode === 'chat' && data.assist && data.assist.answer) {
-                chatHistory.push({ role: 'user', content: prompt }, { role: 'assistant', content: data.assist.answer });
-                chatHistory = chatHistory.slice(-MAX_CHAT_HISTORY);
-            }
         } catch (error) {
             console.error('Search error:', error);
             chatContainer.innerHTML = `<div class="sr-error"><i class="fa-solid fa-triangle-exclamation"></i> ${escapeHTML(error.message || t('something_went_wrong', 'Sorry, something went wrong.'))}</div>`;
         }
 
+        restoreSearchControls();
+    }
+
+    function restoreSearchControls() {
         const activeInput = (bottomChatContainer && bottomChatContainer.classList.contains('active')) ? bottomChatInput : userInput;
         if (activeInput) {
             activeInput.disabled = false;
@@ -1043,8 +1060,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    /** Search → Agent: /search found a question. `route: 'chat'` keeps /chat from
+     *  bouncing it back as a listing request. */
+    function handoffToAgent(redirect, prompt) {
+        switchTab('tab-fast-answer');
+        sendAgentMessage(redirect.query || prompt, { route: 'chat' });
+    }
+
+    /** Agent → Search: run the query the chat assembled, with its filters so the
+     *  conditions are not re-read from text. `route: 'search'` skips the question check. */
+    function handoffToSearch(redirect, prompt) {
+        const query = redirect.query || prompt;
+        if (userInput) userInput.value = query;
+        runSearch(query, 1, { route: 'search', filters: redirect.filters || null });
+    }
+
+    /** Redirects offered next to a chat reply (auto: false), keyed for the click handler. */
+    const offeredRedirects = new Map();
+    let offeredRedirectSeq = 0;
+
+    function buildOpenInSearchButton(redirect, prompt) {
+        const key = String(++offeredRedirectSeq);
+        offeredRedirects.set(key, { redirect, prompt });
+        return `
+            <button type="button" class="sr-answer-link" data-open-search="${key}">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                ${t('open_in_search', 'Open in Search')}
+            </button>
+        `;
+    }
+
     /** Agent tab — /chat by default, /deep-research while the Deep research tag is on. */
-    async function sendAgentMessage(prompt) {
+    async function sendAgentMessage(prompt, opts = {}) {
         if (!aiChatMessages || !prompt) return;
 
         // Move input to bottom if it was centered
@@ -1105,6 +1152,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // the server keep its own short memory of the same conversation.
             chatPayload.history = chatHistory.slice(-MAX_CHAT_HISTORY);
             chatPayload.session_id = chatSessionId;
+            if (opts.route) chatPayload.route = opts.route;
         }
         if (selectedMentionProduct) {
             chatPayload.context_product = selectedMentionProduct;
@@ -1153,14 +1201,33 @@ document.addEventListener('DOMContentLoaded', () => {
             thinkingDiv.remove();
 
             const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+
+            // A plain listing request: /chat ran nothing, the Search tab takes it.
+            const redirect = !isDeepResearch && data && data.redirect;
+            if (response.ok && redirect && redirect.auto && redirect.to === 'search' && !data.response) {
+                const noticeDiv = document.createElement('div');
+                noticeDiv.className = 'ai-msg ai-response-msg';
+                noticeDiv.innerHTML = `<div class="msg-content"><i class="fa-solid fa-magnifying-glass"></i> ${escapeHTML(redirect.notice || t('moved_to_search', 'Showing this in Search.'))}</div>`;
+                aiChatMessages.appendChild(noticeDiv);
+                scrollToBottom();
+                if (bottomChatSendBtn) {
+                    bottomChatSendBtn.disabled = false;
+                    bottomChatSendBtn.style.opacity = '1';
+                }
+                handoffToSearch(redirect, prompt);
+                return;
+            }
+
             const answer = isDeepResearch ? ((data && data.report && data.report.summary) || '') : ((data && data.response) || '');
 
             if (response.ok && data && answer) {
-                rememberAnswerSet(data, prompt);
+                rememberAnswerSet(data, (data && data.search_query) || prompt);
 
                 const aiMsgDiv = document.createElement('div');
                 aiMsgDiv.className = 'ai-msg ai-response-msg';
-                aiMsgDiv.innerHTML = `<div class="msg-content">${isDeepResearch ? buildDeepResearchAnswer(data) : buildChatAnswer(data, duration)}</div>`;
+                const offer = redirect && !redirect.auto && redirect.to === 'search'
+                    ? buildOpenInSearchButton(redirect, prompt) : '';
+                aiMsgDiv.innerHTML = `<div class="msg-content">${isDeepResearch ? buildDeepResearchAnswer(data) : buildChatAnswer(data, duration)}${offer}</div>`;
                 aiChatMessages.appendChild(aiMsgDiv);
 
                 chatHistory.push({ role: 'user', content: prompt }, { role: 'assistant', content: answer });
@@ -1168,12 +1235,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Listings the agent found fill the Search tab, both as results and as citation targets.
                 if (chatContainer && data.products && data.products.length) {
+                    // The model writes its own search text for the tool; that text, not the
+                    // chat message, is what produced these listings, so Search shows and pages it.
+                    const searchQuery = data.search_query || prompt;
                     lastResponseData = data;
-                    lastResponseData.prompt = prompt;
+                    lastResponseData.prompt = searchQuery;
                     // The Search tab falls back to the landing view on an empty query box.
-                    if (userInput) userInput.value = prompt;
-                    searchState = { query: prompt, page: (data.page && data.page.page) || 1, searchId: (data.page && data.page.search_id) || '' };
-                    renderSearchResults(data, prompt, duration);
+                    if (userInput) userInput.value = searchQuery;
+                    searchState = { query: searchQuery, page: (data.page && data.page.page) || 1, searchId: (data.page && data.page.search_id) || '' };
+                    renderSearchResults(data, searchQuery, duration);
                     chatContainer.style.display = 'none';
 
                     // Searching and deep research are about the listings, so hand the user straight
@@ -1247,6 +1317,7 @@ document.addEventListener('DOMContentLoaded', () => {
             search: t('intent_search', 'Search'),
             compare: t('intent_compare', 'Compare'),
             statistics: t('intent_statistics', 'Statistics'),
+            chat: t('intent_chat', 'Conversation'),
         };
         return labels[intent || ''] || null;
     }
@@ -1261,15 +1332,48 @@ document.addEventListener('DOMContentLoaded', () => {
         return labels[name || ''] || null;
     }
 
-    /** Which intent the router picked and which tool(s) ran for one Agent chat
-     *  turn — the same process-steps story Search and deep research already tell. */
+    /** Why a /chat turn went the way it did — the API's meta.stop_reason. */
+    function stopReasonLabel(reason) {
+        const labels = {
+            planned: t('reason_planned', 'Rule'),
+            answer: t('reason_answer', 'Model'),
+            no_tools: t('reason_no_tools', 'Toolless'),
+            max_steps: t('reason_max_steps', 'Limit'),
+        };
+        return labels[reason || ''] || null;
+    }
+
+    /** Who picked a tool: a rule (no model call) or the LLM. */
+    function toolSourceLabel(source) {
+        const labels = {
+            rule: t('picked_by_rule', 'picked by a rule'),
+            llm: t('picked_by_llm', 'picked by the LLM'),
+        };
+        return labels[source || ''] || null;
+    }
+
+    /** Intent, reason and the tool(s) that ran for one Agent chat turn — the same
+     *  process-steps story Search and deep research already tell. */
     function buildChatProcessSteps(data) {
         const steps = [];
-        const intent = intentLabel(data.intent);
+        const tools = (data.tools || []).filter(tool => tool && tool.ok !== false);
+
+        // The API's intent falls back to "search" when it recognises nothing, so a
+        // turn where no tool ran (a greeting, a thank-you) is a conversation, not a search.
+        const intent = intentLabel(tools.length ? data.intent : 'chat');
         if (intent) steps.push({ label: `${t('intent_detected', 'Intent')}: ${intent}`, count: null });
-        (data.tools || []).forEach(tool => {
-            const label = tool && toolLabel(tool.name);
-            if (label) steps.push({ label, count: tool.total || null });
+
+        const reason = stopReasonLabel(data.stop_reason);
+        if (reason) steps.push({ label: `${t('reason_label', 'Reason')}: ${reason}`, count: null });
+
+        tools.forEach(tool => {
+            const label = toolLabel(tool.name);
+            if (!label) return;
+            const by = toolSourceLabel(tool.source);
+            steps.push({
+                label: `${t('tool_label', 'Tool')}: ${label}${by ? ` (${by})` : ''}`,
+                count: tool.total || null,
+            });
         });
         return steps;
     }
@@ -1397,7 +1501,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // on the way to the ranked list — how wide the search actually looked,
         // not just how many made the final cut.
         const checkedCount = sources.pages_count || 0;
-        const totalCount = sources.total_count || products.length;
+        // Every listing across all pages of this search. `pageable` is the API's own
+        // count of what the pager opens (min(total, hard cap)) and stays fixed from
+        // page to page; answers without a pager fall back to the cards on screen.
+        const pageInfo = data.page || {};
+        const resultsCount = pageInfo.pageable || pageInfo.total || products.length;
 
         // The steps the search stream went through (cache, retrieve, rank, ...),
         // or a deep-research answer's own steps — shown collapsed behind "Thoughts for Xs".
@@ -1427,15 +1535,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const assist = data.assist || {};
         const assistCitations = assist.citations || [];
         if (assist.answer) rememberAnswerSet(data, prompt);
+        // Citations come only from the API's own [n] markers, resolved by `ref`
+        // against assist.sources — in the answer and in the highlights alike. A
+        // line without markers (an average, a count) is proven by no single
+        // listing, so it gets no citation rather than a guessed one.
         const answerHTML = assist.answer
             ? `
                 <div class="sr-search-answer">
-                    ${assistCitations.length && hasCitationMarkers(assist.answer)
-                        ? linkCitations(formatAiMessage(assist.answer), assistCitations, data.citeGroup)
-                        : formatAiMessage(assist.answer) + buildCitations(data)}
+                    ${linkCitations(formatAiMessage(escapeHTML(assist.answer)), assistCitations, data.citeGroup)}
                 </div>
                 ${assist.highlights && assist.highlights.length
-                    ? `<ul class="sr-answer-list">${assist.highlights.map(h => `<li>${escapeHTML(h)}</li>`).join('')}</ul>`
+                    ? `<ul class="sr-answer-list">${assist.highlights.map(h => `<li>${linkCitations(escapeHTML(h), assistCitations, data.citeGroup)}</li>`).join('')}</ul>`
                     : ''}
             `
             : '';
@@ -1444,11 +1554,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // district says nothing about coverage, so that one only appears when it
         // adds something — but "checked" is worth showing even when it equals
         // the result count, since that itself says the search found everything.
-        const resultsLabel = totalCount === 1 ? t('result', 'result') : t('results', 'results');
+        const resultsLabel = resultsCount === 1 ? t('result', 'result') : t('results', 'results');
         const coverageRows = [
             sitesCount ? { icon: 'fa-globe', label: sitesLabel, value: formatCount(sitesCount) } : null,
             districtsCount > 1 ? { icon: 'fa-location-dot', label: t('districts', 'districts'), value: formatCount(districtsCount) } : null,
-            totalCount ? { icon: 'fa-list', label: resultsLabel, value: formatCount(totalCount) } : null,
+            resultsCount ? { icon: 'fa-list', label: resultsLabel, value: formatCount(resultsCount) } : null,
             checkedCount > 0 ? { icon: 'fa-layer-group', label: t('checked', 'Checked'), value: formatCount(checkedCount) } : null,
         ].filter(Boolean);
 
@@ -1580,12 +1690,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const url = p.product_url || '';
         const title = p.title || '';
 
-        const accuracyHtml = (p.accuracy !== undefined && p.accuracy !== null) ? `
-            <span class="sr-accuracy-badge" title="${t('accuracy_title', 'Match accuracy')}">
-                <i class="fa-solid fa-circle-check"></i> ${p.accuracy}%
-            </span>
-        ` : '';
-
         // Compact spec line: rooms · area · floor
         const specs = [];
         if (p.rooms) specs.push(`${p.rooms} ${t('rooms_short', 'xona')}`);
@@ -1600,7 +1704,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${imgSrc
                     ? `<img src="${escapeHTML(imgSrc)}" alt="${escapeHTML(title)}" loading="lazy">`
                     : `<span class="sr-grid-card-noimg"><i class="fa-regular fa-image"></i></span>`}
-                ${accuracyHtml}
             </div>
             <div class="sr-grid-card-body">
                 <div class="sr-grid-card-title">${escapeHTML(title)}</div>
@@ -1911,6 +2014,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (e.target.closest('[data-goto-search]')) {
                 showSearchTab(() => scrollMainTo(0));
+                return;
+            }
+
+            const openSearch = e.target.closest('[data-open-search]');
+            if (openSearch) {
+                const offered = offeredRedirects.get(openSearch.dataset.openSearch);
+                if (offered) handoffToSearch(offered.redirect, offered.prompt);
                 return;
             }
 

@@ -784,3 +784,37 @@ msgstr ""
 #: users/forms.py:19
 msgid "Confirm password"
 msgstr ""
+
+msgid "Open in Search"
+msgstr ""
+
+msgid "Showing this in Search."
+msgstr ""
+
+msgid "Conversation"
+msgstr ""
+
+msgid "Reason"
+msgstr ""
+
+msgid "Rule"
+msgstr ""
+
+msgid "Model"
+msgstr ""
+
+msgid "Toolless"
+msgstr ""
+
+msgid "Limit"
+msgstr ""
+
+msgid "Tool"
+msgstr ""
+
+
+msgid "picked by a rule"
+msgstr ""
+
+msgid "picked by the LLM"
+msgstr ""

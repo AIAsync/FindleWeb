@@ -800,3 +800,37 @@ msgstr ""
 
 #~ msgid "pages"
 #~ msgstr "sahifa"
+
+msgid "Open in Search"
+msgstr "Qidiruvda ochish"
+
+msgid "Showing this in Search."
+msgstr "Buni qidiruv oynasida ko'rsatamiz."
+
+msgid "Conversation"
+msgstr "Suhbat"
+
+msgid "Reason"
+msgstr "Sabab"
+
+msgid "Rule"
+msgstr "Qoida"
+
+msgid "Model"
+msgstr "Model"
+
+msgid "Toolless"
+msgstr "Asbobsiz"
+
+msgid "Limit"
+msgstr "Chegara"
+
+msgid "Tool"
+msgstr "Asbob"
+
+
+msgid "picked by a rule"
+msgstr "qoida tanladi"
+
+msgid "picked by the LLM"
+msgstr "LLM tanladi"

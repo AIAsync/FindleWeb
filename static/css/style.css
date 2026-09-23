@@ -2851,15 +2851,6 @@ body.dark-mode .alert-modal-btn-cancel:hover {
 }
 
 /* Accuracy sits on the image so every card body starts at the same height */
-.sr-grid-card-img .sr-accuracy-badge {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    margin-bottom: 0;
-    background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(4px);
-    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
-}
 
 .sr-grid-card-body {
     padding: 12px 14px 14px;
@@ -3400,10 +3391,6 @@ body.dark-mode .alert-modal-btn-cancel:hover {
         gap: 4px;
     }
 
-    .sr-accuracy-badge {
-        font-size: 0.66rem;
-        padding: 2px 6px;
-    }
 }
 
 /* Below ~360px two columns stop being legible, so fall back to one. */
@@ -3471,10 +3458,6 @@ body.dark-mode .sr-grid-card-noimg {
     color: #475569;
 }
 
-body.dark-mode .sr-grid-card-img .sr-accuracy-badge {
-    background: rgba(15, 23, 42, 0.88);
-    box-shadow: none;
-}
 
 body.dark-mode .sr-grid-card-price {
     color: #4ade80;
@@ -4161,24 +4144,7 @@ body.dark-mode .chat-bottom-input .product-tag {
     border-color: rgba(59, 132, 246, 0.3);
 }
 
-.sr-accuracy-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: rgba(16, 185, 129, 0.1);
-    color: #10b981;
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 2px 6px;
-    border-radius: 6px;
-    margin-bottom: 6px;
-    width: fit-content;
-}
 
-body.dark-mode .sr-accuracy-badge {
-    background: rgba(16, 185, 129, 0.2);
-    color: #34d399;
-}
 
 /* Currency label inside price */
 .sr-price-currency {

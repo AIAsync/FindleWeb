@@ -243,7 +243,6 @@ def _build_card(res):
         'price': _to_float(res.get('price')),
         'old_price': None,
         'currency': res.get('currency') or '',
-        'accuracy': res.get('accuracy'),
         'rating': None,
         'district': district,
         'region': region,
@@ -271,6 +270,8 @@ def _build_page(page):
         'page': page.get('page') or 1,
         'per_page': page.get('per_page') or SEARCH_PER_PAGE,
         'total': page.get('total') or 0,
+        # How many of `total` the pager can actually open — the listings across all pages.
+        'pageable': page.get('pageable') or 0,
         'pages': page.get('pages') or 0,
         'has_next': bool(page.get('has_next')),
         'has_prev': bool(page.get('has_prev')),
@@ -308,7 +309,7 @@ def _chat_listings(chat, prompt):
     """
     tool_calls = [c for c in (chat.get('tool_calls') or []) if isinstance(c, dict) and c.get('ok')]
     if not tool_calls:
-        return [], None
+        return [], None, ''
 
     query = prompt
     for call in tool_calls:
@@ -323,9 +324,10 @@ def _chat_listings(chat, prompt):
         SEARCH_TIMEOUT,
     ) or {}
 
+    # `query` is the text the model wrote for its tool, which the Search input shows.
     if companion.get('results'):
-        return companion['results'], _build_page(companion.get('page'))
-    return chat.get('results') or [], None
+        return companion['results'], _build_page(companion.get('page')), query
+    return chat.get('results') or [], None, query
 
 
 def _build_citations(raw_sources):
@@ -360,7 +362,8 @@ def _build_citations(raw_sources):
 
 def _build_tool_calls(raw_calls):
     """Normalize /chat's `tool_calls` down to what the "Thoughts for" panel shows —
-    which tool ran and how many listings it turned up, not its raw arguments/data."""
+    which tool ran, who picked it (rule or llm) and how many listings it turned up,
+    not its raw arguments/data."""
     calls = []
     for c in raw_calls or []:
         if not isinstance(c, dict) or not c.get('name'):
@@ -369,6 +372,7 @@ def _build_tool_calls(raw_calls):
             'name': c.get('name'),
             'total': c.get('total'),
             'ok': c.get('ok', True),
+            'source': c.get('source') or '',
         })
     return calls
 
@@ -437,9 +441,7 @@ def chat_api(request):
     if search_id:
         payload['search_id'] = search_id
 
-    session_id = _clean_session_id(data.get('session_id'))
-    if session_id:
-        payload['session_id'] = session_id
+    _apply_route(payload, data, ('auto', 'search'))
 
     api_data = _findle_post('/search', payload, SEARCH_TIMEOUT)
     if api_data is None:
@@ -448,40 +450,51 @@ def chat_api(request):
     return JsonResponse(_search_response(api_data, prompt))
 
 
+def _build_redirect(raw):
+    """Normalize the API's `redirect` block — the other tab owns this request.
+
+    /search answers `to: "chat"` for a question and runs nothing; /chat answers
+    `to: "search"` for a plain listing request. `auto` true means switch tabs now,
+    false means the reply stands and the redirect is only an "open in Search" offer.
+    """
+    if not isinstance(raw, dict) or raw.get('to') not in ('search', 'chat'):
+        return None
+    return {
+        'to': raw['to'],
+        'auto': bool(raw.get('auto')),
+        'reason': raw.get('reason') or '',
+        'query': raw.get('query') or '',
+        'filters': raw.get('filters') if isinstance(raw.get('filters'), dict) else None,
+        'notice': raw.get('notice') or '',
+    }
+
+
+def _apply_route(payload, data, allowed):
+    """Carry the client's route override and, after a chat→search hop, the chat's filters."""
+    route = data.get('route')
+    if route in allowed:
+        payload['route'] = route
+    filters = data.get('filters')
+    if isinstance(filters, dict) and filters:
+        payload['filters'] = filters
+
+
 def _search_response(api_data, prompt):
-    """Shape a /search payload for the UI. Shared by the blocking and streaming views."""
-    # A question routes itself to the chat layer; the answer and its listings come back in `chat`.
-    chat = api_data.get('chat') or {}
-    results = api_data.get('results') or []
+    """Shape a /search payload for the UI. Shared by the blocking and streaming views.
+
+    /search never answers a question: it returns `redirect` to the chat tab instead
+    and runs nothing, so `assist` is only ever a short summary over the listings.
+    """
+    cards = _build_cards(api_data.get('results'))
     page_info = _build_page(api_data.get('page'))
-
-    if not results and chat:
-        results, chat_page = _chat_listings(chat, prompt)
-        if chat_page:
-            page_info = chat_page
-
-    cards = _build_cards(results)
-
-    assist = _build_assist(api_data.get('assist'))
-    if chat.get('reply'):
-        assist = {
-            'answer': chat['reply'],
-            'highlights': chat.get('highlights') or [],
-            'questions': _llm_questions(chat.get('suggestions'), chat.get('source')),
-            'language': chat.get('language') or assist['language'],
-            # The handed-off answer cites through the chat block's own source list.
-            'citations': _build_citations(chat.get('sources')) or assist['citations'],
-        }
-
     total = page_info['total'] or api_data.get('total_count')
 
     return {
         'query': prompt,
-        'mode': api_data.get('mode') or 'search',
-        'handoff': api_data.get('handoff') or None,
+        'redirect': _build_redirect(api_data.get('redirect')),
         'products': cards,
         'page': page_info,
-        'assist': assist,
+        'assist': _build_assist(api_data.get('assist')),
         'sources': _build_sources(cards, total, api_data.get('retrieval')),
         'category': api_data.get('category') or '',
         'extracted_data': api_data.get('extracted_data') or {},
@@ -649,9 +662,7 @@ def search_stream_api(request):
     search_id = (data.get('search_id') or '').strip()
     if search_id:
         payload['search_id'] = search_id
-    session_id = _clean_session_id(data.get('session_id'))
-    if session_id:
-        payload['session_id'] = session_id
+    _apply_route(payload, data, ('auto', 'search'))
 
     def frames():
         upstream = _findle_stream('/search/stream', payload, SEARCH_TIMEOUT)
@@ -664,6 +675,10 @@ def search_stream_api(request):
                 yield _sse('error', {'message': 'Search service is unavailable'})
                 return
             shaped = _search_response(api_data, prompt)
+            if shaped['redirect']:
+                yield _sse('redirect', shaped['redirect'])
+                yield _sse('done', shaped)
+                return
             yield _sse('results', {'products': shaped['products'], 'page': shaped['page'],
                                    'sources': shaped['sources']})
             if shaped['assist']['answer']:
@@ -685,6 +700,8 @@ def search_stream_api(request):
                         'sources': _build_sources(cards, page_block['total'],
                                                   (body or {}).get('retrieval') if isinstance(body, dict) else None),
                     })
+                elif event == 'redirect':
+                    yield _sse('redirect', _build_redirect(_unwrap(body, 'redirect')))
                 elif event == 'stage':
                     yield _sse('stage', body if isinstance(body, dict) else {'name': str(body)})
                 elif event == 'delta':
@@ -868,10 +885,17 @@ def ai_chat_api(request):
     session_id = _clean_session_id(data.get('session_id'))
     if session_id:
         payload['session_id'] = session_id
+    if data.get('route') in ('auto', 'chat'):
+        payload['route'] = data['route']
 
     chat = _findle_post('/chat', payload, CHAT_TIMEOUT)
+    redirect = _build_redirect((chat or {}).get('redirect'))
+    if redirect and redirect['auto'] and not (chat or {}).get('reply'):
+        # A plain listing request: the API ran nothing and hands it to the Search tab.
+        return JsonResponse({'redirect': redirect, 'session_id': session_id})
+
     if chat and chat.get('reply'):
-        listings, page_info = _chat_listings(chat, prompt)
+        listings, page_info, search_query = _chat_listings(chat, prompt)
         cards = _build_cards(listings)
         return JsonResponse({
             'response': chat['reply'],
@@ -882,9 +906,14 @@ def ai_chat_api(request):
             'sources': _build_sources(cards, (page_info or {}).get('total') or len(cards)),
             'citations': _build_citations(chat.get('sources')),
             'intent': chat.get('intent') or '',
+            # Why the turn ended the way it did: planned / answer / no_tools ...
+            'stop_reason': (chat.get('meta') or {}).get('stop_reason') or '',
+            'search_query': search_query,
             'tools': _build_tool_calls(chat.get('tool_calls')),
             'source': chat.get('source') or 'findle',
             'session_id': session_id,
+            # auto=false: the reply stands, Search is only offered alongside it.
+            'redirect': redirect,
         })
 
     # 2. OpenAI fallback — keeps @mention questions answerable when the chat API is down
