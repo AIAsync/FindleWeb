@@ -834,3 +834,27 @@ msgstr "qoida tanladi"
 
 msgid "picked by the LLM"
 msgstr "LLM tanladi"
+
+#: templates/base.html templates/chat/home.html
+msgid "Searching the Web"
+msgstr "Internetdan qidirilmoqda"
+
+#: templates/base.html templates/chat/home.html
+msgid "Comparing"
+msgstr "Taqqoslanmoqda"
+
+#: templates/base.html templates/chat/home.html
+msgid "Calculating statistics"
+msgstr "Statistika hisoblanmoqda"
+
+#: templates/base.html templates/chat/home.html
+msgid "Checking earlier results"
+msgstr "Oldingi natijalar tekshirilmoqda"
+
+#: templates/base.html templates/chat/home.html
+msgid "Ranking matches"
+msgstr "Natijalar saralanmoqda"
+
+#: templates/base.html templates/chat/home.html
+msgid "Writing the answer"
+msgstr "Javob yozilmoqda"

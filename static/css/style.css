@@ -2731,47 +2731,10 @@ body.dark-mode .alert-modal-btn-cancel:hover {
     flex-wrap: wrap;
 }
 
-.sr-result-count {
+.sr-result-time {
     font-size: 0.95rem;
     font-weight: 600;
     color: var(--text-main);
-}
-
-.sr-result-thoughts summary {
-    cursor: pointer;
-    list-style: none;
-    user-select: none;
-}
-
-.sr-result-thoughts summary::-webkit-details-marker {
-    display: none;
-}
-
-.sr-thoughts-caret {
-    font-size: 0.65rem;
-    margin-right: 2px;
-    transition: transform 0.15s ease;
-}
-
-.sr-result-thoughts[open] .sr-thoughts-caret {
-    transform: rotate(180deg);
-}
-
-.sr-thoughts-steps {
-    list-style: none;
-    margin: 8px 0 0;
-    padding-left: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    font-size: 0.82rem;
-    font-weight: 400;
-    color: var(--text-muted);
-}
-
-.sr-thoughts-steps i {
-    color: #16a34a;
-    margin-right: 4px;
 }
 
 /* Always visible under the headline, never behind a click. */

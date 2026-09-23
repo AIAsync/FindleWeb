@@ -20,6 +20,7 @@ SEARCH_TIMEOUT = 25
 CHAT_TIMEOUT = 60
 DEEP_RESEARCH_TIMEOUT = 180
 MEMORY_TIMEOUT = 10
+INTENT_TIMEOUT = 5
 
 # Cards per Search-tab page. The API caps per_page at 50.
 SEARCH_PER_PAGE = 24
@@ -857,6 +858,63 @@ def _build_history(history):
         if role in ('user', 'assistant') and content:
             clean.append({'role': role, 'content': content[:4000]})
     return clean[-MAX_HISTORY:]
+
+
+INTENT_KINDS = ('search', 'statistics', 'compare')
+
+
+def chat_intent_api(request):
+    """The intent a chat message reads as, while /chat is still working on it.
+
+    /chat has no stream and only names its intent in the finished reply. The
+    /search stream runs the same classifier first thing: its opening frame is
+    either `redirect` (a question: reason "statistics_intent", "small_talk", ...)
+    or the `extract` stage carrying `intent` (a cached query skips straight to
+    `cache`, which is a search too). Read up to that frame, then hang
+    up — nothing after it matters here. Anything unrecognised is "chat".
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid request'}, status=400)
+
+    try:
+        data = json.loads(request.body)
+    except ValueError:
+        return JsonResponse({'error': 'Invalid JSON body'}, status=400)
+
+    prompt = (data.get('prompt') or '').strip()
+    if not prompt:
+        return JsonResponse({'error': 'No prompt provided'}, status=400)
+
+    upstream = _findle_stream('/search/stream',
+                              {'query': prompt[:2000], 'assist': 'off', 'page': 1, 'per_page': 1},
+                              INTENT_TIMEOUT)
+    if upstream is None:
+        return JsonResponse({'intent': ''})
+
+    intent = ''
+    frames = _iter_sse(upstream)
+    try:
+        for event, body in frames:
+            if event == 'redirect':
+                reason = (_unwrap(body, 'redirect').get('reason') or '')
+                intent = reason[:-len('_intent')] if reason.endswith('_intent') else reason
+                break
+            if event == 'stage' and isinstance(body, dict) and body.get('name') == 'extract':
+                intent = ((body.get('intent') or {}).get('name') or '')
+                break
+            if event in ('stage', 'results'):
+                # A cached query skips `extract`; any search work at all means
+                # it was not a question, which is redirected before anything runs.
+                intent = 'search'
+                break
+            if event in ('done', 'error'):
+                break
+    except Exception as e:
+        print(f"[findle-api] intent stream broke: {e}")
+    finally:
+        frames.close()
+
+    return JsonResponse({'intent': intent if intent in INTENT_KINDS else 'chat'})
 
 
 def ai_chat_api(request):

@@ -448,8 +448,10 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 setChatMode(false);
                 if (id === 'tab-all') {
+                    // Nothing typed and nothing searched: back to the landing view.
+                    // Results from a chat answer show even with an empty box.
                     const searchInput = document.getElementById('user-input');
-                    if (searchInput && searchInput.value.trim() === '') {
+                    if (searchInput && searchInput.value.trim() === '' && !searchState.query) {
                         if (typeof window.showLandingView === 'function') {
                             window.showLandingView();
                         } else {
@@ -984,19 +986,17 @@ document.addEventListener('DOMContentLoaded', () => {
             let data = null;
             let streamError = null;
             let redirect = null;
-            const stages = [];
 
             await readEventStream(response, (event, payload) => {
                 if (event === 'redirect') {
                     redirect = payload;
                 } else if (event === 'stage') {
-                    stages.push(payload);
                     setSearchProgress(payload);
                 } else if (event === 'results') {
                     // The whole point of streaming: listings are ready long before
                     // the written answer, so put them on screen now.
                     data = Object.assign({}, payload, { query: prompt });
-                    renderSearchResults(data, prompt, null, stages);
+                    renderSearchResults(data, prompt);
                 } else if (event === 'done') {
                     data = payload;
                 } else if (event === 'error') {
@@ -1031,9 +1031,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const duration = ((Date.now() - startTime) / 1000).toFixed(2);
 
             // Re-render once the full payload is in: same grid, now with the
-            // final counts and timing. `rendered` only tells us the grid is
+            // final counts and the time the search took. `rendered` only tells us the grid is
             // already up, so this never flashes an empty state.
-            renderSearchResults(data, prompt, duration, stages);
+            renderSearchResults(data, prompt, duration);
         } catch (error) {
             console.error('Search error:', error);
             chatContainer.innerHTML = `<div class="sr-error"><i class="fa-solid fa-triangle-exclamation"></i> ${escapeHTML(error.message || t('something_went_wrong', 'Sorry, something went wrong.'))}</div>`;
@@ -1063,8 +1063,46 @@ document.addEventListener('DOMContentLoaded', () => {
     /** Search → Agent: /search found a question. `route: 'chat'` keeps /chat from
      *  bouncing it back as a listing request. */
     function handoffToAgent(redirect, prompt) {
+        // The question now lives in the Agent thread, so it leaves the Search
+        // box, which goes back to the search it was showing before.
+        resetSearchInput(searchState.query);
         switchTab('tab-fast-answer');
-        sendAgentMessage(redirect.query || prompt, { route: 'chat' });
+        // The Search tab already read the intent (reason "statistics_intent", ...).
+        const intent = String(redirect.reason || '').replace(/_intent$/, '');
+        sendAgentMessage(redirect.query || prompt, { route: 'chat', intent });
+    }
+
+    /** Put `text` in the Search box, saved draft included — a reload restores the draft. */
+    function resetSearchInput(text) {
+        if (!userInput) return;
+        userInput.value = text || '';
+        userInput.style.height = 'auto';
+        const id = (conversationIdInput && conversationIdInput.value) || (new URLSearchParams(window.location.search).get('chat_id')) || 'new';
+        try {
+            if (text) localStorage.setItem(`draft_${id}`, text);
+            else localStorage.removeItem(`draft_${id}`);
+        } catch (e) { /* storage blocked */ }
+    }
+
+    /** /chat names its intent only in the finished reply, so ask for it on the
+     *  side and relabel the thinking bubble once it is known. Best effort: the
+     *  bubble keeps "Thinking…" if this fails or the reply lands first. */
+    function showChatIntent(prompt, thinkingDiv) {
+        fetch('/api/ai-chat/intent/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ prompt: prompt })
+        })
+            .then(res => (res.ok ? res.json() : null))
+            .then(data => {
+                if (!data || !thinkingDiv.isConnected) return;
+                const label = thinkingDiv.querySelector('.thinking-label');
+                if (label) label.textContent = intentStatus(data.intent);
+            })
+            .catch(() => {});
     }
 
     /** Agent → Search: run the query the chat assembled, with its filters so the
@@ -1142,9 +1180,10 @@ document.addEventListener('DOMContentLoaded', () => {
         thinkingDiv.className = 'ai-msg ai-response-msg thinking';
         thinkingDiv.innerHTML = isDeepResearch
             ? `<div class="msg-content"><i class="fa-solid fa-flask fa-fade"></i> ${t('deep_research_running', 'Deep research is running, this may take up to a minute...')}</div>`
-            : `<div class="msg-content"><i class="fa-solid fa-ellipsis fa-fade"></i> ${t('ai_thinking', "AI is thinking...")}</div>`;
+            : `<div class="msg-content"><i class="fa-solid fa-ellipsis fa-fade"></i> <span class="thinking-label">${escapeHTML(intentStatus(opts.intent))}</span></div>`;
         aiChatMessages.appendChild(thinkingDiv);
         scrollToBottom();
+        if (!isDeepResearch && !opts.intent) showChatIntent(prompt, thinkingDiv);
 
         const chatPayload = { prompt: prompt };
         if (!isDeepResearch) {
@@ -1167,7 +1206,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const startTime = Date.now();
             const response = await fetch(isDeepResearch ? '/api/deep-research/stream/' : '/api/ai-chat/', {
                 method: 'POST',
                 headers: {
@@ -1200,8 +1238,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             thinkingDiv.remove();
 
-            const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-
             // A plain listing request: /chat ran nothing, the Search tab takes it.
             const redirect = !isDeepResearch && data && data.redirect;
             if (response.ok && redirect && redirect.auto && redirect.to === 'search' && !data.response) {
@@ -1227,7 +1263,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 aiMsgDiv.className = 'ai-msg ai-response-msg';
                 const offer = redirect && !redirect.auto && redirect.to === 'search'
                     ? buildOpenInSearchButton(redirect, prompt) : '';
-                aiMsgDiv.innerHTML = `<div class="msg-content">${isDeepResearch ? buildDeepResearchAnswer(data) : buildChatAnswer(data, duration)}${offer}</div>`;
+                aiMsgDiv.innerHTML = `<div class="msg-content">${isDeepResearch ? buildDeepResearchAnswer(data) : buildChatAnswer(data)}${offer}</div>`;
                 aiChatMessages.appendChild(aiMsgDiv);
 
                 chatHistory.push({ role: 'user', content: prompt }, { role: 'assistant', content: answer });
@@ -1240,10 +1276,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     const searchQuery = data.search_query || prompt;
                     lastResponseData = data;
                     lastResponseData.prompt = searchQuery;
-                    // The Search tab falls back to the landing view on an empty query box.
-                    if (userInput) userInput.value = searchQuery;
+                    // Only a listing search puts its text in the Search box; a question
+                    // (statistics, compare) stays in the chat, its listings still in Search.
+                    if (data.intent === 'search') resetSearchInput(searchQuery);
                     searchState = { query: searchQuery, page: (data.page && data.page.page) || 1, searchId: (data.page && data.page.search_id) || '' };
-                    renderSearchResults(data, searchQuery, duration);
+                    renderSearchResults(data, searchQuery);
                     chatContainer.style.display = 'none';
 
                     // Searching and deep research are about the listings, so hand the user straight
@@ -1283,14 +1320,42 @@ document.addEventListener('DOMContentLoaded', () => {
         return formatted;
     }
 
-    /** Name a stage the search stream can be on. Unknown stage names return
-     *  null rather than a raw identifier — the API adds stages over time
-     *  (it already emits `cache`) and a raw name is not a label. */
-    function stageLabel(name) {
+    /** A value the API left empty — null, '' or a stringified None/null. */
+    function isBlankValue(v) {
+        if (v === null || v === undefined) return true;
+        const text = String(v).trim().toLowerCase();
+        return !text || text === 'none' || text === 'null' || text === 'undefined';
+    }
+
+    /** A step's count, or null when there is none worth printing. */
+    function stepCount(v) {
+        return isBlankValue(v) || !Number(v) ? null : v;
+    }
+
+    /** What the assistant is doing for an intent (search / compare / statistics),
+     *  shown while the request runs. Anything else — a plain question, or an
+     *  intent not known yet — is just "Thinking…". */
+    function intentStatus(intent) {
+        const labels = {
+            search: t('status_searching_web', 'Searching the Web'),
+            compare: t('status_comparing', 'Comparing'),
+            statistics: t('status_statistics', 'Calculating statistics'),
+        };
+        return labels[intent || ''] || t('thinking_label', 'Thinking…');
+    }
+
+    /** Name a stage the search stream can be on. `extract` carries the intent
+     *  the query was read as, so that stage says what the search is doing.
+     *  Unknown stage names return null rather than a raw identifier. */
+    function stageLabel(payload) {
+        const name = payload && payload.name;
+        if (name === 'extract') {
+            const intent = payload.intent && payload.intent.name;
+            return isBlankValue(intent) ? null : intentStatus(intent);
+        }
         const labels = {
             cache: t('stage_cache', 'Checking earlier results'),
-            extract: t('stage_extract', 'Reading the query'),
-            retrieve: t('stage_retrieve', 'Searching listings'),
+            retrieve: t('status_searching_web', 'Searching the Web'),
             rank: t('stage_rank', 'Ranking matches'),
             assist: t('stage_assist', 'Writing the answer')
         };
@@ -1302,98 +1367,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const note = document.querySelector('.sr-loading-note');
         if (!note) return;
 
-        const label = stageLabel(payload && payload.name);
+        const label = stageLabel(payload);
         if (!label) return;
 
-        const found = payload && (payload.total || payload.found);
+        const found = stepCount(payload.total) || stepCount(payload.found);
         note.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> ${escapeHTML(label)}` +
             (found ? ` <span class="sr-stage-count">${escapeHTML(String(found))}</span>` : '');
-    }
-
-    /** The router's intent enum is exactly search / compare / statistics — an
-     *  unmapped value is hidden rather than printed raw, same as stageLabel. */
-    function intentLabel(intent) {
-        const labels = {
-            search: t('intent_search', 'Search'),
-            compare: t('intent_compare', 'Compare'),
-            statistics: t('intent_statistics', 'Statistics'),
-            chat: t('intent_chat', 'Conversation'),
-        };
-        return labels[intent || ''] || null;
-    }
-
-    /** Same enum as intentLabel, for the tool that actually ran. */
-    function toolLabel(name) {
-        const labels = {
-            search: t('tool_search', 'Searched listings'),
-            compare: t('tool_compare', 'Compared listings'),
-            statistics: t('tool_statistics', 'Computed statistics'),
-        };
-        return labels[name || ''] || null;
-    }
-
-    /** Why a /chat turn went the way it did — the API's meta.stop_reason. */
-    function stopReasonLabel(reason) {
-        const labels = {
-            planned: t('reason_planned', 'Rule'),
-            answer: t('reason_answer', 'Model'),
-            no_tools: t('reason_no_tools', 'Toolless'),
-            max_steps: t('reason_max_steps', 'Limit'),
-        };
-        return labels[reason || ''] || null;
-    }
-
-    /** Who picked a tool: a rule (no model call) or the LLM. */
-    function toolSourceLabel(source) {
-        const labels = {
-            rule: t('picked_by_rule', 'picked by a rule'),
-            llm: t('picked_by_llm', 'picked by the LLM'),
-        };
-        return labels[source || ''] || null;
-    }
-
-    /** Intent, reason and the tool(s) that ran for one Agent chat turn — the same
-     *  process-steps story Search and deep research already tell. */
-    function buildChatProcessSteps(data) {
-        const steps = [];
-        const tools = (data.tools || []).filter(tool => tool && tool.ok !== false);
-
-        // The API's intent falls back to "search" when it recognises nothing, so a
-        // turn where no tool ran (a greeting, a thank-you) is a conversation, not a search.
-        const intent = intentLabel(tools.length ? data.intent : 'chat');
-        if (intent) steps.push({ label: `${t('intent_detected', 'Intent')}: ${intent}`, count: null });
-
-        const reason = stopReasonLabel(data.stop_reason);
-        if (reason) steps.push({ label: `${t('reason_label', 'Reason')}: ${reason}`, count: null });
-
-        tools.forEach(tool => {
-            const label = toolLabel(tool.name);
-            if (!label) return;
-            const by = toolSourceLabel(tool.source);
-            steps.push({
-                label: `${t('tool_label', 'Tool')}: ${label}${by ? ` (${by})` : ''}`,
-                count: tool.total || null,
-            });
-        });
-        return steps;
-    }
-
-    /** Turn the stream's raw events (search `stage`s, or a deep-research answer's
-     *  `steps`) into one uniform {label, count} list for the "Thoughts for" panel. */
-    function normalizeThoughtSteps(rawStages, data) {
-        if (rawStages && rawStages.length) {
-            return rawStages
-                .map(s => {
-                    const label = stageLabel(s && s.name);
-                    if (!label) return null;
-                    return { label, count: (s.total || s.found) || null };
-                })
-                .filter(Boolean);
-        }
-        const steps = (data && data.steps) || [];
-        return steps
-            .map(s => ({ label: (s && (s.question || s.query)) || '', count: (s && s.total) || null }))
-            .filter(s => s.label);
     }
 
     function buildLoadingSkeleton(isDeepResearch) {
@@ -1411,7 +1390,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Always present: setSearchProgress() rewrites it as each stage lands.
         const note = isDeepResearch
             ? `<div class="sr-loading-note"><i class="fa-solid fa-flask fa-fade"></i> ${t('deep_research_running', 'Deep research is running, this may take up to a minute...')}</div>`
-            : `<div class="sr-loading-note"><i class="fa-solid fa-circle-notch fa-spin"></i> ${t('searching', 'Searching...')}</div>`;
+            : `<div class="sr-loading-note"><i class="fa-solid fa-circle-notch fa-spin"></i> ${t('status_searching_web', 'Searching the Web')}</div>`;
 
         return `
             <div class="search-results-layout">
@@ -1487,7 +1466,9 @@ document.addEventListener('DOMContentLoaded', () => {
     /* =========================================================
        SEARCH TAB — listings only. Every LLM answer lives in Ask AI.
        ========================================================= */
-    function renderSearchResults(data, prompt, duration, stages) {
+    /** `duration` (seconds) only once a Search-tab search has finished; listings
+     *  rendered from a chat answer, or still streaming in, show no timing. */
+    function renderSearchResults(data, prompt, duration) {
         const products = data.products || [];
         const sources = data.sources || {};
         const isDeepResearch = !!data.report;
@@ -1506,29 +1487,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // page to page; answers without a pager fall back to the cards on screen.
         const pageInfo = data.page || {};
         const resultsCount = pageInfo.pageable || pageInfo.total || products.length;
-
-        // The steps the search stream went through (cache, retrieve, rank, ...),
-        // or a deep-research answer's own steps — shown collapsed behind "Thoughts for Xs".
-        const thoughtSteps = normalizeThoughtSteps(stages, data);
-        const thoughtsLabel = duration
-            ? `${t('thoughts_for', 'Thoughts for')} ${duration}s`
-            : t('thinking_label', 'Thinking…');
-        const thoughtsRows = thoughtSteps.map(s => `
-            <li>
-                <i class="fa-solid fa-check"></i>
-                <span>${escapeHTML(s.label)}</span>
-                ${s.count ? `<span class="sr-step-count">${escapeHTML(String(s.count))}</span>` : ''}
-            </li>`).join('');
-
-        // "Thoughts for" only ever expands to the search process itself — the
-        // stage steps, nothing else.
-        const thoughtsBlock = thoughtsRows
-            ? `
-                <details class="sr-result-thoughts">
-                    <summary class="sr-result-count"><i class="fa-solid fa-chevron-down sr-thoughts-caret"></i> ${escapeHTML(thoughtsLabel)}</summary>
-                    <ol class="sr-thoughts-steps">${thoughtsRows}</ol>
-                </details>`
-            : `<span class="sr-result-count">${escapeHTML(thoughtsLabel)}</span>`;
 
         // The written answer lives here now, not in the Agent tab — always visible
         // on its own, never folded behind a click. No source list: just the summary.
@@ -1566,7 +1524,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let leftHTML = `
             <div class="sr-result-header">
                 <div class="sr-result-headline">
-                    ${thoughtsBlock}
+                    ${duration ? `<span class="sr-result-time">${escapeHTML(`${t('thoughts_for', 'Thoughts for')} ${duration}s`)}</span>` : ''}
                     ${isDeepResearch ? `<span class="sr-mode-chip"><i class="fa-solid fa-flask"></i> ${t('deep_research', 'Deep research')}</span>` : ''}
                 </div>
                 ${answerHTML}
@@ -1819,28 +1777,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /** One /chat turn: the reply, the facts behind it, its listings and the follow-ups it offers. */
-    function buildChatAnswer(data, duration) {
+    function buildChatAnswer(data) {
         const products = data.products || [];
         const citations = data.citations || [];
-
-        // Which intent the router picked and which tool ran — folded behind
-        // "Thoughts for Xs", same story the Search tab and deep research tell.
-        const processSteps = buildChatProcessSteps(data);
-        const processRows = processSteps.map(s => `
-            <li>
-                <span>${escapeHTML(s.label)}</span>
-                ${s.count ? `<span class="sr-step-count">${escapeHTML(String(s.count))}</span>` : ''}
-            </li>`).join('');
-        const thoughtsLabel = duration
-            ? `${t('thoughts_for', 'Thoughts for')} ${duration}s`
-            : t('thinking_label', 'Thinking…');
-        let html = processRows
-            ? `
-                <details class="sr-result-thoughts">
-                    <summary class="sr-result-count"><i class="fa-solid fa-chevron-down sr-thoughts-caret"></i> ${escapeHTML(thoughtsLabel)}</summary>
-                    <ol class="sr-step-timeline">${processRows}</ol>
-                </details>`
-            : '';
 
         // Real [n] markers win; the positional chips stay for answers the API
         // returned without markers in the text (a stats summary) or without a source list.
@@ -1848,7 +1787,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ? linkCitations(formatAiMessage(data.response), citations, data.citeGroup)
             : formatAiMessage(data.response) + buildCitations(data);
 
-        html += `<div class="msg-text">${body}</div>`;
+        let html = `<div class="msg-text">${body}</div>`;
 
         if (data.highlights && data.highlights.length) {
             html += `<ul class="sr-answer-list">${data.highlights.map(h => `<li>${escapeHTML(h)}</li>`).join('')}</ul>`;
@@ -1886,7 +1825,7 @@ document.addEventListener('DOMContentLoaded', () => {
             state.planned = (plan.steps || []).length;
         }
         (newSteps || []).forEach(s => {
-            if (s && (s.question || s.query)) state.steps.push(s);
+            if (s && [s.question, s.query].some(v => !isBlankValue(v))) state.steps.push(s);
         });
 
         const done = state.steps.length;
@@ -1896,8 +1835,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // a timeline, not a checklist.
         const rows = state.steps.map(s => `
             <li>
-                <span>${escapeHTML(s.question || s.query || '')}</span>
-                ${s.total ? `<span class="sr-step-count">${escapeHTML(String(s.total))}</span>` : ''}
+                <span>${escapeHTML([s.question, s.query].find(v => !isBlankValue(v)) || '')}</span>
+                ${stepCount(s.total) ? `<span class="sr-step-count">${escapeHTML(String(s.total))}</span>` : ''}
             </li>`).join('');
 
         bubble.innerHTML = `
@@ -1951,7 +1890,7 @@ document.addEventListener('DOMContentLoaded', () => {
             html += `
                 <details class="sr-answer-steps">
                     <summary>${t('research_steps', 'Research steps')} (${steps.length})</summary>
-                    <ol>${steps.map(s => `<li>${escapeHTML(s.question || s.query)}${s.total ? ` <span class="sr-step-count">${s.total}</span>` : ''}</li>`).join('')}</ol>
+                    <ol>${steps.map(s => `<li>${escapeHTML(s.question || s.query)}${stepCount(s.total) ? ` <span class="sr-step-count">${s.total}</span>` : ''}</li>`).join('')}</ol>
                 </details>
             `;
         }
@@ -1987,7 +1926,7 @@ document.addEventListener('DOMContentLoaded', () => {
             searchState = { query: answerSet.prompt, page: page.page || 1, searchId: page.search_id || '' };
             lastResponseData = answerSet.data;
             lastResponseData.prompt = answerSet.prompt;
-            renderSearchResults(answerSet.data, answerSet.prompt, null);
+            renderSearchResults(answerSet.data, answerSet.prompt);
         }
 
         // The tab switch re-renders the grid from the saved markup, so look the card up after it.

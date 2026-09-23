@@ -6,6 +6,7 @@ urlpatterns = [
     # path('search/', views.search_page, name='search_page'),
     path('api/chat/', views.chat_api, name='chat_api'),
     path('api/ai-chat/', views.ai_chat_api, name='ai_chat_api'),
+    path('api/ai-chat/intent/', views.chat_intent_api, name='chat_intent_api'),
     path('api/deep-research/', views.deep_research_api, name='deep_research_api'),
     path('api/search/stream/', views.search_stream_api, name='search_stream_api'),
     path('api/deep-research/stream/', views.deep_research_stream_api, name='deep_research_stream_api'),

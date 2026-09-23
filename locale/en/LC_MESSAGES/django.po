@@ -818,3 +818,27 @@ msgstr ""
 
 msgid "picked by the LLM"
 msgstr ""
+
+#: templates/base.html templates/chat/home.html
+msgid "Searching the Web"
+msgstr "Searching the Web"
+
+#: templates/base.html templates/chat/home.html
+msgid "Comparing"
+msgstr "Comparing"
+
+#: templates/base.html templates/chat/home.html
+msgid "Calculating statistics"
+msgstr "Calculating statistics"
+
+#: templates/base.html templates/chat/home.html
+msgid "Checking earlier results"
+msgstr "Checking earlier results"
+
+#: templates/base.html templates/chat/home.html
+msgid "Ranking matches"
+msgstr "Ranking matches"
+
+#: templates/base.html templates/chat/home.html
+msgid "Writing the answer"
+msgstr "Writing the answer"
