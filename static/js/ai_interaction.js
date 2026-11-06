@@ -1241,10 +1241,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // A plain listing request: /chat ran nothing, the Search tab takes it.
             const redirect = !isDeepResearch && data && data.redirect;
             if (response.ok && redirect && redirect.auto && redirect.to === 'search' && !data.response) {
-                const noticeDiv = document.createElement('div');
-                noticeDiv.className = 'ai-msg ai-response-msg';
-                noticeDiv.innerHTML = `<div class="msg-content"><i class="fa-solid fa-magnifying-glass"></i> ${escapeHTML(redirect.notice || t('moved_to_search', 'Showing this in Search.'))}</div>`;
-                aiChatMessages.appendChild(noticeDiv);
+                // The API no longer sends canned text: the tab just switches.
+                if (redirect.notice) {
+                    const noticeDiv = document.createElement('div');
+                    noticeDiv.className = 'ai-msg ai-response-msg';
+                    noticeDiv.innerHTML = `<div class="msg-content"><i class="fa-solid fa-magnifying-glass"></i> ${escapeHTML(redirect.notice || t('moved_to_search', 'Showing this in Search.'))}</div>`;
+                    aiChatMessages.appendChild(noticeDiv);
+                }
                 scrollToBottom();
                 if (bottomChatSendBtn) {
                     bottomChatSendBtn.disabled = false;
@@ -1338,6 +1341,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function intentStatus(intent) {
         const labels = {
             search: t('status_searching_web', 'Searching the Web'),
+            prompt: t('status_searching_web', 'Searching the Web'),
+            complex_search: t('status_searching_web', 'Searching the Web'),
             compare: t('status_comparing', 'Comparing'),
             statistics: t('status_statistics', 'Calculating statistics'),
         };

@@ -8,7 +8,6 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from .models import Conversation, Message
 import os
 from dotenv import load_dotenv
-from openai import OpenAI
 import requests
 
 load_dotenv()
@@ -20,6 +19,7 @@ SEARCH_TIMEOUT = 25
 CHAT_TIMEOUT = 60
 DEEP_RESEARCH_TIMEOUT = 180
 MEMORY_TIMEOUT = 10
+MAX_SELECTED_PRODUCTS = 4
 INTENT_TIMEOUT = 5
 
 # Cards per Search-tab page. The API caps per_page at 50.
@@ -311,6 +311,10 @@ def _chat_listings(chat, prompt):
     tool_calls = [c for c in (chat.get('tool_calls') or []) if isinstance(c, dict) and c.get('ok')]
     if not tool_calls:
         return [], None, ''
+
+    # Separate searches and hand-picked listings have no single query to re-run.
+    if any((c.get('arguments') or {}).get('queries') or c.get('name') == 'listings' for c in tool_calls):
+        return chat.get('results') or [], None, ''
 
     query = prompt
     for call in tool_calls:
@@ -809,42 +813,14 @@ def deep_research_stream_api(request):
     return _stream_response(frames())
 
 
-def _openai_answer(prompt, context_product, tagged_products):
-    """Fallback chat completion. Returns the answer, or None when OpenAI is unusable."""
-    api_key = os.getenv('openai_api')
-    if not api_key:
-        return None
-
-    system_prompt = (
-        "You are a helpful assistant for Findle AI, a smart product and real-estate discovery platform. "
-        "Help users with their queries about listings, prices and shopping. "
-        "Use Uzbek language by default if user is in Uzbekistan or asks in Uzbek."
-    )
-
-    if context_product:
-        system_prompt += "\n\nFoydalanuvchi hozirda quyidagi e'lon haqida so'rayapti (Asosiy subyekt):\n"
-        system_prompt += f"Nomi: {context_product.get('title')}\n"
-        system_prompt += f"Narxi: {context_product.get('price')} {context_product.get('currency') or ''}\n"
-        system_prompt += f"Manba: {context_product.get('site_name') or context_product.get('shop_name')}\n"
-
-    if tagged_products:
-        system_prompt += "\n\nFoydalanuvchi quyidagi e'lonlarni ham havola (reference) sifatida keltirdi:\n"
-        for i, p in enumerate(tagged_products, 1):
-            system_prompt += f"{i}. {p.get('title')} ({p.get('price')} {p.get('currency') or ''})\n"
-
-    try:
-        client = OpenAI(api_key=api_key)
-        completion = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": prompt},
-            ],
-        )
-        return completion.choices[0].message.content
-    except Exception as e:
-        print(f"[openai] chat completion failed: {e}")
-        return None
+def _selected_product_ids(context_product, tagged_products):
+    """The listings the user @-mentioned. The agent reads their real fields from the database."""
+    ids = []
+    for product in [context_product, *(tagged_products if isinstance(tagged_products, list) else [])]:
+        pid = str(product.get('product_id') or '').strip() if isinstance(product, dict) else ''
+        if pid and pid not in ids:
+            ids.append(pid)
+    return ids[:MAX_SELECTED_PRODUCTS]
 
 
 def _build_history(history):
@@ -860,7 +836,7 @@ def _build_history(history):
     return clean[-MAX_HISTORY:]
 
 
-INTENT_KINDS = ('search', 'statistics', 'compare')
+INTENT_KINDS = ('search', 'statistics', 'compare', 'prompt', 'complex_search')
 
 
 def chat_intent_api(request):
@@ -931,11 +907,11 @@ def ai_chat_api(request):
     if not prompt:
         return JsonResponse({'error': 'No prompt provided'}, status=400)
 
-    context_product = data.get('context_product')
-    tagged_products = data.get('tagged_products', [])
-
-    # 1. Findle chat — grounded in the real listing data
+    # Findle chat — grounded in the real listing data
     payload = {'message': prompt[:2000], 'history': _build_history(data.get('history'))}
+    product_ids = _selected_product_ids(data.get('context_product'), data.get('tagged_products'))
+    if product_ids:
+        payload['product_ids'] = product_ids
     # With a session the API remembers the last 10 messages itself. The replayed
     # history stays in the payload: it is the authoritative copy, and it keeps
     # the turn correct if the session has expired or the request lands on a
@@ -974,12 +950,7 @@ def ai_chat_api(request):
             'redirect': redirect,
         })
 
-    # 2. OpenAI fallback — keeps @mention questions answerable when the chat API is down
-    answer = _openai_answer(prompt, context_product, tagged_products)
-    if answer:
-        return JsonResponse({'response': answer, 'highlights': [], 'questions': [],
-                             'products': [], 'source': 'openai'})
-
+    # No grounded answer: say so. An unchecked model here could invent prices.
     return JsonResponse({'error': 'Assistant is unavailable right now.'}, status=502)
 
 @login_required
