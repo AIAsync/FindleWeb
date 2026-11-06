@@ -1286,10 +1286,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     renderSearchResults(data, searchQuery);
                     chatContainer.style.display = 'none';
 
-                    // Searching and deep research are about the listings, so hand the user straight
-                    // to them; a statistics or compare answer is the text itself, so stay put.
-                    // Fresh results start at the top, not wherever the chat thread was scrolled.
-                    if (isDeepResearch || data.intent === 'search') showSearchTab(() => scrollMainTo(0));
+                    // A prompt or a question is answered here: the reply is what the user asked for,
+                    // and the listings wait in Search behind the link under it. Deep research is
+                    // about the listings, so it still goes straight to them, starting at the top.
+                    if (isDeepResearch) showSearchTab(() => scrollMainTo(0));
                 }
             } else {
                 const errorDiv = document.createElement('div');
@@ -1795,7 +1795,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let html = `<div class="msg-text">${body}</div>`;
 
         if (data.highlights && data.highlights.length) {
-            html += `<ul class="sr-answer-list">${data.highlights.map(h => `<li>${escapeHTML(h)}</li>`).join('')}</ul>`;
+            html += `<ul class="sr-answer-list">${data.highlights.map(h => `<li>${linkCitations(escapeHTML(h), citations, data.citeGroup)}</li>`).join('')}</ul>`;
         }
         html += buildSourceList(citations);
         html += buildSuggestions(data.questions);
