@@ -4713,3 +4713,7 @@ body.dark-mode .sr-research-loadbar {
 body.dark-mode .sr-step-timeline li::after {
     background: #334155;
 }
+
+/* The Agent input's hint fades between "Ask to Task" and "Click @ to reply" */
+#chat-bottom-input::placeholder { transition: opacity 0.22s ease; opacity: 1; }
+#chat-bottom-input.placeholder-out::placeholder { opacity: 0; }

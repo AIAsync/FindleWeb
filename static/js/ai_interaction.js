@@ -309,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (aiChatContainer) aiChatContainer.style.display = 'block';
             document.body.classList.add('ask-ai-mode');
             if (bottomChatInput) {
-                bottomChatInput.placeholder = t('ask_ai_anything', 'Ask AI anything...');
+                bottomChatInput.placeholder = agentPlaceholder();
                 bottomChatInput.focus();
             }
         } else {
@@ -1129,6 +1129,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /** Agent tab — /chat by default, /deep-research while the Deep research tag is on. */
+    /** The Agent input's hint takes turns between two texts, fading between them. */
+    const AGENT_PLACEHOLDERS = [t('ask_to_task', 'Ask to Task'), t('click_at_to_reply', 'Click @ to reply')];
+    const PLACEHOLDER_EVERY_MS = 3000;
+    let agentPlaceholderIndex = 0;
+
+    function agentPlaceholder() {
+        return AGENT_PLACEHOLDERS[agentPlaceholderIndex];
+    }
+
+    setInterval(() => {
+        if (!bottomChatInput || !document.body.classList.contains('ask-ai-mode')) return;
+        agentPlaceholderIndex = (agentPlaceholderIndex + 1) % AGENT_PLACEHOLDERS.length;
+        // Text typed in: swap quietly, there is nothing to fade
+        if (bottomChatInput.value) {
+            bottomChatInput.placeholder = agentPlaceholder();
+            return;
+        }
+        bottomChatInput.classList.add('placeholder-out');
+        setTimeout(() => {
+            bottomChatInput.placeholder = agentPlaceholder();
+            bottomChatInput.classList.remove('placeholder-out');
+        }, 220);
+    }, PLACEHOLDER_EVERY_MS);
+
     async function sendAgentMessage(prompt, opts = {}) {
         if (!aiChatMessages || !prompt) return;
 
