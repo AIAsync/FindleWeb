@@ -279,7 +279,7 @@
             <button class="chat-plus-btn" id="chat-plus-btn" type="button">
                 <i class="fa-solid fa-plus"></i>
             </button>
-            <textarea id="chat-bottom-input" placeholder="{% translate 'Ask AI anything...' %}" rows="1"></textarea>
+            <textarea id="chat-bottom-input" placeholder="{% translate 'Ask to Task' %}" rows="1"></textarea>
             <button class="chat-clear-btn" id="chat-clear-btn" type="button" hidden
                 title="{% translate 'Clear conversation' %}"
                 aria-label="{% translate 'Clear conversation' %}">
@@ -586,6 +586,25 @@
         window.JS_TRANSLATIONS = {
             "ask_ai_anything": "{% translate 'Ask AI anything...' %}",
             "describe_anything": "{% translate 'Describe anything...' %}",
+            "ask_to_task": "{% translate 'Ask to Task' %}",
+            "click_at_to_reply": "{% translate 'Click @ to reply' %}",
+            "findle_ai": "{% translate 'Findle AI' %}",
+            "ai_reading": "{% translate 'Reading the listings…' %}",
+            "listings_found": "{% translate 'listings' %}",
+            "median": "{% translate 'Median' %}",
+            "range": "{% translate 'Range' %}",
+            "area": "{% translate 'Area' %}",
+            "per_sqm": "{% translate 'Per m²' %}",
+            "understood": "{% translate 'Understood' %}",
+            "to_get_closer": "{% translate 'For a closer match, tell me' %}",
+            "steps_done": "{% translate 'What I did' %}",
+            "tool_search": "{% translate 'Searched' %}",
+            "tool_statistics": "{% translate 'Calculated' %}",
+            "tool_compare": "{% translate 'Compared' %}",
+            "tool_listings": "{% translate 'Opened listings' %}",
+            "rent": "{% translate 'Rent' %}",
+            "sale": "{% translate 'Sale' %}",
+            "rooms_short": "{% translate 'rooms' %}",
             "som": "{% translate "so'm" %}",
             {# The quotes around {prompt} are literal in the text, so this one goes through escapejs — unescaped they close the JS string and take the whole table down with them. #}
             {% translate '\"{prompt}\" query returned {products_count} products from {sites_count} sites and {stores_count} stores. Prices may vary across sources — compare to find the best offer.' as search_summary_format %}
