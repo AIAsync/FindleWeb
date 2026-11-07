@@ -398,31 +398,7 @@ def _build_assist(assist):
         'questions': _llm_questions(assist.get('questions'), assist.get('source')),
         'language': assist.get('language') or '',
         'citations': _build_citations(assist.get('sources')),
-        'stats': _assist_stats(assist.get('facts')),
     }
-
-
-def _assist_stats(facts):
-    """Numbers counted over EVERY result, not just the cards on this page.
-
-    The insight card and the price panel show these, so they agree with the written answer.
-    """
-    if not isinstance(facts, dict):
-        return {}
-
-    def stat(raw):
-        if not isinstance(raw, dict) or not raw.get('count'):
-            return None
-        return {key: raw.get(key) for key in ('count', 'min', 'max', 'avg', 'median', 'unit')}
-
-    stats = {'total': facts.get('total') or 0}
-    for name in ('price', 'area', 'price_per_sqm'):
-        value = stat(facts.get(name))
-        if value:
-            stats[name] = value
-    if facts.get('transaction_type'):
-        stats['deal'] = facts['transaction_type']
-    return stats
 
 
 @ensure_csrf_cookie

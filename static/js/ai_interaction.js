@@ -309,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (aiChatContainer) aiChatContainer.style.display = 'block';
             document.body.classList.add('ask-ai-mode');
             if (bottomChatInput) {
-                bottomChatInput.placeholder = agentPlaceholder();
+                bottomChatInput.placeholder = t('ask_ai_anything', 'Ask AI anything...');
                 bottomChatInput.focus();
             }
         } else {
@@ -995,7 +995,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (event === 'results') {
                     // The whole point of streaming: listings are ready long before
                     // the written answer, so put them on screen now.
-                    data = Object.assign({}, payload, { query: prompt, assistPending: true });
+                    data = Object.assign({}, payload, { query: prompt });
                     renderSearchResults(data, prompt);
                 } else if (event === 'done') {
                     data = payload;
@@ -1129,41 +1129,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /** Agent tab — /chat by default, /deep-research while the Deep research tag is on. */
-    /** The Agent input's hint takes turns between two texts, fading between them. */
-    const AGENT_PLACEHOLDERS = [t('ask_to_task', 'Ask to Task'), t('click_at_to_reply', 'Click @ to reply')];
-    const PLACEHOLDER_EVERY_MS = 3000;
-    let agentPlaceholderIndex = 0;
-
-    function agentPlaceholder() {
-        return AGENT_PLACEHOLDERS[agentPlaceholderIndex];
-    }
-
-    setInterval(() => {
-        if (!bottomChatInput || !document.body.classList.contains('ask-ai-mode')) return;
-        agentPlaceholderIndex = (agentPlaceholderIndex + 1) % AGENT_PLACEHOLDERS.length;
-        if (bottomChatInput.value) {
-            bottomChatInput.placeholder = agentPlaceholder();
-            return;
-        }
-        bottomChatInput.classList.add('fi-placeholder-out');
-        setTimeout(() => {
-            bottomChatInput.placeholder = agentPlaceholder();
-            bottomChatInput.classList.remove('fi-placeholder-out');
-        }, 220);
-    }, PLACEHOLDER_EVERY_MS);
-
-    /** The assistant's name line on every Agent reply and on the thinking bubble. */
-    function buildAgentHeader(label, extra) {
-        return `
-            <div class="fi-agent-head">
-                <span class="fi-avatar"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
-                <span class="fi-agent-name">${escapeHTML(t('findle_ai', 'Findle AI'))}</span>
-                ${label ? `<span class="fi-agent-status">${label}</span>` : ''}
-                ${extra || ''}
-            </div>
-        `;
-    }
-
     async function sendAgentMessage(prompt, opts = {}) {
         if (!aiChatMessages || !prompt) return;
 
@@ -1215,21 +1180,8 @@ document.addEventListener('DOMContentLoaded', () => {
         thinkingDiv.className = 'ai-msg ai-response-msg thinking';
         thinkingDiv.innerHTML = isDeepResearch
             ? `<div class="msg-content"><i class="fa-solid fa-flask fa-fade"></i> ${t('deep_research_running', 'Deep research is running, this may take up to a minute...')}</div>`
-            : `<div class="msg-content fi-thinking">
-                    ${buildAgentHeader(`<span class="thinking-label">${escapeHTML(intentStatus(opts.intent))}</span>`,
-                                       '<span class="fi-agent-time" data-thinking-clock>0s</span>')}
-                    <div class="fi-dots"><span></span><span></span><span></span></div>
-               </div>`;
+            : `<div class="msg-content"><i class="fa-solid fa-ellipsis fa-fade"></i> <span class="thinking-label">${escapeHTML(intentStatus(opts.intent))}</span></div>`;
         aiChatMessages.appendChild(thinkingDiv);
-        const agentStarted = Date.now();
-        const thinkingClock = setInterval(() => {
-            const clock = thinkingDiv.querySelector('[data-thinking-clock]');
-            if (!thinkingDiv.isConnected || !clock) {
-                clearInterval(thinkingClock);
-                return;
-            }
-            clock.textContent = `${Math.floor((Date.now() - agentStarted) / 1000)}s`;
-        }, 500);
         scrollToBottom();
         if (!isDeepResearch && !opts.intent) showChatIntent(prompt, thinkingDiv);
 
@@ -1314,8 +1266,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 aiMsgDiv.className = 'ai-msg ai-response-msg';
                 const offer = redirect && !redirect.auto && redirect.to === 'search'
                     ? buildOpenInSearchButton(redirect, prompt) : '';
-                if (data) data.elapsed = ((Date.now() - agentStarted) / 1000).toFixed(1);
-                aiMsgDiv.innerHTML = `<div class="msg-content${isDeepResearch ? '' : ' fi-answer'}">${isDeepResearch ? buildDeepResearchAnswer(data) : buildChatAnswer(data)}${offer}</div>`;
+                aiMsgDiv.innerHTML = `<div class="msg-content">${isDeepResearch ? buildDeepResearchAnswer(data) : buildChatAnswer(data)}${offer}</div>`;
                 aiChatMessages.appendChild(aiMsgDiv);
 
                 chatHistory.push({ role: 'user', content: prompt }, { role: 'assistant', content: answer });
@@ -1522,97 +1473,12 @@ document.addEventListener('DOMContentLoaded', () => {
        ========================================================= */
     /** `duration` (seconds) only once a Search-tab search has finished; listings
      *  rendered from a chat answer, or still streaming in, show no timing. */
-    /** One chip per condition the search understood: "Chilanzar", "2 rooms", "Rent", "≤ 500 USD". */
-    function understoodChips(extracted) {
-        const data = extracted || {};
-        const flat = Object.assign({}, data.specs || {}, data);
-        const deal = String(flat.transaction_type || '').toLowerCase();
-        const money = (value) => `${formatPriceShort(value)} ${flat.currency || ''}`.trim();
-        const anyOf = (flat.district_any || []).length > 1 ? flat.district_any.join(' / ') : null;
-        const chips = [
-            anyOf || flat.district,
-            flat.rooms ? `${flat.rooms} ${t('rooms_short', 'rooms')}` : null,
-            flat.rooms_min && flat.rooms_max ? `${flat.rooms_min}–${flat.rooms_max} ${t('rooms_short', 'rooms')}` : null,
-            deal === 'rent' ? t('rent', 'Rent') : deal === 'sale' ? t('sale', 'Sale') : null,
-            flat.price_min && flat.price_max ? `${money(flat.price_min)} – ${money(flat.price_max)}`
-                : flat.price_max ? `≤ ${money(flat.price_max)}` : flat.price_min ? `≥ ${money(flat.price_min)}` : null,
-        ].filter(Boolean);
-        return [...new Set(chips)];
-    }
-
-    /** The numbers counted over every result, as short labelled tiles. */
-    function statTiles(stats) {
-        if (!stats || !stats.total) return '';
-        const tiles = [{ label: t('listings_found', 'listings'), value: formatCount(stats.total) }];
-        const price = stats.price;
-        if (price) {
-            tiles.push({ label: t('median', 'Median'), value: `${formatPriceShort(price.median)} ${price.unit || ''}`.trim() });
-            if (price.min !== price.max) {
-                tiles.push({ label: t('range', 'Range'), value: `${formatPriceShort(price.min)}–${formatPriceShort(price.max)}` });
-            }
-        }
-        if (stats.area && stats.area.median) {
-            tiles.push({ label: t('area', 'Area'), value: `${formatPriceShort(stats.area.median)} m²` });
-        }
-        return `<div class="fi-stats">${tiles.map(tile => `
-            <div class="fi-stat"><span class="fi-stat-value">${escapeHTML(String(tile.value))}</span>
-                 <span class="fi-stat-label">${escapeHTML(tile.label)}</span></div>`).join('')}</div>`;
-    }
-
-    /** Search tab's written answer: what was understood, the answer, its numbers and what to add. */
-    function buildSearchInsight(data, assist, citations, duration) {
-        const pending = data.assistPending && !assist.answer;
-        if (!assist.answer && !pending) return '';
-
-        const chips = understoodChips(data.extracted_data);
-        const head = `
-            <div class="fi-insight-head">
-                <span class="fi-avatar"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
-                <span class="fi-agent-name">${escapeHTML(t('findle_ai', 'Findle AI'))}</span>
-                ${duration ? `<span class="fi-agent-time">${escapeHTML(duration)}s</span>` : ''}
-            </div>
-        `;
-        const understood = chips.length ? `
-            <div class="fi-understood">
-                <span class="fi-understood-label">${escapeHTML(t('understood', 'Understood'))}</span>
-                ${chips.map(c => `<span class="fi-chip">${escapeHTML(c)}</span>`).join('')}
-            </div>` : '';
-
-        if (pending) {
-            return `<section class="fi-insight is-loading">${head}${understood}
-                <div class="fi-skeleton"><span></span><span></span><span></span></div>
-                <div class="fi-loading-label">${escapeHTML(t('ai_reading', 'Reading the listings…'))}</div>
-            </section>`;
-        }
-
-        const highlights = (assist.highlights || []).length
-            ? `<ul class="fi-highlights">${assist.highlights.map(h => `<li>${linkCitations(escapeHTML(h), citations, data.citeGroup)}</li>`).join('')}</ul>`
-            : '';
-        const questions = (assist.questions || []).length
-            ? `<div class="fi-refine"><span class="fi-refine-label">${escapeHTML(t('to_get_closer', 'For a closer match, tell me'))}</span>
-                 <ul>${assist.questions.map(q => `<li>${escapeHTML(q)}</li>`).join('')}</ul></div>`
-            : '';
-
-        return `<section class="fi-insight">${head}${understood}
-            <div class="fi-insight-text sr-search-answer">${linkCitations(formatAiMessage(escapeHTML(assist.answer)), citations, data.citeGroup)}</div>
-            ${statTiles(assist.stats)}${highlights}${questions}
-        </section>`;
-    }
-
-    /** Price panel lines from the API's own count over every result, one per currency. */
-    function statsPriceLines(stats) {
-        const price = stats && stats.price;
-        if (!price || price.min == null || price.max == null) return null;
-        return [{ label: price.unit || '', min: price.min, avg: price.avg, max: price.max }];
-    }
-
     function renderSearchResults(data, prompt, duration) {
         const products = data.products || [];
         const sources = data.sources || {};
         const isDeepResearch = !!data.report;
 
-        // Prices over every result when the API counted them, else over the cards on this page.
-        const priceLines = statsPriceLines((data.assist || {}).stats) || buildPriceLines(products);
+        const priceLines = buildPriceLines(products);
 
         const sitesCount = sources.sites_count || 0;
         const sitesLabel = sitesCount === 1 ? t('site', 'site') : t('sites', 'sites');
@@ -1636,7 +1502,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // against assist.sources — in the answer and in the highlights alike. A
         // line without markers (an average, a count) is proven by no single
         // listing, so it gets no citation rather than a guessed one.
-        const answerHTML = buildSearchInsight(data, assist, assistCitations, duration);
+        const answerHTML = assist.answer
+            ? `
+                <div class="sr-search-answer">
+                    ${linkCitations(formatAiMessage(escapeHTML(assist.answer)), assistCitations, data.citeGroup)}
+                </div>
+                ${assist.highlights && assist.highlights.length
+                    ? `<ul class="sr-answer-list">${assist.highlights.map(h => `<li>${linkCitations(escapeHTML(h), assistCitations, data.citeGroup)}</li>`).join('')}</ul>`
+                    : ''}
+            `
+            : '';
 
         // How wide the search looked, above the cards it ended up with. A single
         // district says nothing about coverage, so that one only appears when it
@@ -1653,7 +1528,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // ---- Left column: result header + one uniform grid ----
         let leftHTML = `
             <div class="sr-result-header">
-                ${isDeepResearch ? `<div class="sr-result-headline"><span class="sr-mode-chip"><i class="fa-solid fa-flask"></i> ${t('deep_research', 'Deep research')}</span></div>` : ''}
+                <div class="sr-result-headline">
+                    ${duration ? `<span class="sr-result-time">${escapeHTML(`${t('thoughts_for', 'Thoughts for')} ${duration}s`)}</span>` : ''}
+                    ${isDeepResearch ? `<span class="sr-mode-chip"><i class="fa-solid fa-flask"></i> ${t('deep_research', 'Deep research')}</span>` : ''}
+                </div>
                 ${answerHTML}
             </div>
         `;
@@ -1914,50 +1792,17 @@ document.addEventListener('DOMContentLoaded', () => {
             ? linkCitations(formatAiMessage(data.response), citations, data.citeGroup)
             : formatAiMessage(data.response) + buildCitations(data);
 
-        let html = buildAgentHeader('', data.elapsed ? `<span class="fi-agent-time">${escapeHTML(data.elapsed)}s</span>` : '');
-        html += buildWorkTrail(data.tools);
-        html += `<div class="msg-text">${body}</div>`;
+        let html = `<div class="msg-text">${body}</div>`;
 
         if (data.highlights && data.highlights.length) {
-            html += `<ul class="fi-highlights">${data.highlights.map(h => `<li>${linkCitations(escapeHTML(h), citations, data.citeGroup)}</li>`).join('')}</ul>`;
+            html += `<ul class="sr-answer-list">${data.highlights.map(h => `<li>${linkCitations(escapeHTML(h), citations, data.citeGroup)}</li>`).join('')}</ul>`;
         }
-        // Only a search or chosen listings stand behind these cards. For a number or a comparison
-        // the cards come from a broader re-run and would look like the answer's evidence.
-        const listed = (data.tools || []).some(tool => tool && tool.ok !== false && (tool.name === 'search' || tool.name === 'listings'));
-        if (listed) html += buildMiniCards(products, data.citeGroup);
         html += buildSourceList(citations);
         html += buildSuggestions(data.questions);
         if (products.length) {
             html += buildBackToSearchLink((data.sources && data.sources.total_count) || products.length);
         }
         return html;
-    }
-
-    /** What the agent did for this answer: one chip per tool, with how many listings it touched. */
-    function buildWorkTrail(tools) {
-        const icons = { search: 'fa-magnifying-glass', statistics: 'fa-chart-simple', compare: 'fa-scale-balanced', listings: 'fa-house' };
-        const done = (tools || []).filter(tool => tool && tool.ok !== false && icons[tool.name]);
-        if (!done.length) return '';
-        const chips = done.map(tool => {
-            const count = tool.total ? ` · ${formatCount(tool.total)}` : '';
-            return `<span class="fi-step"><i class="fa-solid ${icons[tool.name]}"></i>${escapeHTML(t(`tool_${tool.name}`, tool.name))}${escapeHTML(count)}</span>`;
-        }).join('');
-        return `<div class="fi-trail" title="${escapeHTML(t('steps_done', 'What I did'))}">${chips}</div>`;
-    }
-
-    /** The first listings behind an answer, right in the chat. A click opens the card in Search. */
-    function buildMiniCards(products, citeGroup) {
-        const shown = (products || []).slice(0, 4);
-        if (!shown.length) return '';
-        return `<div class="fi-mini-cards">${shown.map(p => {
-            const price = p.price ? `${formatPriceShort(p.price)} ${p.currency || ''}`.trim() : t('price_not_listed', 'Price on request');
-            const meta = [p.rooms ? `${p.rooms} ${t('rooms_short', 'rooms')}` : '', p.total_area ? `${formatPriceShort(p.total_area)} m²` : '', p.district].filter(Boolean).join(' · ');
-            return `<button type="button" class="fi-mini-card" data-cite-card="${escapeHTML(p.product_id)}" data-cite-group="${escapeHTML(citeGroup || '')}">
-                ${p.image_url ? `<img src="${escapeHTML(p.image_url)}" alt="" loading="lazy">` : '<span class="fi-mini-noimg"><i class="fa-solid fa-house"></i></span>'}
-                <span class="fi-mini-price">${escapeHTML(price)}</span>
-                <span class="fi-mini-meta">${escapeHTML(meta)}</span>
-            </button>`;
-        }).join('')}</div>`;
     }
 
     /** Follow-ups the model wrote for this answer — one click asks the next question. */
@@ -2108,12 +1953,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const cite = e.target.closest('.sr-cite');
             if (cite) {
                 focusCitedCard(cite.dataset.cite, cite.dataset.citeGroup);
-                return;
-            }
-
-            const miniCard = e.target.closest('[data-cite-card]');
-            if (miniCard) {
-                focusCitedCard(miniCard.dataset.citeCard, miniCard.dataset.citeGroup);
                 return;
             }
 
