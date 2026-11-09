@@ -1677,11 +1677,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const url = p.product_url || '';
         const title = p.title || '';
 
-        // Compact spec line: rooms · area · floor
+        // Compact spec line: rooms · area · floor. US listings (San Francisco): beds · baths · sq ft
         const specs = [];
-        if (p.rooms) specs.push(`${p.rooms} ${t('rooms_short', 'xona')}`);
-        if (p.total_area) specs.push(`${p.total_area} m²`);
-        if (p.floor) specs.push(p.total_floors ? `${p.floor}/${p.total_floors} ${t('floor_short', 'qavat')}` : `${p.floor} ${t('floor_short', 'qavat')}`);
+        const us = p.units === 'us';
+        if (us) {
+            if (p.rooms === 0) specs.push(t('studio', 'Studio'));
+            else if (p.rooms) specs.push(`${p.rooms} ${t('bd_short', 'bd')}`);
+            if (p.bathrooms) specs.push(`${p.bathrooms} ${t('ba_short', 'ba')}`);
+            if (p.area_sqft) specs.push(`${formatPrice(p.area_sqft)} ${t('sqft', 'sq ft')}`);
+        } else {
+            if (p.rooms) specs.push(`${p.rooms} ${t('rooms_short', 'xona')}`);
+            if (p.total_area) specs.push(`${p.total_area} m²`);
+            if (p.floor) specs.push(p.total_floors ? `${p.floor}/${p.total_floors} ${t('floor_short', 'qavat')}` : `${p.floor} ${t('floor_short', 'qavat')}`);
+        }
         const specsHtml = specs.length ? `<div class="sr-grid-card-specs">${specs.map(s => escapeHTML(s)).join(' · ')}</div>` : '';
 
         const location = p.who_by || p.district || p.region || '';
@@ -1697,12 +1705,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${specsHtml}
                 <div class="sr-grid-card-price-row">
                     ${priceText
-                        ? `<span class="sr-grid-card-price">${priceText} <span class="sr-price-currency">${escapeHTML(p.currency || t('som', "so'm"))}</span></span>`
+                        ? (us && p.currency === 'USD'
+                            ? `<span class="sr-grid-card-price">$${priceText}${p.monthly ? `<span class="sr-price-currency">${escapeHTML(t('per_month', '/mo'))}</span>` : ''}</span>`
+                            : `<span class="sr-grid-card-price">${priceText} <span class="sr-price-currency">${escapeHTML(p.currency || t('som', "so'm"))}</span></span>`)
                         : `<span class="sr-grid-card-price muted">${t('price_not_listed', 'Price on request')}</span>`}
                 </div>
                 <div class="sr-grid-card-footer">
                     <span class="sr-grid-card-seller">${escapeHTML(location)}</span>
-                    ${p.site_name ? `<span class="sr-grid-card-site">${escapeHTML(p.site_name)}</span>` : ''}
+                    ${p.site_name ? `<span class="sr-grid-card-site">${escapeHTML(p.site_label || p.site_name)}</span>` : ''}
                 </div>
             </div>
         `;

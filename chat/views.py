@@ -4,6 +4,7 @@ import re
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse, StreamingHttpResponse
 from django.contrib.auth.decorators import login_required
+from django.utils.translation import get_language
 from django.views.decorators.csrf import ensure_csrf_cookie
 from .models import Conversation, Message
 import os
@@ -42,13 +43,26 @@ def _clean_session_id(value):
     return value
 
 
+# The API answers in the language of the query itself; when the query carries no language
+# ("SoMa 2"), it falls back to the interface language sent here.
+_LANGUAGE_AWARE = ('/search', '/search/stream', '/chat', '/deep-research', '/deep-research/stream')
+
+
+def _with_language(path, payload):
+    if isinstance(payload, dict) and path in _LANGUAGE_AWARE and 'language' not in payload:
+        code = (get_language() or '')[:2]
+        if code in ('uz', 'ru', 'en'):
+            return {**payload, 'language': code}
+    return payload
+
+
 def _findle_post(path, payload, timeout):
     """POST to the Findle API. Returns parsed JSON or None on any failure."""
     url = f"{FINDLE_API_BASE}{path}"
     try:
         res = requests.post(
             url,
-            json=payload,
+            json=_with_language(path, payload),
             headers={'accept': 'application/json', 'Content-Type': 'application/json'},
             timeout=timeout,
         )
@@ -90,7 +104,7 @@ def _findle_stream(path, payload, timeout):
     try:
         res = requests.post(
             url,
-            json=payload,
+            json=_with_language(path, payload),
             stream=True,
             headers={'accept': 'text/event-stream', 'Content-Type': 'application/json'},
             timeout=timeout,
@@ -203,12 +217,29 @@ def _to_float(value):
         return None
 
 
+# San Francisco listings come from FindleBot: US units and the sites' own names.
+_US_REGIONS = {'San Francisco'}
+_SQFT_PER_M2 = 10.7639
+_SITE_LABELS = {
+    'craigslist_rent': 'Craigslist', 'craigslist_sublet': 'Craigslist', 'zillow_rentals': 'Zillow',
+    'padmapper': 'PadMapper', 'zumper': 'Zumper', 'zumper_buildings': 'Zumper',
+    'apartmentadvisor': 'ApartmentAdvisor', 'homefinder': 'HomeFinder', 'rentsfnow': 'RentSFNow',
+    'avalon': 'AvalonBay', 'vanguard': 'Vanguard Properties', 'coldwell': 'Coldwell Banker', 'udr': 'UDR',
+    'corcoran_icon': 'Corcoran', 'olx': 'OLX', 'birbir': 'Birbir',
+}
+
+
 def _build_title(res):
     """Rows carry their own title; describe the listing from its fields when they don't."""
     if res.get('title'):
         return res['title']
 
     structured = res.get('structured') or {}
+    if res.get('region') in _US_REGIONS:
+        rooms = structured.get('rooms')
+        kind = 'Studio' if rooms == 0 else (f"{rooms} bd apartment" if rooms else 'Apartment')
+        place = res.get('address') or res.get('district') or res.get('region') or ''
+        return f"{kind} · {place}" if place else kind
     parts = []
     if res.get('property_type'):
         parts.append(res['property_type'])
@@ -233,6 +264,9 @@ def _build_card(res):
     district = res.get('district') or ''
     region = res.get('region') or ''
     location = ', '.join(p for p in (district, region) if p)
+    us = region in _US_REGIONS
+    area = _to_float(res.get('total_area'))
+    site_name = res.get('site_name') or ''
 
     return {
         'product_id': str(res.get('product_id') or ''),
@@ -252,6 +286,12 @@ def _build_card(res):
         'property_type': res.get('property_type') or '',
         'transaction_type': res.get('transaction_type') or '',
         'total_area': res.get('total_area'),
+        # US listings: square feet, bedrooms and baths, monthly rent
+        'units': 'us' if us else 'metric',
+        'area_sqft': round(area * _SQFT_PER_M2) if us and area else None,
+        'bathrooms': structured.get('bathrooms'),
+        'monthly': res.get('transaction_type') == 'Rent' and (structured.get('rent_period') or 'monthly') == 'monthly',
+        'site_label': _SITE_LABELS.get(site_name, site_name),
         'rooms': structured.get('rooms'),
         'floor': structured.get('floor'),
         'total_floors': structured.get('total_floors'),
