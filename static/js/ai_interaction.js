@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatFileInput = document.getElementById('chat-attach-file-input');
     
     const topSearchContainer = document.getElementById('top-search-container');
-    const searchTabs = document.querySelectorAll('#tab-all, #tab-fast-answer, #tab-alert');
+    const searchTabs = document.querySelectorAll('#tab-all, #tab-fast-answer, #tab-map, #tab-alert');
 
     console.log('DOM Elements found:', { chatContainer, mainContent, userInput, sendBtn, bottomChatContainer });
 
@@ -436,7 +436,14 @@ document.addEventListener('DOMContentLoaded', () => {
             searchTabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
 
-            if (id === 'tab-fast-answer') {
+            if (id !== 'tab-map' && window.FindleMap) window.FindleMap.hide();
+
+            if (id === 'tab-map') {
+                // The last search on a map; the search bar stays, a new search redraws it here
+                setChatMode(false);
+                if (chatContainer) chatContainer.style.display = 'none';
+                if (window.FindleMap) window.FindleMap.show(mapContext());
+            } else if (id === 'tab-fast-answer') {
                 tab.classList.remove('has-unread');
                 setChatMode(true);
             } else if (id === 'tab-alert') {
@@ -623,6 +630,17 @@ document.addEventListener('DOMContentLoaded', () => {
     /** Going home starts the workspace over. Everything tied to the last visit
      *  goes — the results, the query, the plus-menu tags, the tab that was open
      *  — and only the Agent thread carries across. */
+    /** What the Map tab draws: the search behind the Search tab (its id pins the ranked list). */
+    function mapContext() {
+        const data = lastResponseData || {};
+        return {
+            searchId: searchState.searchId || '',
+            query: searchState.query || '',
+            products: data.products || [],
+            near: (data.extracted_data && data.extracted_data.near) || [],
+        };
+    }
+
     function resetWorkspace() {
         // Leave Ask-AI mode first: .bottom-chat-container is fixed to the
         // viewport and lives outside #app-view, so hiding the app view does
@@ -639,6 +657,10 @@ document.addEventListener('DOMContentLoaded', () => {
         allTabContent = '';
         searchState = { query: '', page: 1, searchId: '' };
         lastResponseData = null;
+        if (window.FindleMap) {
+            window.FindleMap.reset();
+            window.FindleMap.hide();
+        }
         selectedMentionProduct = null;
         if (replyContext) replyContext.classList.remove('active');
         hideMentionPopup();
@@ -946,8 +968,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const isNewQuery = page === 1 || prompt !== searchState.query;
         if (isNewQuery) searchState = { query: prompt, page: 1, searchId: '' };
 
+        // A search typed on the Map tab stays on the map: it redraws when the results are in
+        const mapTab = document.getElementById('tab-map');
+        const onMap = Boolean(mapTab && mapTab.classList.contains('active'));
         const tabAll = document.getElementById('tab-all');
-        if (tabAll && !tabAll.classList.contains('active')) tabAll.click();
+        if (!onMap && tabAll && !tabAll.classList.contains('active')) tabAll.click();
         const previousHTML = chatContainer.innerHTML;
 
         if (sendBtn) {
@@ -1034,6 +1059,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // final counts and the time the search took. `rendered` only tells us the grid is
             // already up, so this never flashes an empty state.
             renderSearchResults(data, prompt, duration);
+            if (onMap) {
+                // The Search tab shows these results when the user goes back to it
+                allTabContent = chatContainer.innerHTML;
+                if (window.FindleMap) window.FindleMap.show(mapContext());
+            }
         } catch (error) {
             console.error('Search error:', error);
             chatContainer.innerHTML = `<div class="sr-error"><i class="fa-solid fa-triangle-exclamation"></i> ${escapeHTML(error.message || t('something_went_wrong', 'Sorry, something went wrong.'))}</div>`;
@@ -1671,6 +1701,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /* Every card is the same width and height — a plain grid, no featured row. */
+    function formatDistance(meters) {
+        return meters >= 1000 ? `${(meters / 1000).toFixed(1)} km` : `${Math.round(meters)} m`;
+    }
+
     function buildGridCard(p) {
         const priceText = p.price ? formatPrice(p.price) : '';
         const imgSrc = p.image_url || '';
@@ -1691,6 +1725,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (p.floor) specs.push(p.total_floors ? `${p.floor}/${p.total_floors} ${t('floor_short', 'qavat')}` : `${p.floor} ${t('floor_short', 'qavat')}`);
         }
         const specsHtml = specs.length ? `<div class="sr-grid-card-specs">${specs.map(s => escapeHTML(s)).join(' · ')}</div>` : '';
+        // Measured on the map: the distance the search asked about, otherwise the nearest metro
+        const measured = (p.geo_match || []).find(m => m.distance_m != null);
+        const metroText = measured
+            ? `${measured.name} · ${formatDistance(measured.distance_m)}`
+            : (p.metro && p.metro_m != null ? `${p.metro} · ${formatDistance(p.metro_m)}` : '');
+        const metroHtml = metroText
+            ? `<div class="card-metro"><i class="fa-solid ${measured && measured.kind !== 'transit' ? 'fa-ruler-horizontal' : 'fa-train-subway'}"></i>${escapeHTML(metroText)}</div>`
+            : '';
 
         const location = p.who_by || p.district || p.region || '';
 
@@ -1703,6 +1745,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="sr-grid-card-body">
                 <div class="sr-grid-card-title">${escapeHTML(title)}</div>
                 ${specsHtml}
+                ${metroHtml}
                 <div class="sr-grid-card-price-row">
                     ${priceText
                         ? (us && p.currency === 'USD'

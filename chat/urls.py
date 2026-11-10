@@ -9,6 +9,9 @@ urlpatterns = [
     path('api/ai-chat/intent/', views.chat_intent_api, name='chat_intent_api'),
     path('api/deep-research/', views.deep_research_api, name='deep_research_api'),
     path('api/search/stream/', views.search_stream_api, name='search_stream_api'),
+    # Map tab: the located listings of a search and the rail stations layer
+    path('api/geo/search/<str:search_id>/', views.geo_search_api, name='geo_search_api'),
+    path('api/geo/stations/', views.geo_stations_api, name='geo_stations_api'),
     path('api/deep-research/stream/', views.deep_research_stream_api, name='deep_research_stream_api'),
     # Above the /api/chat/<int:chat_id>/ routes below, which would otherwise not
     # match a session id anyway — kept adjacent so the ordering stays obvious.

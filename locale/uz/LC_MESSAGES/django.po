@@ -858,3 +858,75 @@ msgstr "Natijalar saralanmoqda"
 #: templates/base.html templates/chat/home.html
 msgid "Writing the answer"
 msgstr "Javob yozilmoqda"
+
+#: templates/base.html templates/chat/home.html
+msgid "Map"
+msgstr "Xarita"
+
+#: templates/chat/_map_view.html
+msgid "Stations"
+msgstr "Bekatlar"
+
+#: templates/chat/_map_view.html
+msgid "listings on the map"
+msgstr "ta e'lon xaritada"
+
+#: templates/chat/_map_view.html
+msgid "of {total}"
+msgstr "jami {total}"
+
+#: templates/chat/_map_view.html
+msgid "Search for a home — the results will appear on this map."
+msgstr "Uy qidiring — natijalar shu xaritada ko'rinadi."
+
+#: templates/chat/_map_view.html
+msgid "Loading the map…"
+msgstr "Xarita yuklanmoqda…"
+
+#: templates/chat/_map_view.html
+msgid "Showing this page only — run the search again for all results."
+msgstr "Faqat shu sahifa ko'rsatilmoqda — hammasi uchun qayta qidiring."
+
+#: templates/chat/_map_view.html
+msgid "The map could not be loaded."
+msgstr "Xaritani yuklab bo'lmadi."
+
+#: templates/chat/_map_view.html
+msgid "Open listing"
+msgstr "E'lonni ochish"
+
+#: templates/chat/_map_view.html
+msgid "min walk"
+msgstr "daqiqa piyoda"
+
+#: templates/chat/_map_view.html
+msgid "{place} · within {distance}"
+msgstr "{place} · {distance} ichida"
+
+#: templates/chat/_map_view.html
+msgid "approximate location"
+msgstr "taxminiy joylashuv"
+
+#: templates/chat/_map_view.html
+msgid "Address unknown — distance not measured"
+msgstr "Manzil noma'lum — masofa o'lchanmadi"
+
+#: templates/base.html templates/chat/home.html
+msgid "Studio"
+msgstr "Studiya"
+
+#: templates/base.html templates/chat/home.html
+msgid "bd"
+msgstr "yotoq"
+
+#: templates/base.html templates/chat/home.html
+msgid "ba"
+msgstr "hammom"
+
+#: templates/base.html templates/chat/home.html
+msgid "sq ft"
+msgstr "kv fut"
+
+#: templates/base.html templates/chat/home.html
+msgid "/mo"
+msgstr "/oy"

@@ -18,6 +18,9 @@
     <link rel="stylesheet" href="{% static 'css/alerts.css' %}">
     <link rel="stylesheet" href="{% static 'css/monitoring.css' %}">
     <link rel="stylesheet" href="{% static 'css/mobile_responsive.css' %}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+    <link rel="stylesheet" href="{% static 'css/map.css' %}">
 </head>
 
 <body class="landing-page">
@@ -107,6 +110,9 @@
                         </a>
                         <a href="#" class="search-tab" id="landing-tab-fast-answer" data-tab="fast-answer">
                             <i class="fa-solid fa-bolt"></i> {% translate "Agent" %}
+                        </a>
+                        <a href="#" class="search-tab" id="landing-tab-map" data-tab="map">
+                            <i class="fa-solid fa-map-location-dot"></i> {% translate "Map" %}
                         </a>
                         <a href="#" class="search-tab auth-required" id="landing-tab-alert" data-tab="alert">
                             <i class="fa-solid fa-bell"></i> {% translate "Alerts" %}
@@ -207,6 +213,9 @@
                         <a href="#" class="search-tab" id="tab-fast-answer">
                             <i class="fa-solid fa-bolt"></i> {% translate "Agent" %}
                         </a>
+                        <a href="#" class="search-tab" id="tab-map">
+                            <i class="fa-solid fa-map-location-dot"></i> {% translate "Map" %}
+                        </a>
                         <a href="#" class="search-tab auth-required" id="tab-alert">
                             <i class="fa-solid fa-bell"></i> {% translate "Alerts" %}
                         </a>
@@ -259,6 +268,7 @@
                     </div>
                 </div>
                 <div class="chat-container" id="chat-container"></div>
+                {% include "chat/_map_view.html" %}
                 <div class="chat-container ai-chat-mode-container" id="ai-chat-container" style="display: none;">
                     <div id="ai-chat-messages" class="ai-chat-messages">
                         <div class="ai-chat-welcome">
@@ -683,6 +693,9 @@
         };
     </script>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="{% static 'js/results_map.js' %}"></script>
     <script src="{% static 'js/ai_interaction.js' %}"></script>
     <script src="{% static 'js/search_bar.js' %}"></script>
     <script>
@@ -765,7 +778,7 @@
                     }
 
                     // If search query, trigger it on whichever tab the user came in on
-                    if (query && tabId === 'tab-all') {
+                    if (query && (tabId === 'tab-all' || tabId === 'tab-map')) {
                         setTimeout(() => {
                             const sendBtn = document.getElementById('send-btn');
                             if (sendBtn) {
@@ -813,7 +826,7 @@
                     }
 
                     // Reset landing tabs
-                    const landingTabs = document.querySelectorAll('#landing-tab-all, #landing-tab-fast-answer, #landing-tab-alert');
+                    const landingTabs = document.querySelectorAll('#landing-tab-all, #landing-tab-fast-answer, #landing-tab-map, #landing-tab-alert');
                     landingTabs.forEach(t => t.classList.remove('active'));
                     const allTab = document.getElementById('landing-tab-all');
                     if (allTab) allTab.classList.add('active');
@@ -839,7 +852,7 @@
             window.showLandingView = showLandingView;
 
             // Landing tab click handlers
-            const landingTabs = document.querySelectorAll('#landing-tab-all, #landing-tab-fast-answer, #landing-tab-alert');
+            const landingTabs = document.querySelectorAll('#landing-tab-all, #landing-tab-fast-answer, #landing-tab-map, #landing-tab-alert');
             landingTabs.forEach(tab => {
                 tab.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -854,6 +867,9 @@
 
                     if (tabName === 'fast-answer') {
                         showAppView('tab-fast-answer', query);
+                    } else if (tabName === 'map') {
+                        // The map opens even before a search: San Francisco with its stations
+                        showAppView('tab-map', query);
                     } else if (tabName === 'alert') {
                         showAppView('tab-alert', query);
                     } else if (tabName === 'all' && query) {
@@ -876,11 +892,12 @@
 
                 // Determine which tab is active
                 const activeTab = document.querySelector('#landing-tab-all, #landing-tab-fast-answer, #landing-tab-alert');
-                const activeLandingTab = document.querySelector('#landing-tab-all.active, #landing-tab-fast-answer.active, #landing-tab-alert.active');
+                const activeLandingTab = document.querySelector('#landing-tab-all.active, #landing-tab-fast-answer.active, #landing-tab-map.active, #landing-tab-alert.active');
                 let tabId = 'tab-all';
                 if (activeLandingTab) {
                     const tabName = activeLandingTab.getAttribute('data-tab');
                     if (tabName === 'fast-answer') tabId = 'tab-fast-answer';
+                    else if (tabName === 'map') tabId = 'tab-map';
                     else if (tabName === 'alert') tabId = 'tab-alert';
                 }
 

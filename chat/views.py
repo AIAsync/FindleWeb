@@ -81,6 +81,25 @@ def _findle_post(path, payload, timeout):
         return None
 
 
+def _findle_get(path, timeout, params=None):
+    """GET from the Findle API. Returns (parsed JSON or None, HTTP status; 0 when unreachable)."""
+    url = f"{FINDLE_API_BASE}{path}"
+    try:
+        res = requests.get(url, params=params, headers={'accept': 'application/json'}, timeout=timeout)
+    except Exception as e:
+        print(f"[findle-api] GET {url} failed: {e}")
+        return None, 0
+    if res.status_code != 200:
+        if res.status_code != 404:
+            print(f"[findle-api] GET {url} returned HTTP {res.status_code}: {res.text[:200]}")
+        return None, res.status_code
+    try:
+        return res.json(), 200
+    except ValueError as e:
+        print(f"[findle-api] GET {url} returned non-JSON body: {e}")
+        return None, 502
+
+
 def _findle_delete(path, timeout):
     """DELETE against the Findle API. Returns (ok, status_code)."""
     url = f"{FINDLE_API_BASE}{path}"
@@ -296,7 +315,35 @@ def _build_card(res):
         'floor': structured.get('floor'),
         'total_floors': structured.get('total_floors'),
         'listed_at': res.get('listed_at') or '',
+        **_card_geo(res),
     }
+
+
+def _card_geo(res):
+    """Where the listing is on the map: point, neighborhood, nearest metro and the measured distances."""
+    geo = res.get('geo') if isinstance(res.get('geo'), dict) else {}
+    metro = (geo.get('transit') or {}).get('metro') if isinstance(geo.get('transit'), dict) else None
+    return {
+        'lat': _to_float(geo.get('lat')),
+        'lon': _to_float(geo.get('lon')),
+        'neighborhood': geo.get('neighborhood') or '',
+        'metro': _station_text(metro) if isinstance(metro, dict) else '',
+        'metro_m': metro.get('distance_m') if isinstance(metro, dict) else None,
+        'geo_match': [
+            {'name': m.get('name') or '', 'distance_m': m.get('distance_m'), 'walk_min': m.get('walk_min'),
+             'kind': m.get('kind') or ''}
+            for m in (res.get('geo_match') or []) if isinstance(m, dict)
+        ],
+    }
+
+
+_MODE_LABELS = {'bart': 'BART', 'muni_metro': 'Muni Metro', 'caltrain': 'Caltrain'}
+
+
+def _station_text(item):
+    modes = item.get('modes') or [item.get('mode') or '']
+    labels = [_MODE_LABELS[m] for m in modes if m in _MODE_LABELS]
+    return f"{item.get('name') or ''} ({' / '.join(labels)})" if labels else (item.get('name') or '')
 
 
 def _build_cards(results):
@@ -665,6 +712,91 @@ def chat_memory_api(request, session_id):
         return JsonResponse({'messages': messages or [], 'supported': True})
 
     return JsonResponse({'error': 'Invalid request'}, status=405)
+
+
+# ── Map tab ──────────────────────────────────────────────────────────────────
+
+MAP_TIMEOUT = 10
+MAP_POINTS = 300
+_SEARCH_ID_OK = re.compile(r'^[A-Za-z0-9]{6,64}$')
+_stations_cache = {'at': 0.0, 'data': None}
+_STATIONS_TTL = 3600
+
+
+def _map_point(point):
+    """One listing on the map: the popup shows the same facts as the result card."""
+    region = 'San Francisco'
+    rooms = point.get('rooms')
+    area = _to_float(point.get('total_area'))
+    site_name = point.get('site_name') or ''
+    title = point.get('title') or _build_title({
+        'region': region, 'structured': {'rooms': rooms}, 'address': point.get('address'),
+        'district': point.get('district'), 'product_id': point.get('product_id'),
+    })
+    return {
+        'product_id': point.get('product_id') or '',
+        'lat': _to_float(point.get('lat')),
+        'lon': _to_float(point.get('lon')),
+        'approximate': bool(point.get('approximate')),
+        'title': title,
+        'price': _to_float(point.get('price')),
+        'currency': point.get('currency') or '',
+        'monthly': point.get('transaction_type') == 'Rent',
+        'rooms': rooms,
+        'bathrooms': point.get('bathrooms'),
+        'area_sqft': round(area * _SQFT_PER_M2) if area else None,
+        'district': point.get('district') or '',
+        'neighborhood': point.get('neighborhood') or '',
+        'address': point.get('address') or '',
+        'metro': (point.get('metro') or {}).get('name') or '',
+        'metro_m': (point.get('metro') or {}).get('distance_m'),
+        'geo_match': point.get('geo_match') or [],
+        'product_url': point.get('product_url') or None,
+        'image_url': point.get('image_url') or None,
+        'site_label': _SITE_LABELS.get(site_name, site_name),
+    }
+
+
+def geo_search_api(request, search_id):
+    """Map tab: every located listing of a search (by search_id), its distance conditions and bounds."""
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Invalid request'}, status=400)
+    if not _SEARCH_ID_OK.match(search_id or ''):
+        return JsonResponse({'error': 'Invalid search id'}, status=400)
+    data, status = _findle_get(f'/geo/search/{search_id}', MAP_TIMEOUT, {'limit': MAP_POINTS})
+    if data is None:
+        # 404: the API keeps a search for a few minutes; the map then falls back to the cards on screen.
+        return JsonResponse({'error': 'expired' if status == 404 else 'unavailable'},
+                            status=404 if status == 404 else 502)
+    return JsonResponse({
+        'points': [_map_point(p) for p in data.get('points') or [] if isinstance(p, dict)],
+        'near': data.get('near') or [],
+        'total': data.get('total') or 0,
+        'shown': data.get('shown') or 0,
+        'located': data.get('located') or 0,
+        'bounds': data.get('bounds'),
+    })
+
+
+def geo_stations_api(request):
+    """Rail stations for the map layer. They change with the city's map, so an hour of caching is plenty."""
+    import time
+
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Invalid request'}, status=400)
+    now = time.time()
+    if _stations_cache['data'] is not None and now - _stations_cache['at'] < _STATIONS_TTL:
+        return JsonResponse(_stations_cache['data'])
+    data, _status = _findle_get('/geo/stations', MAP_TIMEOUT, {'modes': 'bart,muni_metro,caltrain'})
+    if data is None:
+        return JsonResponse({'stations': []}, status=502)
+    shaped = {'stations': [
+        {'name': s.get('name') or '', 'mode': s.get('mode') or '', 'lines': s.get('lines') or [],
+         'lat': _to_float(s.get('lat')), 'lon': _to_float(s.get('lon'))}
+        for s in data.get('stations') or [] if isinstance(s, dict)
+    ]}
+    _stations_cache.update(at=now, data=shaped)
+    return JsonResponse(shaped)
 
 
 def _stream_response(generator):

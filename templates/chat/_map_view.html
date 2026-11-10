@@ -1,0 +1,31 @@
+{% load i18n %}
+{# Map tab: search results on a San Francisco map (static/js/results_map.js). Shared by home.html and search.html. #}
+<section class="map-view" id="map-view" hidden aria-label="{% translate 'Map' %}">
+    <div class="map-toolbar">
+        <div class="map-status" id="map-status"></div>
+        <div class="map-legend">
+            <span style="--dot:#1d4ed8">BART</span>
+            <span style="--dot:#dc2626">Muni Metro</span>
+            <span style="--dot:#475569">Caltrain</span>
+            <label class="map-layer-toggle">
+                <input type="checkbox" id="map-stations-toggle"> {% translate "Stations" %}
+            </label>
+        </div>
+    </div>
+    <div id="results-map"></div>
+</section>
+<script>
+    window.MAP_TRANSLATIONS = {
+        "map_on_map": "{% translate 'listings on the map' %}",
+        "map_of_total": "{% translate 'of {total}' %}",
+        "map_empty": "{% translate 'Search for a home — the results will appear on this map.' %}",
+        "map_loading": "{% translate 'Loading the map…' %}",
+        "map_expired": "{% translate 'Showing this page only — run the search again for all results.' %}",
+        "map_unavailable": "{% translate 'The map could not be loaded.' %}",
+        "map_open": "{% translate 'Open listing' %}",
+        "map_walk": "{% translate 'min walk' %}",
+        "map_within_format": "{% translate '{place} · within {distance}' %}",
+        "map_approx": "{% translate 'approximate location' %}",
+        "map_unresolved": "{% translate 'Address unknown — distance not measured' %}"
+    };
+</script>
