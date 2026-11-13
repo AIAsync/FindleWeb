@@ -239,6 +239,11 @@
                     L.polygon(item.anchor.shape.map(ring => ring.map(pt => [pt[1], pt[0]])), {
                         color: '#16a34a', weight: 2, fillColor: '#22c55e', fillOpacity: 0.12,
                     }).addTo(nearLayer);
+                } else if (Array.isArray(item.anchor.line) && item.anchor.line.length) {
+                    // A street: the distance is to the street itself, not to a point in its middle
+                    item.anchor.line.forEach(part => L.polyline(part.map(pt => [pt[1], pt[0]]), {
+                        color: '#2563eb', weight: 6, opacity: 0.55, lineCap: 'round',
+                    }).bindTooltip(esc(item.anchor.label)).addTo(nearLayer));
                 } else if (radius) {
                     L.circle([item.anchor.lat, item.anchor.lon], {
                         radius, color: '#2563eb', weight: 1.5, fillColor: '#3b82f6', fillOpacity: 0.06, dashArray: '6 6',
@@ -254,7 +259,10 @@
                     }).addTo(nearLayer));
                 }
             }
-            if (radius) {
+            if (item.relation === 'on') {
+                const text = tr('map_on_street_format', '{place} · on this street').replace('{place}', label);
+                notes.push(`<span class="map-chip"><i class="fa-solid fa-road"></i> ${esc(text)}</span>`);
+            } else if (radius) {
                 const text = tr('map_within_format', '{place} · within {distance}')
                     .replace('{place}', label).replace('{distance}', distance(radius));
                 notes.push(`<span class="map-chip"><i class="fa-solid fa-ruler-horizontal"></i> ${esc(text)}</span>`);

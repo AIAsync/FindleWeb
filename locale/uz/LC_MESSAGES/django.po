@@ -904,6 +904,10 @@ msgid "{place} · within {distance}"
 msgstr "{place} · {distance} ichida"
 
 #: templates/chat/_map_view.html
+msgid "{place} · on this street"
+msgstr "{place} · shu ko'chada"
+
+#: templates/chat/_map_view.html
 msgid "approximate location"
 msgstr "taxminiy joylashuv"
 
