@@ -23,3 +23,24 @@ class Message(models.Model):
 
     def __str__(self):
         return f"{self.role}: {self.content[:50]}"
+
+
+def _alert_owner_key():
+    import secrets
+
+    return secrets.token_urlsafe(24)
+
+
+class AlertOwner(models.Model):
+    """The key that owns a user's alerts in the Findle API.
+
+    The API does not know Django users: alerts there belong to an opaque key, sent in the
+    X-Alert-Owner header. A random key per user, not the user id, so nobody can read another
+    user's alerts by guessing a number.
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='alert_owner')
+    key = models.CharField(max_length=64, unique=True, default=_alert_owner_key)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} alerts"

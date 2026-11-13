@@ -935,3 +935,309 @@ body.dark-mode .alerts-empty-hint i {
         border-bottom-color: #334155;
     }
 }
+
+/* ===================== SERVER ALERTS (static/js/alerts.js) ===================== */
+
+/* Unread number on the Alerts tab */
+.alert-tab-badge {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+}
+
+/* New alert form at the top of the list */
+.alert-new-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 0 12px;
+}
+
+.alert-new-input {
+    width: 100%;
+    box-sizing: border-box;
+    resize: vertical;
+    min-height: 56px;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #fff;
+    color: #1e293b;
+    font: inherit;
+    font-size: 0.9rem;
+    outline: none;
+}
+
+.alert-new-input:focus {
+    border-color: var(--primary, #6366f1);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.alert-new-btn {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 14px;
+    background: var(--primary, #6366f1);
+    color: #fff;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.alert-new-btn:disabled {
+    opacity: 0.6;
+    cursor: progress;
+}
+
+.alert-new-error,
+.alert-edit-error {
+    font-size: 0.82rem;
+    color: #b91c1c;
+    background: #fef2f2;
+    border-radius: 8px;
+    padding: 8px 10px;
+    line-height: 1.4;
+}
+
+.alerts-list-empty {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+.alerts-list-empty i {
+    font-size: 1.5rem;
+    opacity: 0.5;
+    margin-bottom: 0.5rem;
+}
+
+.alerts-list-empty p {
+    margin: 0.25rem 0;
+    font-weight: 600;
+    color: #475569;
+}
+
+/* Conditions: how the description was understood */
+.alert-item-chips,
+.alert-conditions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin: 4px 0 6px;
+}
+
+.alert-conditions {
+    margin: 10px 0 4px;
+}
+
+.alert-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #3730a3;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.alert-conditions .alert-chip {
+    font-size: 0.82rem;
+}
+
+.alert-chip-label {
+    color: #6366f1;
+}
+
+.alert-ignored,
+.alert-preview-note {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin-top: 6px;
+    line-height: 1.45;
+}
+
+.alert-unread-badge {
+    flex-shrink: 0;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 10px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 20px;
+    text-align: center;
+}
+
+.alert-item.paused .alert-item-prompt,
+.alert-item.paused .alert-chip {
+    opacity: 0.6;
+}
+
+.alert-status-paused {
+    color: #b45309;
+}
+
+.alert-detail-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.alert-detail-meta-item.alert-on i {
+    color: #16a34a;
+}
+
+.alert-detail-meta-item.alert-off i {
+    color: #b45309;
+}
+
+#alert-toggle-btn {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.alert-action-btn-delete.confirm {
+    background: #ef4444;
+    color: #fff;
+}
+
+/* New listings */
+.alert-products-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.75rem;
+}
+
+.alert-products-empty {
+    color: #64748b;
+    font-size: 0.88rem;
+    padding: 1.5rem 0;
+}
+
+.alert-products-empty i {
+    margin-right: 6px;
+}
+
+.alert-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.alert-card.unseen .sr-grid-card {
+    border-color: #a5b4fc;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.12);
+}
+
+.alert-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.72rem;
+    color: #94a3b8;
+    padding: 0 2px;
+}
+
+.alert-new-dot {
+    color: #4f46e5;
+    font-weight: 700;
+}
+
+.alert-load-more {
+    margin-top: 1rem;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    border-radius: 10px;
+    padding: 8px 16px;
+    font: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+/* Feedback after the bell button */
+.alert-toast {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 10000;
+    max-width: min(420px, calc(100vw - 40px));
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 18px;
+    border-radius: 10px;
+    color: #fff;
+    font-weight: 500;
+    line-height: 1.45;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    transition: opacity 0.4s ease;
+}
+
+.alert-toast i {
+    margin-top: 3px;
+}
+
+.alert-toast-success {
+    background: #10b981;
+}
+
+.alert-toast-error {
+    background: #dc2626;
+}
+
+.alert-toast.hide {
+    opacity: 0;
+}
+
+body.dark-mode .alert-new-input,
+body.dark-mode .alert-load-more {
+    background: #1e293b;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+body.dark-mode .alert-chip {
+    background: #312e81;
+    color: #e0e7ff;
+}
+
+body.dark-mode .alert-chip-label {
+    color: #a5b4fc;
+}
+
+body.dark-mode .alert-products-title,
+body.dark-mode .alerts-list-empty p {
+    color: #e2e8f0;
+}
+
+body.dark-mode #alert-toggle-btn {
+    background: #334155;
+    color: #e2e8f0;
+}
+
+body.dark-mode .alert-new-error,
+body.dark-mode .alert-edit-error {
+    background: #450a0a;
+    color: #fecaca;
+}

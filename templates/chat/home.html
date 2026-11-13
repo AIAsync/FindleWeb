@@ -683,7 +683,36 @@
             "alert_turned_on": "{% translate 'Alert turned on for' %}",
             "file_prefix": "{% translate 'File' %}",
             "filter": "{% translate 'Filter' %}",
-            "delete_alert_confirm": "{% translate 'Delete this alert?' %}"
+            "delete_alert_confirm": "{% translate 'Delete this alert?' %}",
+            "my_alerts": "{% translate 'My alerts' %}",
+            "alerts_subtitle": "{% translate 'New listings that match your description' %}",
+            "alert_new_placeholder": "{% translate 'e.g. 2 bedroom in Mission under $4000' %}",
+            "alert_create": "{% translate 'Create alert' %}",
+            "alert_describe_first": "{% translate 'Describe what you are looking for first.' %}",
+            "alert_save_failed": "{% translate 'Could not save the alert.' %}",
+            "alert_saved": "{% translate 'Alert saved. New matching listings will appear in Alerts.' %}",
+            "alert_matching_now": "{% translate 'Matching now:' %}",
+            "alert_only_new": "{% translate 'You will be told only about listings that appear from now on.' %}",
+            "alerts_how": "{% translate 'Describe a listing above, or press the bell next to the search box.' %}",
+            "alert_paused": "{% translate 'Paused' %}",
+            "alert_waiting": "{% translate 'Waiting for new listings' %}",
+            "alerts_empty_title": "{% translate 'Get told about new listings' %}",
+            "alerts_empty_text": "{% translate 'Write what you are looking for. When a newly found listing matches it, it appears here and the Alerts tab shows a number.' %}",
+            "alerts_unavailable": "{% translate 'Alerts are unavailable right now. Try again later.' %}",
+            "alert_edit": "{% translate 'Edit description' %}",
+            "alert_matches": "{% translate 'Matches' %}",
+            "alert_active": "{% translate 'Active' %}",
+            "alert_conditions_title": "{% translate 'How the description was understood' %}",
+            "alert_ignored": "{% translate 'Not used as conditions:' %}",
+            "alert_pause": "{% translate 'Pause' %}",
+            "alert_resume": "{% translate 'Resume' %}",
+            "alert_search_now": "{% translate 'Search now' %}",
+            "alert_new_listings": "{% translate 'New listings' %}",
+            "alert_no_listings": "{% translate 'No new matching listings yet. They will appear here as soon as they are found.' %}",
+            "alert_load_more": "{% translate 'Show more' %}",
+            "alert_new": "{% translate 'New' %}",
+            "alerts_sign_in": "{% translate 'Sign in to use alerts' %}",
+            "alert_unread_title": "{% translate 'New matching listings' %}"
         };
         window.t = function(key, defaultVal) {
             if (window.JS_TRANSLATIONS && window.JS_TRANSLATIONS[key] !== undefined) {
@@ -696,6 +725,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="{% static 'js/results_map.js' %}"></script>
+    <script src="{% static 'js/alerts.js' %}"></script>
     <script src="{% static 'js/ai_interaction.js' %}"></script>
     <script src="{% static 'js/search_bar.js' %}"></script>
     <script>

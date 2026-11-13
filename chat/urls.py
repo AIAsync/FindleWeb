@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from . import alerts, views
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -12,6 +12,12 @@ urlpatterns = [
     # Map tab: the located listings of a search and the rail stations layer
     path('api/geo/search/<str:search_id>/', views.geo_search_api, name='geo_search_api'),
     path('api/geo/stations/', views.geo_stations_api, name='geo_stations_api'),
+    # Alerts tab: descriptions that notify when a new listing matches (Findle API /alerts, no LLM)
+    path('api/alerts/', alerts.alerts_api, name='alerts_api'),
+    path('api/alerts/unread/', alerts.alert_unread_api, name='alert_unread_api'),
+    path('api/alerts/notifications/', alerts.alert_notifications_api, name='alert_notifications_api'),
+    path('api/alerts/notifications/seen/', alerts.alert_seen_api, name='alert_seen_api'),
+    path('api/alerts/<int:alert_id>/', alerts.alert_detail_api, name='alert_detail_api'),
     path('api/deep-research/stream/', views.deep_research_stream_api, name='deep_research_stream_api'),
     # Above the /api/chat/<int:chat_id>/ routes below, which would otherwise not
     # match a session id anyway — kept adjacent so the ordering stays obvious.

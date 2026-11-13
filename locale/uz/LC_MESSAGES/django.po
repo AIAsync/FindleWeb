@@ -934,3 +934,135 @@ msgstr "kv fut"
 #: templates/base.html templates/chat/home.html
 msgid "/mo"
 msgstr "/oy"
+
+#: templates/base.html templates/chat/home.html
+msgid "My alerts"
+msgstr "Mening bildirishnomalarim"
+
+#: templates/base.html templates/chat/home.html
+msgid "New listings that match your description"
+msgstr "Ta'rifingizga mos yangi e'lonlar"
+
+#: templates/base.html templates/chat/home.html
+msgid "e.g. 2 bedroom in Mission under $4000"
+msgstr "Masalan: Mission'da 2 xonali, 4000 dollargacha"
+
+#: templates/base.html templates/chat/home.html
+msgid "Create alert"
+msgstr "Bildirishnoma yaratish"
+
+#: templates/base.html templates/chat/home.html
+msgid "Describe what you are looking for first."
+msgstr "Avval nima qidirayotganingizni yozing."
+
+#: templates/base.html templates/chat/home.html
+msgid "Could not save the alert."
+msgstr "Bildirishnomani saqlab bo'lmadi."
+
+#: templates/base.html templates/chat/home.html
+msgid "Alert saved. New matching listings will appear in Alerts."
+msgstr "Bildirishnoma saqlandi. Mos yangi e'lonlar Bildirishnomalar bo'limida chiqadi."
+
+#: templates/base.html templates/chat/home.html
+msgid "Matching now:"
+msgstr "Hozir mos e'lonlar:"
+
+#: templates/base.html templates/chat/home.html
+msgid "You will be told only about listings that appear from now on."
+msgstr "Faqat bundan keyin paydo bo'ladigan e'lonlar haqida xabar beriladi."
+
+#: templates/base.html templates/chat/home.html
+msgid "Describe a listing above, or press the bell next to the search box."
+msgstr "Yuqorida izlayotgan e'loningizni ta'riflang yoki qidiruv maydoni yonidagi qo'ng'iroqchani bosing."
+
+#: templates/base.html templates/chat/home.html
+msgid "Paused"
+msgstr "To'xtatilgan"
+
+#: templates/base.html templates/chat/home.html
+msgid "Waiting for new listings"
+msgstr "Yangi e'lonlar kutilmoqda"
+
+#: templates/base.html templates/chat/home.html
+msgid "Get told about new listings"
+msgstr "Yangi e'lonlardan xabardor bo'ling"
+
+#: templates/base.html templates/chat/home.html
+msgid "Write what you are looking for. When a newly found listing matches it, it appears here and the Alerts tab shows a number."
+msgstr "Nima qidirayotganingizni yozing. Yangi topilgan e'lon unga mos kelsa, shu yerda chiqadi va Bildirishnomalar bo'limida son paydo bo'ladi."
+
+#: templates/base.html templates/chat/home.html chat/alerts.py
+msgid "Alerts are unavailable right now. Try again later."
+msgstr "Bildirishnomalar hozir ishlamayapti. Keyinroq urinib ko'ring."
+
+#: templates/base.html templates/chat/home.html
+msgid "Edit description"
+msgstr "Ta'rifni o'zgartirish"
+
+#: templates/base.html templates/chat/home.html
+msgid "Matches"
+msgstr "Mos e'lonlar"
+
+#: templates/base.html templates/chat/home.html
+msgid "Active"
+msgstr "Faol"
+
+#: templates/base.html templates/chat/home.html
+msgid "How the description was understood"
+msgstr "Ta'rif qanday tushunildi"
+
+#: templates/base.html templates/chat/home.html
+msgid "Not used as conditions:"
+msgstr "Shart sifatida olinmadi:"
+
+#: templates/base.html templates/chat/home.html
+msgid "Pause"
+msgstr "To'xtatish"
+
+#: templates/base.html templates/chat/home.html
+msgid "Resume"
+msgstr "Davom ettirish"
+
+#: templates/base.html templates/chat/home.html
+msgid "Search now"
+msgstr "Hozir qidirish"
+
+#: templates/base.html templates/chat/home.html
+msgid "New listings"
+msgstr "Yangi e'lonlar"
+
+#: templates/base.html templates/chat/home.html
+msgid "No new matching listings yet. They will appear here as soon as they are found."
+msgstr "Hozircha mos yangi e'lon yo'q. Topilishi bilan shu yerda chiqadi."
+
+#: templates/base.html templates/chat/home.html
+msgid "Show more"
+msgstr "Yana ko'rsatish"
+
+#: templates/base.html templates/chat/home.html
+msgid "New"
+msgstr "Yangi"
+
+#: templates/base.html templates/chat/home.html
+msgid "Sign in to use alerts"
+msgstr "Bildirishnomalar uchun tizimga kiring"
+
+#: templates/base.html templates/chat/home.html
+msgid "New matching listings"
+msgstr "Mos yangi e'lonlar"
+
+#: chat/alerts.py
+msgid "Please sign in to use alerts."
+msgstr "Bildirishnomalardan foydalanish uchun tizimga kiring."
+
+#: chat/alerts.py
+msgid "Alert not found."
+msgstr "Bildirishnoma topilmadi."
+
+#: chat/alerts.py
+msgid "Describe what you are looking for."
+msgstr "Nima qidirayotganingizni yozing."
+
+#: chat/alerts.py
+msgid "Invalid request."
+msgstr "Noto'g'ri so'rov."

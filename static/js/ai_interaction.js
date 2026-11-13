@@ -37,7 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const mentionPopup = document.getElementById('product-mention-popup');
     const replyContext = document.getElementById('chat-reply-context');
     let allTabContent = chatContainer ? chatContainer.innerHTML : '';
-    let alertIdToDelete = null;
 
     // Search tab: the ranked list is paged server-side, search_id pins it so rows never shift.
     let searchState = { query: '', page: 1, searchId: '' };
@@ -689,59 +688,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // The landing view owns the transition; it calls this on the way back.
     window.resetWorkspace = resetWorkspace;
     // scrollToBottom();
-    const alertModal = document.getElementById('alert-delete-modal');
-    const alertModalConfirm = document.getElementById('alert-modal-confirm');
-    const alertModalCancel = document.getElementById('alert-modal-cancel');
-
-    function hideAlertModal() {
-        if (alertModal) alertModal.classList.remove('show');
-        alertIdToDelete = null;
-    }
-
-    if (alertModalConfirm) {
-        alertModalConfirm.addEventListener('click', () => {
-            console.log('Confirming alert deletion for ID:', alertIdToDelete);
-            if (alertIdToDelete) {
-                const allSaved = JSON.parse(localStorage.getItem('saved_alerts') || '[]');
-                const updated = allSaved.filter(a => String(a.id) !== String(alertIdToDelete));
-                localStorage.setItem('saved_alerts', JSON.stringify(updated));
-                hideAlertModal();
-                if (typeof window.renderSavedAlerts === 'function') {
-                    window.renderSavedAlerts();
-                }
-            }
-        });
-    }
-
-    if (alertModalCancel) {
-        alertModalCancel.addEventListener('click', hideAlertModal);
-    }
-
-    if (alertModal) {
-        alertModal.addEventListener('click', (e) => {
-            if (e.target === alertModal) {
-                hideAlertModal();
-            }
-        });
-    }
-
-    window.deleteAlert = function (alertId) {
-        console.log('Opening delete modal for alert:', alertId);
-        alertIdToDelete = alertId;
-        if (alertModal) {
-            alertModal.classList.add('show');
-        } else {
-            if (confirm(t('delete_notification_confirm', 'Do you want to delete this notification?'))) {
-                const allSaved = JSON.parse(localStorage.getItem('saved_alerts') || '[]');
-                const updated = allSaved.filter(a => String(a.id) !== String(alertId));
-                localStorage.setItem('saved_alerts', JSON.stringify(updated));
-                if (typeof window.renderSavedAlerts === 'function') {
-                    window.renderSavedAlerts();
-                }
-            }
-        }
-    };
-
     const btnAttachFile = document.getElementById('btn-attach-file');
     const btnFilter = document.getElementById('btn-filter');
     const mobilePlusBtn = document.getElementById('mobile-plus-btn');
@@ -1766,6 +1712,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ? `<div ${attrs}><a href="${escapeHTML(url)}" target="_blank" rel="noopener" class="sr-grid-card-link">${inner}</a></div>`
             : `<div ${attrs}><div class="sr-grid-card-link">${inner}</div></div>`;
     }
+    window.FindleCards = { buildGridCard };
 
     /* =========================================================
        ASK AI TAB — deep-research reports
@@ -2238,323 +2185,39 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     setTimeout(syncActiveTogglesMobile, 500);
+    // Bell next to the search box: the current description becomes an alert (static/js/alerts.js)
     const alertBtn = document.getElementById('alert-btn');
-    const tabAlert = document.getElementById('tab-alert');
-    const tabAll = document.getElementById('tab-all');
 
     if (alertBtn) {
         alertBtn.addEventListener('click', async () => {
-            if (!lastResponseData || !lastResponseData.prompt) {
+            const query = (userInput && userInput.value.trim()) || (lastResponseData && lastResponseData.prompt) || '';
+            if (!query) {
                 alert(t('please_search_first', 'Please search something first.'));
                 return;
             }
-
+            if (!window.FindleAlerts) return;
             alertBtn.disabled = true;
-
-            try {
-                // Save to database via /api/chat/save/
-                const saveResponse = await fetch('/api/chat/save/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken')
-                    },
-                    body: JSON.stringify({
-                        prompt: lastResponseData.prompt,
-                        response: lastResponseData.response || '',
-                        reasoning_steps: lastResponseData.reasoning_steps || [],
-                        products: lastResponseData.products || []
-                    })
-                });
-
-                const saveData = await saveResponse.json();
-
-                if (saveData.status === 'success') {
-                    // Also save to localStorage for alerts tab
-                    const alerts = JSON.parse(localStorage.getItem('saved_alerts') || '[]');
-                    const newAlert = {
-                        id: Date.now(),
-                        timestamp: new Date().toISOString(),
-                        prompt: lastResponseData.prompt,
-                        products: lastResponseData.products || [],
-                        response: lastResponseData.response || '',
-                        conversation_id: saveData.conversation_id
-                    };
-                    alerts.unshift(newAlert);
-                    localStorage.setItem('saved_alerts', JSON.stringify(alerts));
-
-                    // If currently on Alerts tab, refresh immediately
-                    if (tabAlert && tabAlert.classList.contains('active')) {
-                        window.renderSavedAlerts();
-                    }
-
-                    alertBtn.innerHTML = '<i class="fa-solid fa-check" style="color: #22c55e;"></i>';
-
-                    // Trigger Mock Social Alert
-                    if (window.sendAlertToSocialMedia) {
-                        window.sendAlertToSocialMedia(newAlert);
-                    }
-
-                    setTimeout(() => {
-                        alertBtn.innerHTML = '<i class="fa-regular fa-bell"></i>';
-                    }, 2000);
-                } else {
-                    alert(t('save_error', 'Save Error'));
-                }
-            } catch (err) {
-                console.error('Save error:', err);
-                alert(t('save_error', 'Save Error'));
-            }
-
+            const created = await window.FindleAlerts.create(query);
             alertBtn.disabled = false;
+            if (created) {
+                alertBtn.innerHTML = '<i class="fa-solid fa-check" style="color: #22c55e;"></i>';
+                setTimeout(() => {
+                    alertBtn.innerHTML = '<i class="fa-regular fa-bell"></i>';
+                }, 2000);
+                const tabAlert = document.getElementById('tab-alert');
+                if (tabAlert && tabAlert.classList.contains('active')) window.renderSavedAlerts();
+            }
         });
     }
 
     // Removed redundant and conflicting tab switching logic that cleared results
 
+    // Alerts tab: server-side alerts and the new listings that matched them (static/js/alerts.js).
+    // A query typed in the search box (or carried over from the landing page) prefills a new alert.
     window.renderSavedAlerts = function () {
-        const alerts = JSON.parse(localStorage.getItem('saved_alerts') || '[]');
-
-        if (alerts.length === 0) {
-            chatContainer.innerHTML = `
-                <div class="alerts-page-container">
-                    <div class="alerts-empty-full">
-                        <div class="alerts-empty-icon-wrapper">
-                            <i class="fa-regular fa-bell-slash"></i>
-                        </div>
-                        <h3>${t('no_alerts_saved', 'No alerts saved yet')}</h3>
-                        <p>${t('save_alerts_desc', 'Save search results using the bell button.')}</p>
-                        <div class="alerts-empty-hint">
-                            <i class="fa-regular fa-lightbulb"></i>
-                            ${t('save_alerts_hint', 'Press the 🔔 button to save the search result')}
-                        </div>
-                    </div>
-                </div>
-            `;
-            return;
-        }
-
-        chatContainer.innerHTML = `
-            <div class="alerts-page-container">
-                <div class="alerts-sidebar">
-                    <div class="alerts-sidebar-header">
-                        <div class="alerts-sidebar-header-left">
-                            <div class="alerts-sidebar-icon"><i class="fa-solid fa-bookmark"></i></div>
-                            <div>
-                                <div class="alerts-sidebar-title">${t('alerts_history', 'Alerts History')}</div>
-                            </div>
-                        </div>
-                        <span class="alerts-count-badge">${alerts.length}</span>
-                    </div>
-                    <div class="alerts-search-bar">
-                        <i class="fa-solid fa-magnifying-glass alerts-search-icon"></i>
-                        <input type="text" class="alerts-search-input" id="alerts-search-input" placeholder="${t('search_alerts_placeholder', 'Search alerts history')}" />
-                    </div>
-                    <div class="alerts-list-container" id="alerts-list"></div>
-                </div>
-                <div class="alert-detail-view" id="alert-detail">
-                    <div class="alert-detail-empty">
-                        <div class="alert-detail-empty-icon">
-                            <i class="fa-regular fa-hand-pointer"></i>
-                        </div>
-                        <h3>${t('for_more_details', 'For more details')}</h3>
-                        <p> ${t('select_alert_hint', 'Select any alert history on the left')} </p>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        const listContainer = document.getElementById('alerts-list');
-        const detailContainer = document.getElementById('alert-detail');
-        const searchInput = document.getElementById('alerts-search-input');
-
-        function renderAlertsList(filterText) {
-            listContainer.innerHTML = '';
-            const filtered = filterText
-                ? alerts.filter(a => a.prompt.toLowerCase().includes(filterText.toLowerCase()))
-                : alerts;
-
-            if (filtered.length === 0) {
-                listContainer.innerHTML = `
-                    <div style="text-align: center; padding: 2rem 1rem; color: #475569;">
-                        <i class="fa-solid fa-search" style="font-size: 1.5rem; margin-bottom: 0.75rem; opacity: 0.4;"></i>
-                        <p style="font-size: 0.9rem;">${t('no_results_found', 'No results found')}</p>
-                    </div>
-                `;
-                return;
-            }
-
-            filtered.forEach(alert => {
-                const date = new Date(alert.timestamp).toLocaleString('uz-UZ', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-
-                const item = document.createElement('div');
-                item.className = 'alert-item';
-                item.dataset.alertId = alert.id;
-                item.innerHTML = `
-                    <div class="alert-item-header">
-                        <div class="alert-item-prompt">${alert.prompt}</div>
-                        <button class="delete-alert-small" title="${t('delete', 'Delete')}">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
-                    </div>
-                    <div class="alert-item-time"><i class="fa-regular fa-clock"></i> ${date}</div>
-                `;
-
-                item.addEventListener('click', (e) => {
-                    const delSmallBtn = e.target.closest('.delete-alert-small');
-                    if (delSmallBtn) {
-                        e.stopPropagation();
-                        window.deleteAlert(alert.id);
-                        return;
-                    }
-
-                    document.querySelectorAll('.alert-item').forEach(el => el.classList.remove('active'));
-                    item.classList.add('active');
-                    renderAlertDetail(alert);
-
-                    // Mobile behavior: Show detail view
-                    const pageContainer = document.querySelector('.alerts-page-container');
-                    if (pageContainer) {
-                        pageContainer.classList.add('mobile-detail-active');
-                    }
-                });
-
-                listContainer.appendChild(item);
-            });
-        }
-
-        // Initial render
-        renderAlertsList('');
-
-        // Search functionality
-        if (searchInput) {
-            searchInput.addEventListener('input', function () {
-                renderAlertsList(this.value.trim());
-            });
-        }
-
-        function renderAlertDetail(alert) {
-            const dateFull = new Date(alert.timestamp).toLocaleString('uz-UZ', {
-                day: '2-digit',
-                month: 'long',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-
-
-            detailContainer.innerHTML = `
-                <div class="alert-detail-content-wrapper">
-                    <div class="mobile-sticky-header">
-                        <button class="mobile-back-btn" id="mobile-alert-back">
-                            <i class="fa-solid fa-chevron-left"></i> ${t('back', 'Back')}
-                        </button>
-                    </div>
-                    <div class="alert-detail-header">
-                        <div style="width: 100%;">
-                            <div class="alert-detail-header-info">
-                                <div class="alert-detail-title-wrapper">
-                                    <input type="text" id="alert-prompt-input" class="alert-detail-title-input" value="${alert.prompt.replace(/"/g, '&quot;')}" readonly>
-                                    <button class="edit-prompt-btn" id="edit-alert-prompt-btn" title="Edit">
-                                        <i class="fa-solid fa-pen"></i>
-                                    </button>
-                                </div>
-                                <div class="alert-detail-meta">
-                                    <span class="alert-detail-meta-item"><i class="fa-regular fa-calendar"></i> ${dateFull}</span>
-                                    <span class="alert-detail-meta-item"><i class="fa-solid fa-hashtag"></i> ID: ${alert.id.toString().slice(-6)}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="alert-detail-actions">
-                            <button class="alert-action-btn alert-action-btn-search" title="${t('try_again_discovery', 'Try again discovery')}" id="re-search-btn">
-                                <i class="fa-solid fa-magnifying-glass"></i> ${t('rediscovery', 'Rediscovery')}
-                            </button>
-                            <button class="alert-action-btn alert-action-btn-delete" id="delete-alert-btn">
-                                <i class="fa-regular fa-trash-can"></i> ${t('delete', 'Delete')}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            const delBtn = document.getElementById('delete-alert-btn');
-            if (delBtn) {
-                delBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    window.deleteAlert(alert.id);
-                });
-            }
-
-            const reSearchBtn = document.getElementById('re-search-btn');
-            if (reSearchBtn) {
-                reSearchBtn.addEventListener('click', () => {
-                    const tabAllBtn = document.getElementById('tab-all');
-                    if (tabAllBtn) tabAllBtn.click();
-                    if (userInput) {
-                        userInput.value = alert.prompt;
-                        userInput.focus();
-                        userInput.style.height = 'auto';
-                        userInput.style.height = (userInput.scrollHeight) + 'px';
-                    }
-                });
-            }
-
-            const editPromptBtn = document.getElementById('edit-alert-prompt-btn');
-            const promptInput = document.getElementById('alert-prompt-input');
-            if (editPromptBtn && promptInput) {
-                const icon = editPromptBtn.querySelector('i');
-                let isEditing = false;
-
-                const savePrompt = () => {
-                    promptInput.setAttribute('readonly', 'true');
-                    promptInput.classList.remove('editing');
-                    icon.classList.remove('fa-check');
-                    icon.classList.add('fa-pen');
-                    isEditing = false;
-
-                    if (alert.prompt !== promptInput.value) {
-                        alert.prompt = promptInput.value;
-                        const sidebarItemPrompt = document.querySelector(`.alert-item[data-alert-id="${alert.id}"] .alert-item-prompt`);
-                        if (sidebarItemPrompt) {
-                            sidebarItemPrompt.textContent = alert.prompt;
-                        }
-                    }
-                };
-
-                editPromptBtn.addEventListener('click', () => {
-                    if (!isEditing) {
-                        promptInput.removeAttribute('readonly');
-                        promptInput.focus();
-                        promptInput.classList.add('editing');
-                        icon.classList.remove('fa-pen');
-                        icon.classList.add('fa-check');
-                        isEditing = true;
-                    } else {
-                        savePrompt();
-                    }
-                });
-
-                promptInput.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') {
-                        savePrompt();
-                    }
-                });
-            }
-
-            const mobileBackBtn = document.getElementById('mobile-alert-back');
-            if (mobileBackBtn) {
-                mobileBackBtn.addEventListener('click', () => {
-                    const pageContainer = document.querySelector('.alerts-page-container');
-                    if (pageContainer) pageContainer.classList.remove('mobile-detail-active');
-                });
-            }
-        }
-    }
+        if (!window.FindleAlerts) return;
+        window.FindleAlerts.render(chatContainer, userInput ? userInput.value.trim() : '');
+    };
     // Auth Interceptor
     document.addEventListener('click', (e) => {
         // Find closest element with auth-required class
@@ -2763,61 +2426,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
-
-    window.sendAlertToSocialMedia = function (alertData) {
-        const enabledPlatforms = socialToggles.filter(t => localStorage.getItem(t.key) === 'true');
-
-        if (enabledPlatforms.length > 0) {
-            const platformNames = enabledPlatforms.map(p => p.name).join(', ');
-            console.log(`Sending alert for prompt "${alertData.prompt}" to: ${platformNames}`);
-
-            // Show feedback
-            const feedback = document.createElement('div');
-            feedback.className = 'alert-feedback-toast';
-            feedback.innerHTML = `<i class="fa-solid fa-paper-plane"></i>${t('alert_turned_on', 'Alert turned on for')} ${platformNames}`;
-            feedback.style.cssText = `
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                background: #10b981;
-                color: white;
-                padding: 12px 24px;
-                border-radius: 8px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                z-index: 10000;
-                animation: slideInRight 0.3s ease;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                font-weight: 500;
-            `;
-
-            // Add animation keyframes if not exists
-            if (!document.getElementById('toast-style')) {
-                const style = document.createElement('style');
-                style.id = 'toast-style';
-                style.textContent = `
-                    @keyframes slideInRight {
-                        from { transform: translateX(100%); opacity: 0; }
-                        to { transform: translateX(0); opacity: 1; }
-                    }
-                    @keyframes fadeOut {
-                        to { opacity: 0; }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-
-            document.body.appendChild(feedback);
-
-            setTimeout(() => {
-                feedback.style.animation = 'fadeOut 0.5s ease forwards';
-                setTimeout(() => feedback.remove(), 500);
-            }, 3000);
-        } else {
-            console.log('No social media platforms enabled for alerts.');
-        }
-    };
 
     // Monitoring Popup Logic
     const monitoringBtn = document.getElementById('btn-monitoring');
