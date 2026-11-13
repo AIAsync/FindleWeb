@@ -44,3 +44,43 @@ class AlertOwner(models.Model):
 
     def __str__(self):
         return f"{self.user.username} alerts"
+
+
+class UsageDay(models.Model):
+    """One browser's active time and clicks on one day (UTC). Read by the FindleBot Telegram bot (/web).
+
+    `visitor` is a random id the page keeps in localStorage, not an IP or a fingerprint: anonymous
+    visitors are counted without identifying them. `user` is set once the browser is signed in.
+    """
+    day = models.DateField()
+    visitor = models.CharField(max_length=40)
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='usage_days')
+    seconds = models.PositiveIntegerField(default=0)
+    clicks = models.PositiveIntegerField(default=0)
+    first_at = models.DateTimeField(auto_now_add=True)
+    last_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'web_usage_day'
+        constraints = [models.UniqueConstraint(fields=['day', 'visitor'], name='web_usage_day_visitor')]
+        indexes = [models.Index(fields=['day', 'user'], name='web_usage_day_user')]
+
+    def __str__(self):
+        return f"{self.day} {self.user or self.visitor}: {self.seconds}s, {self.clicks} clicks"
+
+
+class UsageClick(models.Model):
+    """How many times one browser clicked one button or link on one day (UTC)."""
+    day = models.DateField()
+    visitor = models.CharField(max_length=40)
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='usage_clicks')
+    target = models.CharField(max_length=100)
+    count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        db_table = 'web_usage_click'
+        constraints = [models.UniqueConstraint(fields=['day', 'visitor', 'target'], name='web_usage_click_target')]
+        indexes = [models.Index(fields=['day', 'target'], name='web_usage_click_day')]
+
+    def __str__(self):
+        return f"{self.day} {self.target}: {self.count}"

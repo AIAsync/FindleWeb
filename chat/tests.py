@@ -131,3 +131,67 @@ class AlertsApiTests(TestCase):
                 self.call(_Response(200, {'unread': 0})) as api:
             self.client.get('/api/alerts/unread/')
         self.assertEqual(api.call_args.kwargs['headers']['X-Alerts-Key'], 'service-secret')
+
+
+class UsageTests(TestCase):
+    """static/js/usage.js reports clicks and active seconds; daily counters per browser, no typed text."""
+
+    VISITOR = 'a1b2c3d4e5f6a7b8c9d0e1f2'
+
+    def report(self, client=None, **data):
+        payload = {'visitor': self.VISITOR, 'seconds': 0, 'clicks': {}, **data}
+        return (client or self.client).post('/api/usage/', {'data': json.dumps(payload)})
+
+    def test_anonymous_visitor_is_counted_without_a_user(self):
+        from .models import UsageClick, UsageDay
+
+        self.assertEqual(self.report(seconds=45, clicks={'#send-btn': 2, '#tab-map': 1}).status_code, 204)
+        self.assertEqual(self.report(seconds=60, clicks={'#send-btn': 1}).status_code, 204)
+        day = UsageDay.objects.get(visitor=self.VISITOR)
+        self.assertEqual((day.seconds, day.clicks, day.user), (105, 4, None))
+        counts = dict(UsageClick.objects.filter(visitor=self.VISITOR).values_list('target', 'count'))
+        self.assertEqual(counts, {'#send-btn': 3, '#tab-map': 1})
+
+    def test_signed_in_user_owns_the_browser_day(self):
+        from .models import UsageClick, UsageDay
+
+        self.report(seconds=30)
+        user = User.objects.create_user('alice', password='pw-123456')
+        self.client.force_login(user)
+        self.report(seconds=30, clicks={'#tab-alert': 1})
+        self.assertEqual(UsageDay.objects.get(visitor=self.VISITOR).user, user)
+        self.assertEqual(UsageClick.objects.get(target='#tab-alert').user, user)
+
+    def test_reports_are_bounded(self):
+        from .models import UsageClick, UsageDay
+
+        clicks = {f'.button-{i}': 1000 for i in range(80)}
+        self.report(seconds=100000, clicks=clicks)
+        day = UsageDay.objects.get(visitor=self.VISITOR)
+        self.assertEqual(day.seconds, 120)
+        self.assertEqual(UsageClick.objects.count(), 50)
+        self.assertEqual(day.clicks, 50 * 200)
+
+    def test_bad_reports_are_rejected(self):
+        self.assertEqual(self.report(visitor='short').status_code, 400)
+        self.assertEqual(self.client.post('/api/usage/', {'data': 'not json'}).status_code, 400)
+        self.assertEqual(self.client.get('/api/usage/').status_code, 405)
+
+    def test_csrf_token_from_the_page_is_required(self):
+        from django.test import Client, override_settings
+
+        # Pages use the manifest storage in settings; tests have no collected static files
+        plain = {'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+                 'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'}}
+        with override_settings(STORAGES=plain):
+            self._csrf_flow(Client(enforce_csrf_checks=True))
+
+    def _csrf_flow(self, client):
+
+        self.assertEqual(self.report(client, seconds=15).status_code, 403)
+        page = client.get('/')
+        self.assertContains(page, 'js/usage.js')
+        token = page.content.decode().split('name="csrf-token" content="', 1)[1].split('"', 1)[0]
+        payload = {'visitor': self.VISITOR, 'seconds': 15, 'clicks': {}}
+        response = client.post('/api/usage/', {'csrfmiddlewaretoken': token, 'data': json.dumps(payload)})
+        self.assertEqual(response.status_code, 204)

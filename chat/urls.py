@@ -1,5 +1,5 @@
 from django.urls import path
-from . import alerts, views
+from . import alerts, usage, views
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -19,6 +19,8 @@ urlpatterns = [
     path('api/alerts/notifications/seen/', alerts.alert_seen_api, name='alert_seen_api'),
     path('api/alerts/<int:alert_id>/', alerts.alert_detail_api, name='alert_detail_api'),
     path('api/deep-research/stream/', views.deep_research_stream_api, name='deep_research_stream_api'),
+    # Usage monitoring: clicks and active time from static/js/usage.js (read by the FindleBot Telegram bot)
+    path('api/usage/', usage.usage_collect_api, name='usage_collect_api'),
     # Above the /api/chat/<int:chat_id>/ routes below, which would otherwise not
     # match a session id anyway — kept adjacent so the ordering stays obvious.
     path('api/chat/memory/<str:session_id>/', views.chat_memory_api, name='chat_memory_api'),
