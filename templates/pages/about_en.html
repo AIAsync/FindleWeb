@@ -1,0 +1,81 @@
+{% extends "pages/base_page.html" %}
+{% load static %}
+{% comment %}Translated from the owner's page (index.html); its pricing and subscription section is left out.{% endcomment %}
+{% block title %}About Findle AI{% endblock %}
+{% block description %}All of Uzbekistan's marketplaces in one smart search. Findle AI understands your request, analyzes the market and finds the best option.{% endblock %}
+{% block main_class %}info-main--wide{% endblock %}
+{% block content %}
+<section class="about-hero">
+    <img src="{% static 'images/findle-logo-new.png' %}" alt="" class="about-hero-logo">
+    <p class="about-eyebrow">About Findle AI</p>
+    <h1>All of Uzbekistan's marketplaces<br><span>In one smart search</span></h1>
+    <p class="info-lead">Stop digging through thousands of websites. With AI, find the lowest prices, trends and rare products in seconds.</p>
+</section>
+
+<section class="about-section">
+    <h2>How does the AI help?</h2>
+    <p class="about-section-lead">Our technology saves you time and money</p>
+    <div class="about-grid">
+        <div class="about-card">
+            <div class="about-card-icon"><i class="fa-solid fa-magnifying-glass-location"></i></div>
+            <h3>Global search</h3>
+            <p>Search for products across all online stores and marketplaces in Uzbekistan with a single query.</p>
+        </div>
+        <div class="about-card">
+            <div class="about-card-icon"><i class="fa-solid fa-bell"></i></div>
+            <h3>AI agent &amp; notifications</h3>
+            <p>Can't find a product? The AI keeps looking for it online and tells you as soon as it appears or its price drops.</p>
+        </div>
+        <div class="about-card">
+            <div class="about-card-icon"><i class="fa-solid fa-comments"></i></div>
+            <h3>Understands and acts on relative requests (<a href="https://en.wikipedia.org/wiki/Multiple-criteria_decision_analysis" target="_blank" rel="noopener">MCDM</a>)</h3>
+            <p>Describe what you need in your own words, in any language. The AI understands relative requests and finds the best option based on real market data.</p>
+        </div>
+        <div class="about-card">
+            <div class="about-card-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+            <h3>Smart history</h3>
+            <p>All your searches are saved as chats. Come back to them, review and edit them.</p>
+        </div>
+        <div class="about-card">
+            <span class="about-badge">Coming soon</span>
+            <div class="about-card-icon"><i class="fa-solid fa-chart-line"></i></div>
+            <h3>Market analysis</h3>
+            <p>Follow price changes and trends in real time, and avoid overpaying.</p>
+        </div>
+    </div>
+</section>
+
+<section class="about-section">
+    <h2>How it works</h2>
+    <p class="about-section-lead">Findle AI understands your request, analyzes the market and finds the best option</p>
+    <ol class="about-steps">
+        <li>
+            <h3>Write your request</h3>
+            <p>Describe what you want in plain words. No filters, checkboxes or complicated forms.</p>
+        </li>
+        <li>
+            <h3>The AI checks the market</h3>
+            <p>The AI scans hundreds of sources to find real prices and availability.</p>
+        </li>
+        <li>
+            <h3>Smart ranking</h3>
+            <p>The MCDM algorithm weighs price, quality and reliability to choose the best option.</p>
+        </li>
+        <li>
+            <h3>Results and tracking</h3>
+            <p>Nothing found? The AI agent keeps track of the product and tells you when something changes.</p>
+        </li>
+    </ol>
+</section>
+
+<section class="about-section">
+    <h2>Follow us</h2>
+    <p class="about-section-lead">For news and questions</p>
+    <ul class="about-social">
+        <li><a href="https://t.me/FindleAI" target="_blank" rel="noopener"><i class="fa-brands fa-telegram"></i> Telegram</a></li>
+        <li><a href="https://www.instagram.com/FindleAI" target="_blank" rel="noopener"><i class="fa-brands fa-instagram"></i> Instagram</a></li>
+    </ul>
+</section>
+
+<p class="about-cta"><a href="{% url 'home' %}" class="info-btn info-btn-primary"><i class="fa-solid fa-magnifying-glass"></i> Start searching</a></p>
+{% endblock %}

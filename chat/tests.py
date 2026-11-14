@@ -2,9 +2,10 @@ import json
 from unittest import mock
 
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import TestCase, override_settings
+from django.urls import reverse
 
-from . import alerts
+from . import alerts, pages
 from .models import AlertOwner
 
 
@@ -195,3 +196,63 @@ class UsageTests(TestCase):
         payload = {'visitor': self.VISITOR, 'seconds': 15, 'clicks': {}}
         response = client.post('/api/usage/', {'csrfmiddlewaretoken': token, 'data': json.dumps(payload)})
         self.assertEqual(response.status_code, 204)
+
+
+# Pages use the manifest static storage in settings; tests have no collected static files
+PLAIN_STORAGES = {'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+                  'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'}}
+
+
+@override_settings(STORAGES=PLAIN_STORAGES)
+class InfoPageTests(TestCase):
+    """Help, Terms of Service, Privacy Policy and About: one template per language (chat/pages.py)."""
+
+    TITLES = {
+        'en': {'help': 'Help', 'terms': 'Terms of Service', 'privacy': 'Privacy Policy', 'about': 'About Findle AI'},
+        'uz': {'help': 'Yordam', 'terms': 'Foydalanish shartlari', 'privacy': 'Maxfiylik siyosati',
+               'about': 'Findle AI haqida'},
+    }
+
+    def get(self, url, language=None):
+        if language:
+            self.client.cookies['django_language'] = language
+        return self.client.get(url)
+
+    def test_every_page_renders_in_both_languages(self):
+        for language, titles in self.TITLES.items():
+            for page, title in titles.items():
+                with self.subTest(language=language, page=page):
+                    response = self.get(reverse(page), language)
+                    self.assertEqual(response.status_code, 200)
+                    self.assertContains(response, f'<title>{title} · Findle AI</title>', html=False)
+                    self.assertContains(response, 'js/usage.js')
+                    # Every page links to the other three, and marks itself
+                    for other in pages.PAGES:
+                        self.assertContains(response, f'href="{reverse(other)}"')
+                    self.assertContains(response, f'href="{reverse(page)}" aria-current="page"')
+
+    def test_a_language_without_its_own_page_falls_back_to_english(self):
+        with mock.patch.object(pages, 'get_language', return_value='ru'):
+            response = self.client.get(reverse('privacy'))
+        self.assertContains(response, '<h1>Privacy Policy</h1>', html=False)
+
+    def test_about_keeps_the_information_and_leaves_out_pricing(self):
+        uz = self.get(reverse('about'), 'uz')
+        self.assertContains(uz, 'AI Qanday yordam beradi?')
+        self.assertContains(uz, "Aqlli saralash")
+        en = self.get(reverse('about'), 'en')
+        self.assertContains(en, 'How it works')
+        for response in (uz, en):
+            text = response.content.decode().lower()
+            for word in ('tarif', 'obuna', 'premium', 'subscription', 'pricing', "so'm"):
+                self.assertNotIn(word, text)
+
+    def test_home_links_the_pages_and_has_no_subscription(self):
+        for user in (None, User.objects.create_user('alice', password='pw-123456')):
+            if user:
+                self.client.force_login(user)
+            response = self.client.get('/')
+            for page in pages.PAGES:
+                self.assertContains(response, f'href="{reverse(page)}"')
+            self.assertNotContains(response, 'Subscription')
+            self.assertNotContains(response, 'Obuna')

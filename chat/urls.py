@@ -1,8 +1,13 @@
 from django.urls import path
-from . import alerts, usage, views
+from . import alerts, pages, usage, views
 
 urlpatterns = [
     path('', views.home, name='home'),
+    # Help, Terms of Service, Privacy Policy, About (chat/pages.py, one template per language)
+    path('help/', pages.info_page, {'page': 'help'}, name='help'),
+    path('terms/', pages.info_page, {'page': 'terms'}, name='terms'),
+    path('privacy/', pages.info_page, {'page': 'privacy'}, name='privacy'),
+    path('about/', pages.info_page, {'page': 'about'}, name='about'),
     # path('search/', views.search_page, name='search_page'),
     path('api/chat/', views.chat_api, name='chat_api'),
     path('api/ai-chat/', views.ai_chat_api, name='ai_chat_api'),

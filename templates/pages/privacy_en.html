@@ -1,0 +1,82 @@
+{% extends "pages/base_page.html" %}
+{% block title %}Privacy Policy{% endblock %}
+{% block description %}What information Findle AI collects, what it is used for and what choices you have.{% endblock %}
+{% block content %}
+<h1>Privacy Policy</h1>
+<p class="info-updated">Last updated: November 14, 2026</p>
+
+<p>This policy explains what information Findle AI ("Findle", "we") collects when you use the website and the search service, what we use it for and what choices you have.</p>
+
+<h2>1. What we collect</h2>
+<h3>Your account</h3>
+<p>If you sign up, we keep your username and your password, which is stored only as a secure hash. If you continue with Google, Google shares your name, email address and basic profile information with us.</p>
+
+<h3>What you search for</h3>
+<p>The text you type into search, into the Agent and into alerts. Searches are logged together with technical details, such as the language, the number of results and the response time, so that we can see what people fail to find and improve the results. Phone numbers and @usernames are masked before a search is logged.</p>
+
+<h3>Your alerts</h3>
+<p>The descriptions you save as alerts and the listings that matched them.</p>
+
+<h3>How the site is used</h3>
+<p>Which buttons and links are clicked and how long the site is actively used. These are counted per browser and per day under a random identifier stored in your browser, and linked to your account when you are signed in. The count never includes what you type or the content of your messages. Our team views these counts in a private report delivered through Telegram.</p>
+
+<h3>Technical logs</h3>
+<p>Like most websites, our servers record standard technical information, such as your IP address, your browser type and the pages requested, to keep the service secure and to fix problems.</p>
+
+<h2>2. How we use it</h2>
+<ul>
+    <li>to run search, Agent answers and alerts;</li>
+    <li>to keep you signed in and remember your settings;</li>
+    <li>to understand which features are used and to improve search quality;</li>
+    <li>to protect the service from abuse.</li>
+</ul>
+<p>We don't sell your personal information and don't use it for advertising.</p>
+
+<h2>3. AI answers</h2>
+<p>Agent and Deep research answers are written by a language model from an external AI provider. To produce an answer, the text of your question, the recent messages of the conversation and the listings found are sent to that provider. Please don't put sensitive information, such as identity documents or bank details, in your questions.</p>
+
+<h2>4. Cookies and browser storage</h2>
+<ul>
+    <li><strong>Cookies:</strong> a session cookie that keeps you signed in, a security (CSRF) cookie and, if you choose a language, a language cookie.</li>
+    <li><strong>Browser storage:</strong> your theme and language, your current Agent conversation, so that it survives a page reload, and the random identifier used for the usage count.</li>
+</ul>
+<p>We don't use advertising or third-party tracking cookies. You can delete cookies and stored data in your browser's settings; you will then be signed out and your settings will be reset.</p>
+
+<h2>5. Other services</h2>
+<ul>
+    <li>Our pages load fonts, icons and map images from Google Fonts, cdnjs, unpkg and OpenStreetMap. Your browser connects to them directly, so they receive your IP address, as with any website.</li>
+    <li>Sign-in with Google is provided by Google under its own privacy policy.</li>
+    <li>Opening a listing takes you to the website that published it, which has its own privacy policy.</li>
+</ul>
+
+<h2>6. Listings</h2>
+<p>Listings are collected from public websites and can include contact details that the advertiser published there. If you are an advertiser and want your listing or your details removed from Findle, contact us.</p>
+
+<h2>7. How long we keep data</h2>
+<ul>
+    <li><strong>Search logs:</strong> up to 90 days.</li>
+    <li><strong>The Agent conversation on our server:</strong> deleted after an hour without new messages. The copy in your browser stays until you clear it.</li>
+    <li><strong>Usage counts:</strong> kept as daily totals per browser.</li>
+    <li><strong>Technical logs:</strong> for a limited time, for security and troubleshooting.</li>
+    <li><strong>Your account and alerts:</strong> until you delete them or ask us to delete your account.</li>
+</ul>
+
+<h2>8. Your choices</h2>
+<ul>
+    <li>Delete alerts you no longer need in the Alerts tab.</li>
+    <li>Clear the Agent conversation and other stored data in your browser.</li>
+    <li>Ask us for a copy of your data, to correct it, or to delete your account and the data linked to it. We will reply within 30 days.</li>
+</ul>
+
+<h2>9. Security</h2>
+<p>The site works over HTTPS, passwords are stored only as hashes, and access to data is limited to what is needed to run the service. No system is completely secure, but we work to protect your information.</p>
+
+<h2>10. Children</h2>
+<p>Findle is not intended for children under 16, and we don't knowingly collect their data.</p>
+
+<h2>11. Changes to this policy</h2>
+<p>We will publish any changes on this page and update the date at the top.</p>
+
+<h2>12. Contact</h2>
+<p>Privacy questions and requests: Telegram <a href="https://t.me/FindleAI" target="_blank" rel="noopener">@FindleAI</a>. See also the <a href="{% url 'terms' %}">Terms of Service</a>.</p>
+{% endblock %}

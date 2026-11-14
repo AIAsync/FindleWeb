@@ -1,0 +1,81 @@
+{% extends "pages/base_page.html" %}
+{% load static %}
+{% comment %}Matn egasining sahifasidan (index.html) olingan; tariflar va obuna bo'limi kiritilmagan.{% endcomment %}
+{% block title %}Findle AI haqida{% endblock %}
+{% block description %}Butun O'zbekiston bozorlari bitta aqlli qidiruvda. Findle AI so'rovingizni tushunadi, bozorni tahlil qiladi va eng maqbul variantni topadi.{% endblock %}
+{% block main_class %}info-main--wide{% endblock %}
+{% block content %}
+<section class="about-hero">
+    <img src="{% static 'images/findle-logo-new.png' %}" alt="" class="about-hero-logo">
+    <p class="about-eyebrow">Findle AI haqida</p>
+    <h1>Butun O'zbekiston bozorlari<br><span>Bitta aqlli qidiruvda</span></h1>
+    <p class="info-lead">Minglab saytlarni titkilashni to'xtating. AI yordamida eng arzon narxlar, trendlar va noyob mahsulotlarni soniyalar ichida toping.</p>
+</section>
+
+<section class="about-section">
+    <h2>AI Qanday yordam beradi?</h2>
+    <p class="about-section-lead">Bizning texnologiyamiz sizning vaqtingiz va pulingizni tejaydi</p>
+    <div class="about-grid">
+        <div class="about-card">
+            <div class="about-card-icon"><i class="fa-solid fa-magnifying-glass-location"></i></div>
+            <h3>Global Qidiruv</h3>
+            <p>Bitta so'rov orqali O'zbekistondagi barcha onlayn do'konlar va marketlardan mahsulot qidiring.</p>
+        </div>
+        <div class="about-card">
+            <div class="about-card-icon"><i class="fa-solid fa-bell"></i></div>
+            <h3>AI Agent &amp; Bildirishnoma</h3>
+            <p>Mahsulot topilmadimi? AI uni internetda kuzatib yuradi va paydo bo'lishi yoki narxi tushishi bilan sizga xabar beradi.</p>
+        </div>
+        <div class="about-card">
+            <div class="about-card-icon"><i class="fa-solid fa-comments"></i></div>
+            <h3>Nisbiy gaplarni tushunadi va bajaradi (<a href="https://en.wikipedia.org/wiki/Multiple-criteria_decision_analysis" target="_blank" rel="noopener">MCDM</a>)</h3>
+            <p>Istalgan tildagi so'zlar bilan ta'riflab bering. AI nisbiy buyruqlarni tushunadi va real bozor ma'lumotlari asosida eng maqbul variantni topadi.</p>
+        </div>
+        <div class="about-card">
+            <div class="about-card-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+            <h3>Aqlli Tarix</h3>
+            <p>Barcha qidiruvlaringiz chat ko'rinishida saqlanadi. Ularni qayta ko'rib chiqing va tahrirlang.</p>
+        </div>
+        <div class="about-card">
+            <span class="about-badge">Tez orada</span>
+            <div class="about-card-icon"><i class="fa-solid fa-chart-line"></i></div>
+            <h3>Bozor Tahlili</h3>
+            <p>Real vaqtda narxlar o'zgarishi va trendlarni kuzating. Qimmatga sotib olishdan saqlaning.</p>
+        </div>
+    </div>
+</section>
+
+<section class="about-section">
+    <h2>Qanday ishlaydi?</h2>
+    <p class="about-section-lead">Findle AI sizning so'rovingizni tushunadi, bozorni tahlil qiladi va eng maqbul variantni topadi</p>
+    <ol class="about-steps">
+        <li>
+            <h3>So'rov yozing</h3>
+            <p>Oddiy so'zlar bilan xohishingizni yozing. Filtr, checkbox yoki murakkab formalar yo'q.</p>
+        </li>
+        <li>
+            <h3>AI bozorni tekshiradi</h3>
+            <p>AI yuzlab manbalarni skanerlab, real narxlar va mavjudlikni aniqlaydi.</p>
+        </li>
+        <li>
+            <h3>Aqlli saralash</h3>
+            <p>MCDM algoritmi narx, sifat va ishonchlilikni hisobga olib eng yaxshi variantni tanlaydi.</p>
+        </li>
+        <li>
+            <h3>Natija va kuzatuv</h3>
+            <p>Topilmadimi? AI Agent mahsulotni kuzatadi va o'zgarish bo'lsa sizga xabar beradi.</p>
+        </li>
+    </ol>
+</section>
+
+<section class="about-section">
+    <h2>Bizni kuzating</h2>
+    <p class="about-section-lead">Yangiliklar va savollar uchun</p>
+    <ul class="about-social">
+        <li><a href="https://t.me/FindleAI" target="_blank" rel="noopener"><i class="fa-brands fa-telegram"></i> Telegram</a></li>
+        <li><a href="https://www.instagram.com/FindleAI" target="_blank" rel="noopener"><i class="fa-brands fa-instagram"></i> Instagram</a></li>
+    </ul>
+</section>
+
+<p class="about-cta"><a href="{% url 'home' %}" class="info-btn info-btn-primary"><i class="fa-solid fa-magnifying-glass"></i> Qidirishni boshlash</a></p>
+{% endblock %}

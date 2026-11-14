@@ -1,0 +1,90 @@
+{% extends "pages/base_page.html" %}
+{% block title %}Help{% endblock %}
+{% block description %}How to search for rentals with Findle AI, what each tab does and where the listings come from.{% endblock %}
+{% block content %}
+<h1>Help</h1>
+<p class="info-lead">Findle AI finds rental homes in San Francisco from a description in your own words. Here is how to get the most out of it.</p>
+
+<nav class="info-toc" aria-label="On this page">
+    <a href="#start">Getting started</a>
+    <a href="#tips">Writing a request</a>
+    <a href="#tabs">Search, Agent, Map, Alerts</a>
+    <a href="#listings">About the listings</a>
+    <a href="#account">Account and settings</a>
+    <a href="#faq">Questions</a>
+    <a href="#contact">Contact</a>
+</nav>
+
+<h2 id="start">Getting started</h2>
+<p>Type what you are looking for into the search box and press Enter, for example:</p>
+<p class="info-query">2 bedroom in the Mission under $4,000 with parking</p>
+<p>There are no forms to fill in: the rent, bedrooms, neighborhood or street, distance to a place and other details are read from your text. Searching doesn't need an account; alerts do.</p>
+
+<h2 id="tips">Writing a good request</h2>
+<ul>
+    <li><strong>Where.</strong> A neighborhood, a street or a landmark: <span class="info-query">in Hayes Valley</span>, <span class="info-query">on Valencia St</span>, <span class="info-query">within 1 km of Salesforce Tower</span>, <span class="info-query">near BART</span>.</li>
+    <li><strong>Budget.</strong> A limit or a range: <span class="info-query">under $3,500</span>, <span class="info-query">$2,500 to $3,000</span>.</li>
+    <li><strong>Size.</strong> Bedrooms, bathrooms or area: <span class="info-query">studio</span>, <span class="info-query">2 bed 2 bath</span>, <span class="info-query">over 800 sq ft</span>.</li>
+    <li><strong>What matters most.</strong> <span class="info-query">cheapest</span>, <span class="info-query">largest</span>, <span class="info-query">pets allowed</span>, <span class="info-query">furnished</span>. Results are ranked by what you ask for.</li>
+    <li><strong>Language.</strong> Write in English, Uzbek or Russian.</li>
+</ul>
+<p>If no listing meets every condition, Findle loosens the least important one so that you still see the closest options.</p>
+
+<h2 id="tabs">Search, Agent, Map and Alerts</h2>
+<h3><i class="fa-solid fa-magnifying-glass"></i> Search</h3>
+<p>Listing cards with the rent, size, location and the site where the listing was published. Open a card to see the original listing.</p>
+
+<h3><i class="fa-solid fa-bolt"></i> Agent</h3>
+<p>Ask about homes in plain words, for example <span class="info-query">Which of these allow dogs?</span> or <span class="info-query">What is the average rent for a 1 bedroom in SoMa?</span> The answer links to the listings it is based on. The conversation is kept in your browser, so it is still there after you reload the page.</p>
+<p>For a longer, step-by-step report, such as a comparison of neighborhoods, choose <strong>Deep research</strong> in the <i class="fa-solid fa-plus" aria-label="plus"></i> menu of the search box.</p>
+
+<h3><i class="fa-solid fa-map-location-dot"></i> Map</h3>
+<p>The results of your search on a map of San Francisco. A distance condition is drawn as a circle around its place, and a request such as <span class="info-query">near BART</span> also shows the BART, Muni Metro and Caltrain stations.</p>
+
+<h3><i class="fa-solid fa-bell"></i> Alerts</h3>
+<p>Save a description as an alert with the bell button in the search box. Findle checks every new listing against it: matches appear in the Alerts tab, and the tab shows how many are new. Only listings that appear after you save the alert are reported. Alerts need an account.</p>
+
+<h2 id="listings">About the listings</h2>
+<ul>
+    <li><strong>Where they come from.</strong> Findle collects rental listings published on public listing websites. Each card shows the site, and its link opens the original listing.</li>
+    <li><strong>How fresh they are.</strong> Sites that change quickly are checked every few hours, every other site at least once a day. When a listing is taken down from its site, it leaves Findle within about two days.</li>
+    <li><strong>Duplicates.</strong> The same apartment advertised on several sites is shown once.</li>
+    <li><strong>Renting.</strong> Findle is not a landlord or a broker. To ask about a home or to rent it, contact the advertiser through the original listing, and confirm the price, fees and availability with them.</li>
+</ul>
+<div class="info-note">
+    <i class="fa-solid fa-shield-halved"></i>
+    <p><strong>Stay safe.</strong> Never send a deposit, money or copies of your documents before you have seen the home and know who you are dealing with. Be careful with offers that look too good to be true.</p>
+</div>
+
+<h2 id="account">Account and settings</h2>
+<ul>
+    <li>Sign up with a username and a password, or continue with Google.</li>
+    <li>Open <strong>Settings</strong> from your profile menu to change the language (English or O'zbek) and to turn on dark mode.</li>
+    <li>Delete an alert you no longer need from the Alerts tab.</li>
+</ul>
+
+<h2 id="faq">Questions</h2>
+<details>
+    <summary>Is Findle free?</summary>
+    <p>Yes. Search, the Agent, the map and alerts are free to use.</p>
+</details>
+<details>
+    <summary>Why can't I find a listing I saw yesterday?</summary>
+    <p>It was most likely taken down on the site where it was published, so Findle removed it as well.</p>
+</details>
+<details>
+    <summary>Why is the price different on the original site?</summary>
+    <p>Advertisers edit their listings, and Findle picks up the change at its next check. The original listing always has the latest version.</p>
+</details>
+<details>
+    <summary>Can Findle arrange a viewing or sign a lease for me?</summary>
+    <p>No. Findle helps you find homes; viewings and leases are arranged directly with the advertiser.</p>
+</details>
+<details>
+    <summary>Is the Agent's answer always right?</summary>
+    <p>Answers are written by an AI model from the listings found, and they can contain mistakes. Check important details in the original listing.</p>
+</details>
+
+<h2 id="contact">Contact</h2>
+<p>Something not working, or a question this page doesn't answer? Write to us on Telegram: <a href="https://t.me/FindleAI" target="_blank" rel="noopener">@FindleAI</a>.</p>
+{% endblock %}

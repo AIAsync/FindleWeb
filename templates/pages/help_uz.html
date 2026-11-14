@@ -1,0 +1,90 @@
+{% extends "pages/base_page.html" %}
+{% block title %}Yordam{% endblock %}
+{% block description %}Findle AI bilan ijaraga uy qanday qidiriladi, har bir bo'lim nima qiladi va e'lonlar qayerdan olinadi.{% endblock %}
+{% block content %}
+<h1>Yordam</h1>
+<p class="info-lead">Findle AI San-Fransiskoda ijaraga beriladigan uylarni o'z so'zlaringiz bilan yozilgan ta'rif bo'yicha topadi. Undan qanday to'liq foydalanish mumkinligi quyida.</p>
+
+<nav class="info-toc" aria-label="Shu sahifada">
+    <a href="#start">Boshlash</a>
+    <a href="#tips">So'rov yozish</a>
+    <a href="#tabs">Qidiruv, Agent, Xarita, Bildirishnomalar</a>
+    <a href="#listings">E'lonlar haqida</a>
+    <a href="#account">Hisob va sozlamalar</a>
+    <a href="#faq">Savollar</a>
+    <a href="#contact">Aloqa</a>
+</nav>
+
+<h2 id="start">Boshlash</h2>
+<p>Qidiruv maydoniga nima izlayotganingizni yozing va Enter'ni bosing, masalan:</p>
+<p class="info-query">Missionda 4000 dollargacha 2 xonali kvartira, parkovkasi bilan</p>
+<p>Hech qanday forma to'ldirish shart emas: ijara narxi, xonalar soni, mahalla yoki ko'cha, biror joygacha masofa va boshqa shartlar matningizdan o'qiladi. Qidirish uchun hisob kerak emas, bildirishnomalar uchun esa kerak.</p>
+
+<h2 id="tips">Yaxshi so'rov qanday yoziladi</h2>
+<ul>
+    <li><strong>Qayerda.</strong> Mahalla, ko'cha yoki mashhur joy: <span class="info-query">Hayes Valleyda</span>, <span class="info-query">Valencia St'da</span>, <span class="info-query">Salesforce Tower'dan 1 km ichida</span>, <span class="info-query">BART yaqinida</span>.</li>
+    <li><strong>Byudjet.</strong> Chegara yoki oraliq: <span class="info-query">3500 dollargacha</span>, <span class="info-query">2500 dan 3000 dollargacha</span>.</li>
+    <li><strong>O'lcham.</strong> Xona, hammom yoki maydon: <span class="info-query">studiya</span>, <span class="info-query">2 xonali, 2 hammomli</span>, <span class="info-query">800 sq ft dan katta</span>.</li>
+    <li><strong>Eng muhimi.</strong> <span class="info-query">eng arzon</span>, <span class="info-query">eng katta</span>, <span class="info-query">uy hayvoni mumkin</span>, <span class="info-query">mebelli</span>. Natijalar siz so'ragan narsa bo'yicha saralanadi.</li>
+    <li><strong>Til.</strong> O'zbek, ingliz yoki rus tilida yozing.</li>
+</ul>
+<p>Agar hamma shartga mos e'lon bo'lmasa, Findle eng kam muhim shartni yumshatadi, shunda eng yaqin variantlarni baribir ko'rasiz.</p>
+
+<h2 id="tabs">Qidiruv, Agent, Xarita va Bildirishnomalar</h2>
+<h3><i class="fa-solid fa-magnifying-glass"></i> Qidiruv</h3>
+<p>E'lon kartalari: ijara narxi, o'lcham, joylashuv va e'lon joylangan sayt. Asl e'lonni ko'rish uchun kartani oching.</p>
+
+<h3><i class="fa-solid fa-bolt"></i> Agent</h3>
+<p>Uylar haqida oddiy so'zlar bilan so'rang, masalan <span class="info-query">Bulardan qaysi birida it boqish mumkin?</span> yoki <span class="info-query">SoMa'da 1 xonali kvartiraning o'rtacha ijarasi qancha?</span> Javobda u tayangan e'lonlarga havolalar bo'ladi. Suhbat brauzeringizda saqlanadi, shuning uchun sahifa qayta yuklangandan keyin ham joyida qoladi.</p>
+<p>Uzunroq, bosqichma-bosqich hisobot kerak bo'lsa, masalan mahallalarni solishtirish uchun, qidiruv maydonidagi <i class="fa-solid fa-plus" aria-label="plyus"></i> menyusidan <strong>Chuqur tadqiqot</strong>ni tanlang.</p>
+
+<h3><i class="fa-solid fa-map-location-dot"></i> Xarita</h3>
+<p>Qidiruv natijalari San-Fransisko xaritasida. Masofa sharti joy atrofida aylana bilan chiziladi, <span class="info-query">BART yaqinida</span> kabi so'rovda esa BART, Muni Metro va Caltrain bekatlari ham ko'rsatiladi.</p>
+
+<h3><i class="fa-solid fa-bell"></i> Bildirishnomalar</h3>
+<p>Ta'rifni qidiruv maydonidagi qo'ng'iroqcha tugmasi bilan bildirishnoma qilib saqlang. Findle har bir yangi e'lonni u bilan solishtiradi: moslari Bildirishnomalar bo'limida chiqadi, bo'lim yonida esa nechtasi yangi ekani ko'rinadi. Faqat bildirishnoma saqlangandan keyin paydo bo'lgan e'lonlar haqida xabar beriladi. Bildirishnomalar uchun hisob kerak.</p>
+
+<h2 id="listings">E'lonlar haqida</h2>
+<ul>
+    <li><strong>Qayerdan olinadi.</strong> Findle ochiq e'lon saytlarida joylangan ijara e'lonlarini yig'adi. Har bir kartada sayt nomi ko'rsatiladi, havolasi esa asl e'lonni ochadi.</li>
+    <li><strong>Qanchalik yangi.</strong> Tez o'zgaradigan saytlar har bir necha soatda, qolganlari kamida kuniga bir marta tekshiriladi. E'lon o'z saytidan olib tashlansa, taxminan ikki kun ichida Findle'dan ham olinadi.</li>
+    <li><strong>Takrorlar.</strong> Bir nechta saytda e'lon qilingan bitta kvartira bir marta ko'rsatiladi.</li>
+    <li><strong>Ijaraga olish.</strong> Findle uy egasi ham, vositachi ham emas. Uy haqida so'rash yoki uni ijaraga olish uchun asl e'lon orqali e'lon beruvchiga murojaat qiling, narx, qo'shimcha to'lovlar va bo'shligini undan aniqlang.</li>
+</ul>
+<div class="info-note">
+    <i class="fa-solid fa-shield-halved"></i>
+    <p><strong>Ehtiyot bo'ling.</strong> Uyni ko'rmaguncha va kim bilan ishlayotganingizni bilmaguncha hech qachon zaklad, pul yoki hujjatlaringiz nusxasini yubormang. Haddan tashqari arzon takliflardan ehtiyot bo'ling.</p>
+</div>
+
+<h2 id="account">Hisob va sozlamalar</h2>
+<ul>
+    <li>Foydalanuvchi nomi va parol bilan ro'yxatdan o'ting yoki Google orqali kiring.</li>
+    <li>Tilni (English yoki O'zbek) almashtirish va tungi rejimni yoqish uchun profil menyusidan <strong>Sozlamalar</strong>ni oching.</li>
+    <li>Keraksiz bo'lib qolgan bildirishnomani Bildirishnomalar bo'limidan o'chiring.</li>
+</ul>
+
+<h2 id="faq">Savollar</h2>
+<details>
+    <summary>Findle bepulmi?</summary>
+    <p>Ha. Qidiruv, Agent, xarita va bildirishnomalardan bepul foydalaniladi.</p>
+</details>
+<details>
+    <summary>Kecha ko'rgan e'lonimni nega topa olmayapman?</summary>
+    <p>Ehtimol, u joylangan saytidan olib tashlangan, shuning uchun Findle ham uni olib tashlagan.</p>
+</details>
+<details>
+    <summary>Asl saytda narx nega boshqacha?</summary>
+    <p>E'lon beruvchilar e'lonlarini o'zgartirib turadi, Findle esa o'zgarishni keyingi tekshiruvda oladi. Eng so'nggi ma'lumot har doim asl e'londa bo'ladi.</p>
+</details>
+<details>
+    <summary>Findle uyni ko'rishni tashkil qila oladimi yoki ijara shartnomasini tuza oladimi?</summary>
+    <p>Yo'q. Findle uy topishga yordam beradi, uyni ko'rish va shartnoma e'lon beruvchi bilan bevosita kelishiladi.</p>
+</details>
+<details>
+    <summary>Agent javobi har doim to'g'rimi?</summary>
+    <p>Javoblarni topilgan e'lonlar asosida AI modeli yozadi va ularda xato bo'lishi mumkin. Muhim ma'lumotni asl e'londan tekshiring.</p>
+</details>
+
+<h2 id="contact">Aloqa</h2>
+<p>Nimadir ishlamayaptimi yoki savolingizga bu sahifada javob yo'qmi? Bizga Telegram'da yozing: <a href="https://t.me/FindleAI" target="_blank" rel="noopener">@FindleAI</a>.</p>
+{% endblock %}

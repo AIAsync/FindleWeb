@@ -1,0 +1,62 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="{{ request.LANGUAGE_CODE }}">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %} · Findle AI</title>
+    <meta name="description" content="{% block description %}{% endblock %}">
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/pages.css' %}">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <script src="{% static 'js/usage.js' %}" defer></script>
+</head>
+
+<body class="info-page">
+    <script>
+        // The theme and accent color chosen in Settings on the main page
+        try {
+            if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
+            const accent = localStorage.getItem('accentColor');
+            if (accent) document.documentElement.style.setProperty('--primary', accent);
+        } catch (e) { /* storage blocked: the light theme */ }
+    </script>
+
+    <header class="info-topbar">
+        <a href="{% url 'home' %}" class="info-brand">
+            <img src="{% static 'images/findle-logo-new.png' %}" alt="">
+            <span>{% translate "Findle AI" %}</span>
+        </a>
+        <nav class="info-topbar-actions">
+            {% if user.is_authenticated %}
+            <a href="{% url 'home' %}" class="info-btn info-btn-primary"><i class="fa-solid fa-magnifying-glass"></i> {% translate "Search" %}</a>
+            {% else %}
+            <a href="{% url 'login' %}" class="info-btn">{% translate "Sign in" %}</a>
+            <a href="{% url 'register' %}" class="info-btn info-btn-primary">{% translate "Sign up" %}</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main class="info-main {% block main_class %}{% endblock %}">
+        <article class="info-article">
+            {% block content %}{% endblock %}
+        </article>
+    </main>
+
+    <footer class="info-footer">
+        <nav class="info-footer-links">
+            <a href="{% url 'help' %}"{% if page == 'help' %} aria-current="page"{% endif %}>{% translate "Help" %}</a>
+            <a href="{% url 'terms' %}"{% if page == 'terms' %} aria-current="page"{% endif %}>{% translate "Terms of Service" %}</a>
+            <a href="{% url 'privacy' %}"{% if page == 'privacy' %} aria-current="page"{% endif %}>{% translate "Privacy Policy" %}</a>
+            <a href="{% url 'about' %}"{% if page == 'about' %} aria-current="page"{% endif %}>{% translate "About Findle AI" %}</a>
+        </nav>
+        <p class="info-copy">© 2025–2026 Findle AI. {% translate "All rights reserved." %}</p>
+    </footer>
+</body>
+
+</html>

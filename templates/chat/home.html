@@ -51,8 +51,8 @@
                         </div>
                         <hr>
                         <a href="#" class="dropdown-item btn-settings"><i class="fa-solid fa-gear"></i> {% translate "Settings" %}</a>
-                        <a href="#" class="dropdown-item"><i class="fa-solid fa-circle-question"></i> {% translate "Help" %}</a>
-                        <a href="#" class="dropdown-item"><i class="fa-solid fa-file-contract"></i> {% translate "Terms of Service" %}</a>
+                        <a href="{% url 'help' %}" class="dropdown-item"><i class="fa-solid fa-circle-question"></i> {% translate "Help" %}</a>
+                        <a href="{% url 'terms' %}" class="dropdown-item"><i class="fa-solid fa-file-contract"></i> {% translate "Terms of Service" %}</a>
                         <hr>
                         <a href="{% url 'logout' %}" class="dropdown-item logout"><i
                                 class="fa-solid fa-right-from-bracket"></i> {% translate "Logout" %}</a>
@@ -129,10 +129,10 @@
         <!-- Footer -->
         <footer class="landing-footer">
             <div class="landing-footer-links">
-                <a href="#" class="landing-footer-link">{% translate "Help" %}</a>
-                <a href="#" class="landing-footer-link">{% translate "Terms of Service" %}</a>
-                <a href="#" class="landing-footer-link">{% translate "About Findle AI" %}</a>
-                <a href="#" class="landing-footer-link">{% translate "Subscription" %}</a>
+                <a href="{% url 'help' %}" class="landing-footer-link">{% translate "Help" %}</a>
+                <a href="{% url 'terms' %}" class="landing-footer-link">{% translate "Terms of Service" %}</a>
+                <a href="{% url 'privacy' %}" class="landing-footer-link">{% translate "Privacy Policy" %}</a>
+                <a href="{% url 'about' %}" class="landing-footer-link">{% translate "About Findle AI" %}</a>
             </div>
         </footer>
     </div>
@@ -195,8 +195,8 @@
                             </div>
                             <hr>
                             <a href="#" class="dropdown-item btn-settings"><i class="fa-solid fa-gear"></i> {% translate "Settings" %}</a>
-                            <a href="#" class="dropdown-item"><i class="fa-solid fa-circle-question"></i> {% translate "Help" %}</a>
-                            <a href="#" class="dropdown-item"><i class="fa-solid fa-file-contract"></i> {% translate "Terms of Service" %}</a>
+                            <a href="{% url 'help' %}" class="dropdown-item"><i class="fa-solid fa-circle-question"></i> {% translate "Help" %}</a>
+                            <a href="{% url 'terms' %}" class="dropdown-item"><i class="fa-solid fa-file-contract"></i> {% translate "Terms of Service" %}</a>
                             <hr>
                             <a href="{% url 'logout' %}" class="dropdown-item logout"><i
                                     class="fa-solid fa-right-from-bracket"></i> {% translate "Logout" %}</a>

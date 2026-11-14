@@ -670,8 +670,12 @@ msgstr ""
 msgid "About Findle AI"
 msgstr ""
 
-#: templates/chat/home.html:127
-msgid "Subscription"
+#: templates/chat/home.html templates/pages/base_page.html
+msgid "Privacy Policy"
+msgstr ""
+
+#: templates/pages/base_page.html
+msgid "All rights reserved."
 msgstr ""
 
 #: templates/chat/home.html:223 templates/chat/home.html:330

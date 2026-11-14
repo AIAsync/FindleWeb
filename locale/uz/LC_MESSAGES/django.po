@@ -681,9 +681,13 @@ msgstr ""
 msgid "About Findle AI"
 msgstr "Findle AI haqida"
 
-#: templates/chat/home.html:127
-msgid "Subscription"
-msgstr "Obuna"
+#: templates/chat/home.html templates/pages/base_page.html
+msgid "Privacy Policy"
+msgstr "Maxfiylik siyosati"
+
+#: templates/pages/base_page.html
+msgid "All rights reserved."
+msgstr "Barcha huquqlar himoyalangan."
 
 #: templates/chat/home.html:223 templates/chat/home.html:330
 #: templates/chat/search.html:11
