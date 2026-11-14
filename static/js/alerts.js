@@ -185,6 +185,10 @@
             input.value = '';
             const alert = res.data.alert;
             await loadAlerts(alert ? alert.id : null, res.data.preview);
+            // A phone shows one pane: open the new alert, where it says how many listings match now.
+            // The class only has an effect in the phone layout (mobile_responsive.css).
+            const page = container.querySelector('.alerts-page-container');
+            if (page && alert) page.classList.add('mobile-detail-active');
         });
         input.addEventListener('keydown', (event) => {
             if (event.key === 'Enter' && !event.shiftKey) {

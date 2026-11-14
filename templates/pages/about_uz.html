@@ -1,69 +1,72 @@
 {% extends "pages/base_page.html" %}
 {% load static %}
-{% comment %}Matn egasining sahifasidan (index.html) olingan; tariflar va obuna bo'limi kiritilmagan.{% endcomment %}
 {% block title %}Findle AI haqida{% endblock %}
-{% block description %}Butun O'zbekiston bozorlari bitta aqlli qidiruvda. Findle AI so'rovingizni tushunadi, bozorni tahlil qiladi va eng maqbul variantni topadi.{% endblock %}
+{% block description %}O'ndan ortiq saytdagi San-Fransisko ijara e'lonlari bitta aqlli qidiruvda. Qanday uy kerakligini o'z so'zlaringiz bilan yozing, Findle AI eng mosini topadi.{% endblock %}
 {% block main_class %}info-main--wide{% endblock %}
 {% block content %}
 <section class="about-hero">
     <img src="{% static 'images/findle-logo-new.png' %}" alt="" class="about-hero-logo">
     <p class="about-eyebrow">Findle AI haqida</p>
-    <h1>Butun O'zbekiston bozorlari<br><span>Bitta aqlli qidiruvda</span></h1>
-    <p class="info-lead">Minglab saytlarni titkilashni to'xtating. AI yordamida eng arzon narxlar, trendlar va noyob mahsulotlarni soniyalar ichida toping.</p>
+    <h1>San-Fransisko ijara e'lonlari<br><span>Bitta aqlli qidiruvda</span></h1>
+    <p class="info-lead">Ijara saytlarini birma-bir titkilashni to'xtating. Qanday uy kerakligini o'z so'zlaringiz bilan yozing, Findle AI esa o'ndan ortiq saytdagi mos e'lonlarni soniyalar ichida topadi.</p>
 </section>
 
 <section class="about-section">
-    <h2>AI Qanday yordam beradi?</h2>
-    <p class="about-section-lead">Bizning texnologiyamiz sizning vaqtingiz va pulingizni tejaydi</p>
+    <h2>AI qanday yordam beradi?</h2>
+    <p class="about-section-lead">Bizning texnologiyamiz vaqtingiz va pulingizni tejaydi</p>
     <div class="about-grid">
         <div class="about-card">
             <div class="about-card-icon"><i class="fa-solid fa-magnifying-glass-location"></i></div>
-            <h3>Global Qidiruv</h3>
-            <p>Bitta so'rov orqali O'zbekistondagi barcha onlayn do'konlar va marketlardan mahsulot qidiring.</p>
-        </div>
-        <div class="about-card">
-            <div class="about-card-icon"><i class="fa-solid fa-bell"></i></div>
-            <h3>AI Agent &amp; Bildirishnoma</h3>
-            <p>Mahsulot topilmadimi? AI uni internetda kuzatib yuradi va paydo bo'lishi yoki narxi tushishi bilan sizga xabar beradi.</p>
+            <h3>Barcha ijara saytlari bitta qidiruvda</h3>
+            <p>Katta ijara portallaridan tortib rieltorlar va uy-joy boshqaruv kompaniyalarining o'z saytlarigacha, o'ndan ortiq saytdagi e'lonlar bir joyda. Bir nechta saytga joylangan bitta kvartira bir marta ko'rsatiladi.</p>
         </div>
         <div class="about-card">
             <div class="about-card-icon"><i class="fa-solid fa-comments"></i></div>
-            <h3>Nisbiy gaplarni tushunadi va bajaradi (<a href="https://en.wikipedia.org/wiki/Multiple-criteria_decision_analysis" target="_blank" rel="noopener">MCDM</a>)</h3>
-            <p>Istalgan tildagi so'zlar bilan ta'riflab bering. AI nisbiy buyruqlarni tushunadi va real bozor ma'lumotlari asosida eng maqbul variantni topadi.</p>
+            <h3>Oddiy va nisbiy gaplarni tushunadi (<a href="https://en.wikipedia.org/wiki/Multiple-criteria_decision_analysis" target="_blank" rel="noopener">MCDM</a>)</h3>
+            <p>Uyni o'zbek, ingliz yoki rus tilida ta'riflang: mahalla, ko'cha, byudjet, xonalar soni, biror joy yoki BART'gacha masofa. AI "eng arzon" yoki "eng katta" kabi nisbiy so'rovlarni tushunadi va haqiqiy e'lonlarni shunga qarab saralaydi.</p>
         </div>
         <div class="about-card">
-            <div class="about-card-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
-            <h3>Aqlli Tarix</h3>
-            <p>Barcha qidiruvlaringiz chat ko'rinishida saqlanadi. Ularni qayta ko'rib chiqing va tahrirlang.</p>
+            <div class="about-card-icon"><i class="fa-solid fa-bell"></i></div>
+            <h3>Bildirishnomalar</h3>
+            <p>Hozircha mos uy yo'qmi? Ta'rifingizni bildirishnoma qilib saqlang: yangi mos e'lon paydo bo'lishi bilan Findle sizga xabar beradi.</p>
         </div>
         <div class="about-card">
-            <span class="about-badge">Tez orada</span>
-            <div class="about-card-icon"><i class="fa-solid fa-chart-line"></i></div>
-            <h3>Bozor Tahlili</h3>
-            <p>Real vaqtda narxlar o'zgarishi va trendlarni kuzating. Qimmatga sotib olishdan saqlaning.</p>
+            <div class="about-card-icon"><i class="fa-solid fa-bolt"></i></div>
+            <h3>AI agent</h3>
+            <p>E'lonlar haqida oddiy so'zlar bilan so'rang, masalan qaysi birida uy hayvoni boqish mumkin yoki mahallada bir xonali kvartira qancha turadi. Javobda u tayangan e'lonlarga havolalar bo'ladi.</p>
+        </div>
+        <div class="about-card">
+            <div class="about-card-icon"><i class="fa-solid fa-map-location-dot"></i></div>
+            <h3>Xarita va transport</h3>
+            <p>Natijalarni BART, Muni Metro va Caltrain bekatlari bilan birga San-Fransisko xaritasida ko'ring va biror joy yoki bekatgacha masofa bo'yicha qidiring.</p>
+        </div>
+        <div class="about-card">
+            <div class="about-card-icon"><i class="fa-solid fa-rotate"></i></div>
+            <h3>Doim yangi e'lonlar</h3>
+            <p>Tez o'zgaradigan saytlar har bir necha soatda tekshiriladi, saytidan olib tashlangan e'lon esa taxminan ikki kun ichida Findle'dan ham olinadi.</p>
         </div>
     </div>
 </section>
 
 <section class="about-section">
     <h2>Qanday ishlaydi?</h2>
-    <p class="about-section-lead">Findle AI sizning so'rovingizni tushunadi, bozorni tahlil qiladi va eng maqbul variantni topadi</p>
+    <p class="about-section-lead">Findle AI so'rovingizni tushunadi, e'lonlarni tahlil qiladi va eng maqbul variantlarni topadi</p>
     <ol class="about-steps">
         <li>
             <h3>So'rov yozing</h3>
             <p>Oddiy so'zlar bilan xohishingizni yozing. Filtr, checkbox yoki murakkab formalar yo'q.</p>
         </li>
         <li>
-            <h3>AI bozorni tekshiradi</h3>
-            <p>AI yuzlab manbalarni skanerlab, real narxlar va mavjudlikni aniqlaydi.</p>
+            <h3>Findle e'lonlarni tekshiradi</h3>
+            <p>O'ndan ortiq saytdan yig'ilgan va har kuni yangilanadigan minglab San-Fransisko ijara e'lonlari ichidan qidiradi.</p>
         </li>
         <li>
             <h3>Aqlli saralash</h3>
-            <p>MCDM algoritmi narx, sifat va ishonchlilikni hisobga olib eng yaxshi variantni tanlaydi.</p>
+            <p>MCDM algoritmi narx, o'lcham, joylashuv va siz so'ragan barcha shartlarni hisobga olib, eng yaxshi variantlarni birinchi qo'yadi.</p>
         </li>
         <li>
-            <h3>Natija va kuzatuv</h3>
-            <p>Topilmadimi? AI Agent mahsulotni kuzatadi va o'zgarish bo'lsa sizga xabar beradi.</p>
+            <h3>Natija va bildirishnoma</h3>
+            <p>Natijalarni kartalarda va xaritada ko'ring, Agentdan ular haqida so'rang yoki yangi mos e'lonlardan xabar olish uchun bildirishnoma saqlang.</p>
         </li>
     </ol>
 </section>

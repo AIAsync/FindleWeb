@@ -493,8 +493,8 @@
 
     /* 10. Alerts master / detail
        ------------------------------------------------------------------
-       One pane at a time. ai_interaction.js toggles .mobile-detail-active on
-       the container when a row is opened, and clears it on back. */
+       One pane at a time. alerts.js toggles .mobile-detail-active on the
+       container when a row is opened, and clears it on back. */
     .content-area:has(.alerts-page-container) {
         padding: 0;
         /* .content-area already has flex: 1 inside .main-content, which has a
@@ -504,10 +504,26 @@
         min-height: 0;
     }
 
+    /* The page sits in .chat-container, which must fill .content-area too:
+       left at its content height, the container's height: 100% fell back to
+       auto, so once the list was hidden it was 0 px tall and its
+       overflow: hidden clipped the opened alert away (a blank page whose
+       Back button could not be tapped). */
+    .chat-container:has(.alerts-page-container) {
+        flex: 1;
+        min-height: 0;
+        padding-bottom: 0;
+    }
+
     .alerts-page-container {
         display: block;
         position: relative;
         height: 100%;
+    }
+
+    /* 16px, to stop iOS zooming in when the field is focused. */
+    .alert-new-input {
+        font-size: 16px;
     }
 
     .alerts-sidebar {

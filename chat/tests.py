@@ -236,15 +236,18 @@ class InfoPageTests(TestCase):
             response = self.client.get(reverse('privacy'))
         self.assertContains(response, '<h1>Privacy Policy</h1>', html=False)
 
-    def test_about_keeps_the_information_and_leaves_out_pricing(self):
+    def test_about_describes_the_san_francisco_rental_search(self):
         uz = self.get(reverse('about'), 'uz')
-        self.assertContains(uz, 'AI Qanday yordam beradi?')
-        self.assertContains(uz, "Aqlli saralash")
+        self.assertContains(uz, "San-Fransisko ijara e'lonlari")
+        self.assertContains(uz, 'Aqlli saralash')
         en = self.get(reverse('about'), 'en')
+        self.assertContains(en, 'San Francisco rentals')
         self.assertContains(en, 'How it works')
         for response in (uz, en):
             text = response.content.decode().lower()
-            for word in ('tarif', 'obuna', 'premium', 'subscription', 'pricing', "so'm"):
+            # The old marketplace text, the market analysis card and the pricing are gone
+            for word in ("o'zbekiston", 'uzbekistan', 'bozor tahlili', 'market analysis', 'tez orada', 'coming soon',
+                         'tarif', 'obuna', 'premium', 'subscription', 'pricing', "so'm"):
                 self.assertNotIn(word, text)
 
     def test_home_links_the_pages_and_has_no_subscription(self):

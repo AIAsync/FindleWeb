@@ -717,7 +717,7 @@ body.dark-mode .alert-detail-actions {
 @media (max-width: 768px) {
     /* The mobile master/detail layout (sidebar OR detail, never stacked) lives
        in mobile_responsive.css, together with the .mobile-detail-active class
-       that ai_interaction.js toggles. Stacking rules must not be re-added here. */
+       that alerts.js toggles. Stacking rules must not be re-added here. */
 
     .alert-detail-content-wrapper {
         padding: 1.25rem;
@@ -734,6 +734,14 @@ body.dark-mode .alert-detail-actions {
 
     .alert-detail-header-info {
         padding-right: 0;
+    }
+
+    /* Under the description now: the header's own border closes the block,
+       and on a narrow phone the three buttons wrap instead of overflowing. */
+    .alert-detail-actions {
+        flex-wrap: wrap;
+        padding-bottom: 0;
+        border-bottom: none;
     }
 
     .alert-products-grid {
@@ -952,18 +960,20 @@ body.dark-mode .alerts-empty-hint i {
     text-align: center;
 }
 
-/* New alert form at the top of the list */
+/* New alert form at the top of the list. Inset like the header above it, so
+   the field and the button do not touch the sidebar's edges. */
 .alert-new-form {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 0 0 12px;
+    padding: 0 1.25rem 12px;
 }
 
 .alert-new-input {
     width: 100%;
     box-sizing: border-box;
-    resize: vertical;
+    /* Fixed size: no drag handle in the corner */
+    resize: none;
     min-height: 56px;
     padding: 10px 12px;
     border: 1px solid #e2e8f0;
@@ -1215,6 +1225,12 @@ body.dark-mode .alert-load-more {
     background: #1e293b;
     border-color: #334155;
     color: #e2e8f0;
+}
+
+/* --primary turns white in dark mode, which made the label invisible */
+body.dark-mode .alert-new-btn {
+    background: #f1f5f9;
+    color: #0f172a;
 }
 
 body.dark-mode .alert-chip {

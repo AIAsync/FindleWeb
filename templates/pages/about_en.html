@@ -1,15 +1,14 @@
 {% extends "pages/base_page.html" %}
 {% load static %}
-{% comment %}Translated from the owner's page (index.html); its pricing and subscription section is left out.{% endcomment %}
 {% block title %}About Findle AI{% endblock %}
-{% block description %}All of Uzbekistan's marketplaces in one smart search. Findle AI understands your request, analyzes the market and finds the best option.{% endblock %}
+{% block description %}San Francisco rentals from more than ten websites in one smart search. Describe the home you want in your own words, and Findle AI finds the best matches.{% endblock %}
 {% block main_class %}info-main--wide{% endblock %}
 {% block content %}
 <section class="about-hero">
     <img src="{% static 'images/findle-logo-new.png' %}" alt="" class="about-hero-logo">
     <p class="about-eyebrow">About Findle AI</p>
-    <h1>All of Uzbekistan's marketplaces<br><span>In one smart search</span></h1>
-    <p class="info-lead">Stop digging through thousands of websites. With AI, find the lowest prices, trends and rare products in seconds.</p>
+    <h1>San Francisco rentals<br><span>In one smart search</span></h1>
+    <p class="info-lead">Stop checking rental sites one by one. Describe the home you want in your own words, and Findle AI finds matching listings from more than ten websites in seconds.</p>
 </section>
 
 <section class="about-section">
@@ -18,52 +17,56 @@
     <div class="about-grid">
         <div class="about-card">
             <div class="about-card-icon"><i class="fa-solid fa-magnifying-glass-location"></i></div>
-            <h3>Global search</h3>
-            <p>Search for products across all online stores and marketplaces in Uzbekistan with a single query.</p>
-        </div>
-        <div class="about-card">
-            <div class="about-card-icon"><i class="fa-solid fa-bell"></i></div>
-            <h3>AI agent &amp; notifications</h3>
-            <p>Can't find a product? The AI keeps looking for it online and tells you as soon as it appears or its price drops.</p>
+            <h3>Every rental site in one search</h3>
+            <p>Listings from more than ten websites, from the big rental portals to brokers' and property managers' own sites. An apartment posted on several sites is shown once.</p>
         </div>
         <div class="about-card">
             <div class="about-card-icon"><i class="fa-solid fa-comments"></i></div>
-            <h3>Understands and acts on relative requests (<a href="https://en.wikipedia.org/wiki/Multiple-criteria_decision_analysis" target="_blank" rel="noopener">MCDM</a>)</h3>
-            <p>Describe what you need in your own words, in any language. The AI understands relative requests and finds the best option based on real market data.</p>
+            <h3>Understands plain and relative requests (<a href="https://en.wikipedia.org/wiki/Multiple-criteria_decision_analysis" target="_blank" rel="noopener">MCDM</a>)</h3>
+            <p>Describe the home in English, Uzbek or Russian: neighborhood, street, budget, bedrooms, distance to a landmark or to BART. The AI understands relative requests such as "cheapest" or "largest" and ranks real listings by them.</p>
         </div>
         <div class="about-card">
-            <div class="about-card-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
-            <h3>Smart history</h3>
-            <p>All your searches are saved as chats. Come back to them, review and edit them.</p>
+            <div class="about-card-icon"><i class="fa-solid fa-bell"></i></div>
+            <h3>Alerts</h3>
+            <p>Nothing suitable yet? Save your description as an alert, and Findle tells you as soon as a new matching listing appears.</p>
         </div>
         <div class="about-card">
-            <span class="about-badge">Coming soon</span>
-            <div class="about-card-icon"><i class="fa-solid fa-chart-line"></i></div>
-            <h3>Market analysis</h3>
-            <p>Follow price changes and trends in real time, and avoid overpaying.</p>
+            <div class="about-card-icon"><i class="fa-solid fa-bolt"></i></div>
+            <h3>AI agent</h3>
+            <p>Ask about the listings in plain words, such as which ones allow pets or what a one-bedroom costs in a neighborhood, and get an answer with links to the listings behind it.</p>
+        </div>
+        <div class="about-card">
+            <div class="about-card-icon"><i class="fa-solid fa-map-location-dot"></i></div>
+            <h3>Map and transit</h3>
+            <p>See the results on a map of San Francisco together with BART, Muni Metro and Caltrain stations, and search by distance to a landmark or a station.</p>
+        </div>
+        <div class="about-card">
+            <div class="about-card-icon"><i class="fa-solid fa-rotate"></i></div>
+            <h3>Fresh listings</h3>
+            <p>Sites that change quickly are checked every few hours, and a listing taken down from its site leaves Findle within about two days.</p>
         </div>
     </div>
 </section>
 
 <section class="about-section">
     <h2>How it works</h2>
-    <p class="about-section-lead">Findle AI understands your request, analyzes the market and finds the best option</p>
+    <p class="about-section-lead">Findle AI understands your request, analyzes the listings and finds the best options</p>
     <ol class="about-steps">
         <li>
             <h3>Write your request</h3>
             <p>Describe what you want in plain words. No filters, checkboxes or complicated forms.</p>
         </li>
         <li>
-            <h3>The AI checks the market</h3>
-            <p>The AI scans hundreds of sources to find real prices and availability.</p>
+            <h3>Findle checks the listings</h3>
+            <p>It searches thousands of San Francisco rentals collected from more than ten websites and updated every day.</p>
         </li>
         <li>
             <h3>Smart ranking</h3>
-            <p>The MCDM algorithm weighs price, quality and reliability to choose the best option.</p>
+            <p>The MCDM algorithm weighs price, size, location and everything you asked for, and puts the best options first.</p>
         </li>
         <li>
-            <h3>Results and tracking</h3>
-            <p>Nothing found? The AI agent keeps track of the product and tells you when something changes.</p>
+            <h3>Results and alerts</h3>
+            <p>See the results as cards and on the map, ask the agent about them, or save an alert to hear about new matches.</p>
         </li>
     </ol>
 </section>
