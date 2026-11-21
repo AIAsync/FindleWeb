@@ -114,10 +114,12 @@
     }
 
     function csrfToken() {
-        var meta = document.querySelector('meta[name="csrf-token"]');
-        if (meta && meta.content) return meta.content;
+        // The cookie first: Django rotates it on login and logout, while the meta tag keeps the token
+        // the page was loaded with, and a report sent with the old one is refused (403) and lost.
         var match = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
-        return match ? decodeURIComponent(match[1]) : '';
+        if (match) return decodeURIComponent(match[1]);
+        var meta = document.querySelector('meta[name="csrf-token"]');
+        return meta && meta.content ? meta.content : '';
     }
 
     function flush() {
