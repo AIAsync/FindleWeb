@@ -245,6 +245,16 @@ _SITE_LABELS = {
     'apartmentadvisor': 'ApartmentAdvisor', 'homefinder': 'HomeFinder', 'rentsfnow': 'RentSFNow',
     'avalon': 'AvalonBay', 'vanguard': 'Vanguard Properties', 'coldwell': 'Coldwell Banker', 'udr': 'UDR',
     'corcoran_icon': 'Corcoran', 'olx': 'OLX', 'birbir': 'Birbir',
+    'rentable': 'Rentable', 'dahlia': 'DAHLIA (SF affordable housing)',
+    # San Francisco property managers whose listings are on AppFolio
+    'appfolio_amore': 'Amore Real Estate', 'appfolio_apg': 'APG', 'appfolio_ggproperties': 'Golden Gate Properties',
+    'appfolio_housingguild': 'The Housing Guild', 'appfolio_luminor': 'Luminor Real Estate',
+    'appfolio_vesta': 'Vesta Asset Management', 'appfolio_amsi': 'AMSI', 'appfolio_hampshire': 'Hampshire',
+    'appfolio_improperties': 'IM Properties', 'appfolio_twobliving': '2B Living', 'appfolio_towerrents': 'Tower Rents',
+    'appfolio_twosevenseven': 'Two Seven Seven', 'appfolio_jimenez': 'Jimenez & Associates',
+    'appfolio_gaetani': 'Gaetani Real Estate',
+    # ... and on Buildium
+    'buildium_skybox': 'Skybox Realty',
 }
 
 
