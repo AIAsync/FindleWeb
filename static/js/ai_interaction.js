@@ -1083,8 +1083,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /** Agent → Search: run the query the chat assembled, with its filters so the
      *  conditions are not re-read from text. `route: 'search'` skips the question check. */
-    function handoffToSearch(redirect, prompt) {
-        const query = redirect.query || prompt;
+    function handoffToSearch(redirect, prompt, searched) {
+        // `searched` — the query the Agent's own search ran (its listings came from it). The redirect's
+        // query can carry earlier turns of the conversation, so the box would show two questions in one.
+        const query = searched || redirect.query || prompt;
         if (userInput) userInput.value = query;
         runSearch(query, 1, { route: 'search', filters: redirect.filters || null });
     }
@@ -1093,9 +1095,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const offeredRedirects = new Map();
     let offeredRedirectSeq = 0;
 
-    function buildOpenInSearchButton(redirect, prompt) {
+    function buildOpenInSearchButton(redirect, prompt, searched) {
         const key = String(++offeredRedirectSeq);
-        offeredRedirects.set(key, { redirect, prompt });
+        offeredRedirects.set(key, { redirect, prompt, searched });
         return `
             <button type="button" class="sr-answer-link" data-open-search="${key}">
                 <i class="fa-solid fa-magnifying-glass"></i>
@@ -1265,7 +1267,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const aiMsgDiv = document.createElement('div');
                 aiMsgDiv.className = 'ai-msg ai-response-msg';
                 const offer = redirect && !redirect.auto && redirect.to === 'search'
-                    ? buildOpenInSearchButton(redirect, prompt) : '';
+                    ? buildOpenInSearchButton(redirect, prompt, data.search_query) : '';
                 aiMsgDiv.innerHTML = `<div class="msg-content">${isDeepResearch ? buildDeepResearchAnswer(data) : buildChatAnswer(data)}${offer}</div>`;
                 aiChatMessages.appendChild(aiMsgDiv);
 
@@ -1279,9 +1281,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const searchQuery = data.search_query || prompt;
                     lastResponseData = data;
                     lastResponseData.prompt = searchQuery;
-                    // Only a listing search puts its text in the Search box; a question
-                    // (statistics, compare) stays in the chat, its listings still in Search.
-                    if (data.intent === 'search') resetSearchInput(searchQuery);
+                    // The Search box shows the query these listings came from, whatever the intent:
+                    // Search and its box always describe the same list.
+                    resetSearchInput(searchQuery);
                     searchState = { query: searchQuery, page: (data.page && data.page.page) || 1, searchId: (data.page && data.page.search_id) || '' };
                     renderSearchResults(data, searchQuery);
                     chatContainer.style.display = 'none';
@@ -1824,7 +1826,7 @@ document.addEventListener('DOMContentLoaded', () => {
         html += buildSourceList(citations);
         html += buildSuggestions(data.questions);
         if (products.length) {
-            html += buildBackToSearchLink((data.sources && data.sources.total_count) || products.length);
+            html += buildBackToSearchLink((data.sources && data.sources.total_count) || products.length, data.citeGroup);
         }
         return html;
     }
@@ -1924,13 +1926,13 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
 
-        html += buildBackToSearchLink(total);
+        html += buildBackToSearchLink(total, data.citeGroup);
         return html;
     }
 
-    function buildBackToSearchLink(total) {
+    function buildBackToSearchLink(total, group) {
         return `
-            <button type="button" class="sr-answer-link" data-goto-search>
+            <button type="button" class="sr-answer-link" data-goto-search="${escapeHTML(group || '')}">
                 <i class="fa-solid fa-magnifying-glass"></i>
                 ${t('see_listings', 'See listings')}${total ? ` (${total})` : ''}
             </button>
@@ -1941,22 +1943,26 @@ document.addEventListener('DOMContentLoaded', () => {
         switchTab('tab-all', landing);
     }
 
+    /** Put an Agent answer's listings back into Search, with the query they came from in the box.
+     *  A later search may have replaced the grid; nothing to do when it still shows this answer. */
+    function restoreAnswerSet(group) {
+        const answerSet = group ? answerSets.get(group) : null;
+        if (!answerSet || !chatContainer) return;
+        resetSearchInput(answerSet.prompt);
+        if (lastResponseData === answerSet.data) return;
+        const page = answerSet.data.page || {};
+        searchState = { query: answerSet.prompt, page: page.page || 1, searchId: page.search_id || '' };
+        lastResponseData = answerSet.data;
+        lastResponseData.prompt = answerSet.prompt;
+        renderSearchResults(answerSet.data, answerSet.prompt);
+    }
+
     /** Follow a citation: open Search on the cited listing and flash it so the eye lands on it. */
     function focusCitedCard(productId, group) {
         if (!chatContainer) return;
 
         const selector = `.sr-grid-card[data-product-id="${CSS.escape(productId)}"]`;
-        const answerSet = answerSets.get(group);
-
-        // A later search may have replaced the grid — put this answer's listings back first.
-        if (!chatContainer.querySelector(selector) && answerSet) {
-            const page = answerSet.data.page || {};
-            if (userInput) userInput.value = answerSet.prompt;
-            searchState = { query: answerSet.prompt, page: page.page || 1, searchId: page.search_id || '' };
-            lastResponseData = answerSet.data;
-            lastResponseData.prompt = answerSet.prompt;
-            renderSearchResults(answerSet.data, answerSet.prompt);
-        }
+        if (!chatContainer.querySelector(selector)) restoreAnswerSet(group);
 
         // The tab switch re-renders the grid from the saved markup, so look the card up after it.
         showSearchTab(() => {
@@ -1980,7 +1986,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            if (e.target.closest('[data-goto-search]')) {
+            const seeListings = e.target.closest('[data-goto-search]');
+            if (seeListings) {
+                restoreAnswerSet(seeListings.dataset.gotoSearch);
                 showSearchTab(() => scrollMainTo(0));
                 return;
             }
@@ -1988,7 +1996,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const openSearch = e.target.closest('[data-open-search]');
             if (openSearch) {
                 const offered = offeredRedirects.get(openSearch.dataset.openSearch);
-                if (offered) handoffToSearch(offered.redirect, offered.prompt);
+                if (offered) handoffToSearch(offered.redirect, offered.prompt, offered.searched);
                 return;
             }
 
