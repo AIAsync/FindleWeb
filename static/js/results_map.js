@@ -34,6 +34,8 @@
     let pinLayer = null;
     let manyListings = false;
     let nearLayer = null;
+    // The neighborhood the search asked for, outlined (San Francisco has its boundaries)
+    let areaLayer = null;
     let stationLayer = null;
     let stations = null;
     let drawnKey = null;
@@ -103,6 +105,7 @@
             maxZoom: 19, attribution: ATTRIBUTION, referrerPolicy: 'strict-origin-when-cross-origin',
         }).addTo(map);
         stationLayer = L.layerGroup();
+        areaLayer = L.featureGroup().addTo(map);
         nearLayer = L.featureGroup().addTo(map);
         dotLayer = L.featureGroup();
         pinLayer = L.featureGroup();
@@ -273,7 +276,27 @@
         return notes;
     }
 
-    function fit(points, near) {
+    /** Outline the neighborhood the search named. */
+    function drawArea(area) {
+        areaLayer.clearLayers();
+        if (!area || !Array.isArray(area.rings)) return;
+        area.rings.forEach(ring => {
+            if (Array.isArray(ring) && ring.length >= 3) {
+                L.polygon(ring, {
+                    color: '#2563eb', weight: 2, dashArray: '6 4', fillColor: '#2563eb', fillOpacity: 0.06,
+                    interactive: false,
+                }).addTo(areaLayer);
+            }
+        });
+    }
+
+    function fit(points, near, focus) {
+        // The API's focus: the neighborhood's outline, or the listings without a stray far-away point
+        const anchored = (near || []).some(item => item.anchor && item.anchor.lat != null);
+        if (!anchored && Array.isArray(focus) && focus.length === 2) {
+            map.fitBounds(L.latLngBounds(focus), { padding: [40, 40], maxZoom: 16 });
+            return;
+        }
         const corners = points.filter(p => p.lat != null).map(p => [p.lat, p.lon]);
         (near || []).forEach(item => {
             if (item.anchor && item.anchor.lat != null) corners.push([item.anchor.lat, item.anchor.lon]);
@@ -310,6 +333,7 @@
             dotLayer.clearLayers();
             pinLayer.clearLayers();
             nearLayer.clearLayers();
+            areaLayer.clearLayers();
             await showStations(true);
             map.setView(HOME_CENTER, HOME_ZOOM);
             setStatus(`<span class="map-muted">${esc(tr('map_empty', 'Search for a home — the results will appear on this map.'))}</span>`);
@@ -336,8 +360,9 @@
             expired = expired || Boolean(ctx.searchId);
         }
         drawListings(data.points || []);
+        drawArea(data.area);
         const notes = await drawNear(data.near || ctx.near || []);
-        fit(data.points || [], data.near || ctx.near || []);
+        fit(data.points || [], data.near || ctx.near || [], data.focus);
         setStatus(summary(data, notes, expired));
         drawnKey = key;
     }

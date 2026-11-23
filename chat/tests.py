@@ -286,3 +286,13 @@ class UsRentalsTests(TestCase):
     def test_nationwide_sources_have_their_site_names(self):
         self.assertEqual(views._build_card(_listing(site_name='padmapper_us'))['site_label'], 'PadMapper')
         self.assertEqual(views._build_card(_listing(site_name='craigslist_us'))['site_label'], 'Craigslist')
+
+    def test_the_map_gets_the_neighborhood_outline_and_what_to_fit(self):
+        api = {'points': [{'product_id': '1', 'lat': 37.76, 'lon': -122.415, 'region': 'San Francisco'}],
+               'near': [], 'total': 1, 'shown': 1, 'located': 1, 'bounds': [[37.76, -122.415], [37.76, -122.415]],
+               'focus': [[37.748, -122.426], [37.770, -122.405]],
+               'area': {'names': ['Mission'], 'rings': [[[37.748, -122.426], [37.770, -122.426], [37.770, -122.405]]]}}
+        with mock.patch('chat.views.requests.get', return_value=_Response(200, api)):
+            data = self.client.get('/api/geo/search/abcdef123456/').json()
+        self.assertEqual(data['focus'], api['focus'])
+        self.assertEqual(data['area']['names'], ['Mission'])

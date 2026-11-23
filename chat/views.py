@@ -787,6 +787,9 @@ def geo_search_api(request, search_id):
         'shown': data.get('shown') or 0,
         'located': data.get('located') or 0,
         'bounds': data.get('bounds'),
+        # What the map fits (the named neighborhood or the listings) and that neighborhood's outline
+        'focus': data.get('focus'),
+        'area': data.get('area'),
     })
 
 
