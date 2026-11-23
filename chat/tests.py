@@ -262,80 +262,18 @@ class InfoPageTests(TestCase):
 
 
 @override_settings(STORAGES=PLAIN_STORAGES)
-class RegionPickerTests(TestCase):
-    """The city picker: the list comes from the Findle API, the pick lives in the session and reaches
-    every search, chat and alert call; a query that names a place is still searched there by the API."""
+class UsRentalsTests(TestCase):
+    """Rentals from the whole US: the place comes only from the query, there is no city picker."""
 
-    REGIONS = {'default': 'San Francisco', 'regions': [
-        {'region': 'San Francisco', 'listings': 5000, 'center': [37.77, -122.42]},
-        {'region': 'Chicago, IL', 'listings': 40, 'center': [41.88, -87.63]},
-        {'region': 'Tashkent', 'listings': 9, 'center': None},
-    ]}
-
-    def setUp(self):
-        views._regions_cache.update(at=0.0, data=None)
-        self.addCleanup(views._regions_cache.update, at=0.0, data=None)
-        self.addCleanup(region.set_current_region, None)
-
-    def regions_api(self, body=None, status=200):
-        return mock.patch('chat.views.requests.get',
-                          return_value=_Response(status, self.REGIONS if body is None else body))
-
-    def pick(self, name):
-        return self.client.post('/api/regions/', data=json.dumps({'region': name}), content_type='application/json')
-
-    def test_the_list_has_us_cities_and_starts_on_the_default(self):
-        with self.regions_api() as get:
-            first = self.client.get('/api/regions/').json()
-            self.client.get('/api/regions/')
-        self.assertEqual(get.call_count, 1)  # cached
-        self.assertEqual(first['current'], 'San Francisco')
-        self.assertEqual([item['region'] for item in first['regions']], ['San Francisco', 'Chicago, IL'])
-        self.assertEqual(first['regions'][1]['center'], [41.88, -87.63])
-
-    def test_the_api_down_still_answers_with_the_default(self):
-        with mock.patch('chat.views.requests.get', side_effect=ConnectionError('refused')):
-            data = self.client.get('/api/regions/').json()
-        self.assertEqual((data['current'], data['regions']), ('San Francisco', []))
-
-    def test_a_pick_lives_in_the_session_and_reaches_the_search(self):
-        with self.regions_api():
-            self.assertEqual(self.pick('Chicago, IL').status_code, 200)
-            self.assertEqual(self.client.get('/api/regions/').json()['current'], 'Chicago, IL')
+    def test_no_city_picker_and_no_city_is_sent_with_a_search(self):
+        self.assertNotIn('region-picker', self.client.get('/').content.decode())
         with mock.patch('chat.views.requests.post', return_value=_Response(200, {'results': []})) as post:
-            self.client.post('/api/chat/', data=json.dumps({'prompt': '2 bedroom'}), content_type='application/json')
-        self.assertEqual(post.call_args.kwargs['json']['region'], 'Chicago, IL')
-        self.assertIn('Chicago, IL', self.client.get('/').content.decode())
-
-    def test_no_pick_sends_no_region_and_the_api_keeps_its_default(self):
-        with mock.patch('chat.views.requests.post', return_value=_Response(200, {'results': []})) as post:
-            self.client.post('/api/chat/', data=json.dumps({'prompt': '2 bedroom'}), content_type='application/json')
-        self.assertNotIn('region', post.call_args.kwargs['json'])
-
-    def test_unknown_or_malformed_cities_are_refused(self):
-        with self.regions_api():
-            for name in ('Tashkent', 'Boston, MA', "Robert'); DROP", '', 'X' * 90):
-                self.assertEqual(self.pick(name).status_code, 400, name)
-            self.assertEqual(self.client.post('/api/regions/', data='{"region": 5}',
-                                              content_type='application/json').status_code, 400)
-        self.assertNotIn(region.SESSION_KEY, self.client.session)
-
-    def test_the_region_goes_only_to_search_chat_and_research(self):
-        region.set_current_region('Chicago, IL')
-        self.assertEqual(views._with_language('/deep-research', {'query': 'x'})['region'], 'Chicago, IL')
-        self.assertNotIn('region', views._with_language('/chat/memory', {'query': 'x'}))
-        self.assertEqual(views._with_language('/search', {'query': 'x', 'region': 'Boston, MA'})['region'],
-                         'Boston, MA')
-
-    def test_a_new_alert_watches_the_picked_city(self):
-        user = User.objects.create_user('ali', password='pass-1234-word')
-        self.client.force_login(user)
-        with self.regions_api():
-            self.pick('Chicago, IL')
-        body = {'alert': {'id': 7, 'query': '2 bedroom', 'conditions': []}, 'preview': {'current': 3}}
-        with mock.patch('chat.alerts.requests.request', return_value=_Response(201, body)) as api:
-            self.client.post('/api/alerts/', data=json.dumps({'query': '2 bedroom'}), content_type='application/json')
-        self.assertEqual(api.call_args.kwargs['json']['region'], 'Chicago, IL')
+            self.client.post('/api/chat/', data=json.dumps({'prompt': '2 bedroom in Chicago'}),
+                             content_type='application/json')
+        sent = post.call_args.kwargs['json']
+        self.assertEqual(sent['query'], '2 bedroom in Chicago')
+        self.assertNotIn('region', sent)
+        self.assertEqual(self.client.get('/api/regions/').status_code, 404)
 
     def test_every_us_city_gets_us_units_and_english_titles(self):
         self.assertTrue(region.is_us_region('San Francisco') and region.is_us_region('Chicago, IL'))
@@ -344,3 +282,7 @@ class RegionPickerTests(TestCase):
         self.assertEqual(views._build_card(_listing(region='Tashkent'))['units'], 'metric')
         point = views._map_point({'product_id': '1', 'region': 'Chicago, IL', 'rooms': 2})
         self.assertEqual(point['title'], '2 bd apartment · Chicago, IL')
+
+    def test_nationwide_sources_have_their_site_names(self):
+        self.assertEqual(views._build_card(_listing(site_name='padmapper_us'))['site_label'], 'PadMapper')
+        self.assertEqual(views._build_card(_listing(site_name='craigslist_us'))['site_label'], 'Craigslist')

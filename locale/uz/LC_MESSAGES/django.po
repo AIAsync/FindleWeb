@@ -1070,15 +1070,3 @@ msgstr "Nima qidirayotganingizni yozing."
 #: chat/alerts.py
 msgid "Invalid request."
 msgstr "Noto'g'ri so'rov."
-
-#: templates/chat/_region_picker.html
-msgid "City"
-msgstr "Shahar"
-
-#: templates/chat/_region_picker.html
-msgid "Search for a city"
-msgstr "Shaharni qidiring"
-
-#: templates/chat/_region_picker.html
-msgid "listings"
-msgstr "ta e'lon"

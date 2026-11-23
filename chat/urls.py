@@ -17,8 +17,6 @@ urlpatterns = [
     # Map tab: the located listings of a search and the rail stations layer
     path('api/geo/search/<str:search_id>/', views.geo_search_api, name='geo_search_api'),
     path('api/geo/stations/', views.geo_stations_api, name='geo_stations_api'),
-    # City picker: the cities with listings and the visitor's pick (chat/region.py)
-    path('api/regions/', views.regions_api, name='regions_api'),
     # Alerts tab: descriptions that notify when a new listing matches (Findle API /alerts, no LLM)
     path('api/alerts/', alerts.alerts_api, name='alerts_api'),
     path('api/alerts/unread/', alerts.alert_unread_api, name='alert_unread_api'),

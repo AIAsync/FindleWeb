@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.translation import get_language
 from django.views.decorators.csrf import ensure_csrf_cookie
 from .models import Conversation, Message
-from .region import DEFAULT_REGION, SESSION_KEY, current_region, is_us_region, valid_region
+from .region import DEFAULT_REGION, is_us_region
 import os
 from dotenv import load_dotenv
 import requests
@@ -50,17 +50,12 @@ _LANGUAGE_AWARE = ('/search', '/search/stream', '/chat', '/deep-research', '/dee
 
 
 def _with_language(path, payload):
-    """Interface language and the picked city (chat/region.py) for search, chat and research calls."""
-    if not isinstance(payload, dict) or path not in _LANGUAGE_AWARE:
-        return payload
-    extra = {}
-    code = (get_language() or '')[:2]
-    if 'language' not in payload and code in ('uz', 'ru', 'en'):
-        extra['language'] = code
-    region = current_region()
-    if region and 'region' not in payload:
-        extra['region'] = region
-    return {**payload, **extra} if extra else payload
+    """The interface language for search, chat and research calls. The place comes only from the query."""
+    if isinstance(payload, dict) and path in _LANGUAGE_AWARE and 'language' not in payload:
+        code = (get_language() or '')[:2]
+        if code in ('uz', 'ru', 'en'):
+            return {**payload, 'language': code}
+    return payload
 
 
 def _findle_post(path, payload, timeout):
@@ -247,7 +242,8 @@ def _to_float(value):
 _SQFT_PER_M2 = 10.7639
 _SITE_LABELS = {
     'craigslist_rent': 'Craigslist', 'craigslist_sublet': 'Craigslist', 'zillow_rentals': 'Zillow',
-    'padmapper': 'PadMapper', 'zumper': 'Zumper', 'zumper_buildings': 'Zumper',
+    'padmapper': 'PadMapper', 'padmapper_us': 'PadMapper', 'craigslist_us': 'Craigslist',
+    'zumper': 'Zumper', 'zumper_buildings': 'Zumper',
     'apartmentadvisor': 'ApartmentAdvisor', 'homefinder': 'HomeFinder', 'rentsfnow': 'RentSFNow',
     'avalon': 'AvalonBay', 'vanguard': 'Vanguard Properties', 'coldwell': 'Coldwell Banker', 'udr': 'UDR',
     'corcoran_icon': 'Corcoran', 'olx': 'OLX', 'birbir': 'Birbir',
@@ -741,7 +737,7 @@ _STATIONS_TTL = 3600
 
 def _map_point(point):
     """One listing on the map: the popup shows the same facts as the result card."""
-    region = point.get('region') or current_region() or DEFAULT_REGION
+    region = point.get('region') or DEFAULT_REGION
     rooms = point.get('rooms')
     area = _to_float(point.get('total_area'))
     site_name = point.get('site_name') or ''
@@ -813,58 +809,6 @@ def geo_stations_api(request):
     ]}
     _stations_cache.update(at=now, data=shaped)
     return JsonResponse(shaped)
-
-
-# ── City picker ──────────────────────────────────────────────────────────────
-
-REGIONS_TIMEOUT = 10
-_regions_cache = {'at': 0.0, 'data': None}
-_REGIONS_TTL = 300
-
-
-def _regions():
-    """Cities with listings, most listings first (Findle API /search/regions, cached five minutes)."""
-    import time
-
-    now = time.time()
-    if _regions_cache['data'] is not None and now - _regions_cache['at'] < _REGIONS_TTL:
-        return _regions_cache['data']
-    data, status = _findle_get('/search/regions', REGIONS_TIMEOUT)
-    if status == 200 and isinstance(data, dict):
-        shaped = {
-            'default': data.get('default') or DEFAULT_REGION,
-            'regions': [
-                {'region': item.get('region'), 'listings': int(item.get('listings') or 0),
-                 'center': item.get('center')}
-                for item in data.get('regions') or []
-                if isinstance(item, dict) and valid_region(item.get('region'))
-            ],
-        }
-        _regions_cache.update(at=now, data=shaped)
-        return shaped
-    # The API is down: keep the last list, or offer the default city alone
-    return _regions_cache['data'] or {'default': DEFAULT_REGION, 'regions': []}
-
-
-def regions_api(request):
-    """GET — the cities to pick from and the visitor's current one. POST {region} — pick a city."""
-    if request.method == 'GET':
-        data = _regions()
-        current = request.session.get(SESSION_KEY) or data['default']
-        return JsonResponse({'current': current, 'default': data['default'], 'regions': data['regions']})
-    if request.method != 'POST':
-        return JsonResponse({'error': 'Invalid request'}, status=405)
-    try:
-        body = json.loads(request.body or b'{}')
-    except ValueError:
-        return JsonResponse({'error': 'Invalid JSON'}, status=400)
-    region = body.get('region') if isinstance(body, dict) else None
-    region = region.strip() if isinstance(region, str) else ''
-    known = {item['region'] for item in _regions()['regions']}
-    if not valid_region(region) or (known and region not in known):
-        return JsonResponse({'error': 'Unknown city'}, status=400)
-    request.session[SESSION_KEY] = region
-    return JsonResponse({'current': region})
 
 
 def _stream_response(generator):

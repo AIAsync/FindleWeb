@@ -17,7 +17,6 @@ from django.views.decorators.http import require_http_methods
 
 from .models import AlertOwner
 from .views import FINDLE_API_BASE, _build_card
-from .region import current_region
 
 ALERTS_TIMEOUT = 10
 # Optional server-to-server key; the API checks it only when ALERTS_API_KEY is set on its side.
@@ -103,9 +102,6 @@ def alerts_api(request):
         return JsonResponse({'status': 'error', 'code': 'empty',
                              'message': _('Describe what you are looking for.')}, status=400)
     payload = {'query': query[:MAX_QUERY], 'language': _language()}
-    # The picked city: an alert whose description names no place watches that city
-    if current_region():
-        payload['region'] = current_region()
     name = str((data or {}).get('name') or '').strip()
     if name:
         payload['name'] = name[:MAX_NAME]
@@ -136,8 +132,6 @@ def alert_detail_api(request, alert_id):
         payload['name'] = data['name'].strip()[:MAX_NAME]
     if isinstance(data.get('query'), str) and data['query'].strip():
         payload['query'] = data['query'].strip()[:MAX_QUERY]
-        if current_region():
-            payload['region'] = current_region()
     body, status = _api('PATCH', f'/alerts/{alert_id}', request.user, payload=payload)
     if status != 200 or not isinstance(body, dict):
         return _error(body, status)

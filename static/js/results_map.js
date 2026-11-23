@@ -11,10 +11,9 @@
 (function () {
     'use strict';
 
-    const SF_CENTER = [37.765, -122.435];
-    const SF_ZOOM = 12;
-    // The picked city (static/js/region_picker.js): where the map stands when it has no listings
-    const homeCenter = () => (window.FindleRegion && window.FindleRegion.center) || SF_CENTER;
+    // Rentals from the whole US: with no listings to fit the map shows the country
+    const HOME_CENTER = [39.5, -98.35];
+    const HOME_ZOOM = 4;
     const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
     const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors · <a href="https://datasf.org" target="_blank" rel="noopener">DataSF</a>';
     const MODE_COLORS = { bart: '#1d4ed8', muni_metro: '#dc2626', caltrain: '#475569' };
@@ -97,7 +96,7 @@
             setStatus(`<span class="map-status-error">${esc(tr('map_unavailable', 'The map could not be loaded.'))}</span>`);
             return null;
         }
-        map = L.map(box, { zoomControl: true, scrollWheelZoom: true }).setView(homeCenter(), SF_ZOOM);
+        map = L.map(box, { zoomControl: true, scrollWheelZoom: true }).setView(HOME_CENTER, HOME_ZOOM);
         // OpenStreetMap's tile servers refuse requests without a Referer, and Django's SecurityMiddleware
         // sends none cross-origin (Referrer-Policy: same-origin). The site's origin is enough for them.
         L.tileLayer(TILE_URL, {
@@ -281,7 +280,7 @@
         });
         if (corners.length === 1) map.setView(corners[0], 15);
         else if (corners.length) map.fitBounds(L.latLngBounds(corners), { padding: [40, 40], maxZoom: 16 });
-        else map.setView(homeCenter(), SF_ZOOM);
+        else map.setView(HOME_CENTER, HOME_ZOOM);
     }
 
     function summary(data, notes, expired) {
@@ -294,11 +293,6 @@
         if (expired) parts.push(`<span class="map-muted">${esc(tr('map_expired', 'Showing this page only — run the search again for all results.'))}</span>`);
         return parts.concat(notes).join(' ');
     }
-
-    // A new city: an empty map moves there at once; a map with listings waits for the new search
-    document.addEventListener('findle:region', () => {
-        if (map && !drawnKey) map.setView(homeCenter(), SF_ZOOM);
-    });
 
     async function show(ctx) {
         const view = element('map-view');
@@ -317,7 +311,7 @@
             pinLayer.clearLayers();
             nearLayer.clearLayers();
             await showStations(true);
-            map.setView(homeCenter(), SF_ZOOM);
+            map.setView(HOME_CENTER, HOME_ZOOM);
             setStatus(`<span class="map-muted">${esc(tr('map_empty', 'Search for a home — the results will appear on this map.'))}</span>`);
             return;
         }

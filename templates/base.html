@@ -107,11 +107,8 @@
                         <a href="#" class="search-tab auth-required" id="tab-alert">
                             <i class="fa-solid fa-bell"></i> {% translate "Alerts" %}
                         </a>
-                        {% include "chat/_region_picker.html" %}
                     </div>
                 </div>
-                <!-- Phones: the tab row scrolls sideways, so the city picker moves here (region_picker.js) -->
-                <div class="region-picker-row" id="region-picker-row" hidden></div>
             </div>
             <div class="workbench-panel" id="panel-monitoring">
                 <div class="workbench-header">
@@ -575,7 +572,6 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="{% static 'js/results_map.js' %}"></script>
-    <script src="{% static 'js/region_picker.js' %}"></script>
     <script src="{% static 'js/alerts.js' %}"></script>
     <script src="{% static 'js/ai_interaction.js' %}"></script>
     <script src="{% static 'js/workbench.js' %}"></script>
