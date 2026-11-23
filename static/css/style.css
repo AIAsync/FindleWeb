@@ -4717,3 +4717,191 @@ body.dark-mode .sr-step-timeline li::after {
 /* The Agent input's hint fades between "Ask to Task" and "Click @ to reply" */
 #chat-bottom-input::placeholder { transition: opacity 0.22s ease; opacity: 1; }
 #chat-bottom-input.placeholder-out::placeholder { opacity: 0; }
+
+
+/* --- City picker (templates/chat/_region_picker.html, static/js/region_picker.js) --- */
+.region-picker {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.region-picker-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 220px;
+    padding: 5px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-main);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.region-picker-btn:hover,
+.region-picker.open .region-picker-btn {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.region-picker-btn:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.region-picker-btn .fa-location-dot {
+    color: #dc2626;
+    font-size: 0.85rem;
+}
+
+.region-picker-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.region-picker-caret {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    transition: transform 0.2s;
+}
+
+.region-picker.open .region-picker-caret {
+    transform: rotate(180deg);
+}
+
+.region-picker-panel {
+    position: fixed;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px;
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 14px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25), 0 8px 10px -6px rgba(0, 0, 0, 0.15);
+}
+
+.region-picker-panel[hidden] {
+    display: none;
+}
+
+.region-picker-search {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: #f8fafc;
+    color: var(--text-main);
+    font-size: 0.9rem;
+    outline: none;
+}
+
+.region-picker-search:focus {
+    border-color: #94a3b8;
+    background: #ffffff;
+}
+
+.region-picker-list {
+    list-style: none;
+    max-height: min(320px, 60vh);
+    overflow-y: auto;
+}
+
+.region-picker-item {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    color: var(--text-main);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.region-picker-item:hover {
+    background: #f1f5f9;
+}
+
+.region-picker-item.active {
+    background: #e2e8f0;
+    font-weight: 600;
+}
+
+.region-picker-count {
+    flex-shrink: 0;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 400;
+}
+
+body.dark-mode .region-picker-btn:hover,
+body.dark-mode .region-picker.open .region-picker-btn {
+    background: #1e293b;
+    border-color: #475569;
+}
+
+body.dark-mode .region-picker-btn .fa-location-dot {
+    color: #f87171;
+}
+
+body.dark-mode .region-picker-panel {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .region-picker-search {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+body.dark-mode .region-picker-item:hover {
+    background: #334155;
+}
+
+body.dark-mode .region-picker-item.active {
+    background: #475569;
+}
+
+.region-picker-row {
+    display: flex;
+    justify-content: center;
+    padding: 6px 12px 8px;
+}
+
+.region-picker-row[hidden] {
+    display: none;
+}
+
+/* The header's bottom line moves under the picker row */
+.app-header .region-picker-row {
+    border-bottom: 1px solid #e2e8f0;
+}
+
+body.region-row-docked .app-header .topbar-search-tabs-container {
+    border-bottom-color: transparent;
+}
+
+body.dark-mode .app-header .region-picker-row {
+    border-bottom-color: #1e293b;
+}
+
+.landing-region-row {
+    padding-top: 10px;
+}
+
+@media (max-width: 768px) {
+    .region-picker-btn {
+        max-width: calc(100vw - 48px);
+        padding: 4px 12px;
+        font-size: 0.8rem;
+    }
+}

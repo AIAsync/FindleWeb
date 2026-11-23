@@ -1,0 +1,16 @@
+{% load i18n %}
+<!-- City picker: every search, chat and alert runs in this city unless the query names a place
+     (static/js/region_picker.js, chat/region.py) -->
+<div class="region-picker" id="region-picker" data-listings-label="{% translate 'listings' %}">
+    <button type="button" class="region-picker-btn" id="region-picker-btn"
+        title="{% translate 'City' %}" aria-haspopup="listbox" aria-expanded="false">
+        <i class="fa-solid fa-location-dot"></i>
+        <span class="region-picker-label" id="region-picker-label">{{ request.session.findle_region|default:"San Francisco" }}</span>
+        <i class="fa-solid fa-chevron-down region-picker-caret"></i>
+    </button>
+    <div class="region-picker-panel" id="region-picker-panel" hidden>
+        <input type="text" id="region-picker-search" class="region-picker-search"
+            placeholder="{% translate 'Search for a city' %}" autocomplete="off" aria-label="{% translate 'Search for a city' %}">
+        <ul class="region-picker-list" id="region-picker-list" role="listbox"></ul>
+    </div>
+</div>

@@ -846,3 +846,15 @@ msgstr "Ranking matches"
 #: templates/base.html templates/chat/home.html
 msgid "Writing the answer"
 msgstr "Writing the answer"
+
+#: templates/chat/_region_picker.html
+msgid "City"
+msgstr ""
+
+#: templates/chat/_region_picker.html
+msgid "Search for a city"
+msgstr ""
+
+#: templates/chat/_region_picker.html
+msgid "listings"
+msgstr ""
