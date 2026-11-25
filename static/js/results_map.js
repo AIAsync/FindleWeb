@@ -24,6 +24,9 @@
         caltrain: ['caltrain'], rail: ['bart', 'muni_metro', 'caltrain'], transit: ['bart', 'muni_metro', 'caltrain'],
     };
     const MAX_STATION_CIRCLES = 25;
+    // BART, Muni Metro and Caltrain run only around San Francisco: their legend and the station switch are shown
+    // only while the map shows that area, not over Tashkent or New York
+    const TRANSIT_AREA = [[36.9, -122.75], [38.1, -121.5]];
 
     // Many listings: dots until the user zooms in, price pins from this zoom on
     const PIN_ZOOM = 15;
@@ -122,6 +125,7 @@
         dotLayer = L.featureGroup();
         pinLayer = L.featureGroup();
         map.on('zoomend', applyZoomMode);
+        map.on('moveend', updateLegend);
 
         const toggle = element('map-stations-toggle');
         if (toggle) {
@@ -162,6 +166,15 @@
         }
         await loadStations();
         stationLayer.addTo(map);
+    }
+
+    function updateLegend() {
+        const legend = document.querySelector('#map-view .map-legend');
+        if (!legend || !map) return;
+        // A map that is not on screen yet has no size: it is measured again when the tab opens
+        const size = map.getSize();
+        if (!size.x || !size.y) return;
+        legend.hidden = !map.getBounds().intersects(L.latLngBounds(TRANSIT_AREA));
     }
 
     function specs(p) {
@@ -330,8 +343,9 @@
         const corners = located.map(p => [p.lat, p.lon]);
         (near || []).forEach(item => {
             if (item.anchor && item.anchor.lat != null) corners.push([item.anchor.lat, item.anchor.lon]);
-            // Ko'cha: butun chizig'i ko'rinsin, faqat o'rtasidagi nuqta emas
-            if (item.anchor && Array.isArray(item.anchor.line)) {
+            // Ko'cha: uylar taxminiy joyda (tuman markazi) bo'lsa butun chizig'i ko'rinsin — so'ralgan joy shu chiziq.
+            // Aniq nuqtalar ko'cha bo'ylab yotadi: xarita uylarga moslashadi, uzun ko'cha uni uzoqlashtirmaydi
+            if ((approximate || !located.length) && item.anchor && Array.isArray(item.anchor.line)) {
                 item.anchor.line.forEach(part => (part || []).forEach(pt => corners.push([pt[1], pt[0]])));
             }
         });

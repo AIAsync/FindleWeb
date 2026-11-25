@@ -85,6 +85,11 @@
     color: var(--text-muted);
 }
 
+/* BART, Muni Metro, Caltrain: only while the map shows the San Francisco area (static/js/results_map.js) */
+.map-legend[hidden] {
+    display: none;
+}
+
 .map-legend span::before {
     content: "";
     display: inline-block;
