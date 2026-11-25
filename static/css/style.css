@@ -2941,6 +2941,33 @@ body.dark-mode .alert-modal-btn-cancel:hover {
     color: #cbd5e1;
 }
 
+/* Nothing found: the message is the whole answer, so it is large */
+.sr-empty {
+    gap: 16px;
+    padding: 72px 20px;
+}
+
+.sr-empty i {
+    font-size: 4.5rem;
+    color: #94a3b8;
+}
+
+.sr-empty p {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--text-main, #334155);
+}
+
+.search-results-layout.is-empty {
+    display: flex;
+    justify-content: center;
+}
+
+.search-results-layout.is-empty .search-results-main {
+    flex: 0 1 640px;
+}
+
 .sr-error {
     flex-direction: row;
     justify-content: center;

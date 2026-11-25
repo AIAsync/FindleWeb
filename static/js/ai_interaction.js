@@ -1528,7 +1528,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ].filter(Boolean);
 
         // ---- Left column: result header + one uniform grid ----
-        let leftHTML = `
+        // Nothing found: no "Thoughts for" line and no answer (the API asks no model then), only the empty state
+        let leftHTML = products.length > 0 ? `
             <div class="sr-result-header">
                 <div class="sr-result-headline">
                     ${duration ? `<span class="sr-result-time">${escapeHTML(`${t('thoughts_for', 'Thoughts for')} ${duration}s`)}</span>` : ''}
@@ -1536,7 +1537,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 ${answerHTML}
             </div>
-        `;
+        ` : '';
 
         if (products.length > 0) {
             leftHTML += `<div class="sr-products-grid">${products.map(buildGridCard).join('')}</div>`;
@@ -1588,12 +1589,13 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
 
-        chatContainer.innerHTML = `
+        // Nothing found: one centred message, no empty price column beside it
+        chatContainer.innerHTML = products.length > 0 ? `
             <div class="search-results-layout">
                 <div class="search-results-main">${leftHTML}</div>
                 <div class="search-results-sidebar">${rightHTML}</div>
             </div>
-        `;
+        ` : `<div class="search-results-layout is-empty"><div class="search-results-main">${leftHTML}</div></div>`;
 
         // Update allTabContent whenever new results are rendered
         allTabContent = chatContainer.innerHTML;
