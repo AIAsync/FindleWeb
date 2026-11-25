@@ -330,6 +330,10 @@
         const corners = located.map(p => [p.lat, p.lon]);
         (near || []).forEach(item => {
             if (item.anchor && item.anchor.lat != null) corners.push([item.anchor.lat, item.anchor.lon]);
+            // Ko'cha: butun chizig'i ko'rinsin, faqat o'rtasidagi nuqta emas
+            if (item.anchor && Array.isArray(item.anchor.line)) {
+                item.anchor.line.forEach(part => (part || []).forEach(pt => corners.push([pt[1], pt[0]])));
+            }
         });
         if (corners.length === 1) map.setView(corners[0], approximate ? 13 : 15);
         else if (corners.length) map.fitBounds(L.latLngBounds(corners), { padding: [40, 40], maxZoom });
