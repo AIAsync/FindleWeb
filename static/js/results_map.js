@@ -57,19 +57,31 @@
         return typeof url === 'string' && /^https?:\/\//i.test(url) ? url : '';
     }
 
+    // Valyuta nomi narxdan keyin: so'm — "so'm"; noma'lum valyutaga belgi qo'yilmaydi ("$" so'mdagi narxni
+    // million dollar qilib ko'rsatardi)
+    function currencyWord(currency) {
+        if (currency === 'UZS') return tr('som', "so'm");
+        return currency && currency !== 'USD' ? currency : '';
+    }
+
     function money(value, currency) {
         if (value == null) return '';
         const amount = Math.round(value).toLocaleString('en-US');
-        return currency === 'USD' || !currency ? `$${amount}` : `${amount} ${currency}`;
+        if (currency === 'USD') return `$${amount}`;
+        const word = currencyWord(currency);
+        return word ? `${amount} ${word}` : amount;
     }
 
     function shortMoney(value, currency) {
         if (value == null) return '?';
-        const sign = currency === 'USD' || !currency ? '$' : '';
-        if (value >= 1000000) return `${sign}${(value / 1000000).toFixed(1)}M`;
-        if (value >= 10000) return `${sign}${Math.round(value / 1000)}k`;
-        if (value >= 1000) return `${sign}${(value / 1000).toFixed(1)}k`;
-        return `${sign}${Math.round(value)}`;
+        const sign = currency === 'USD' ? '$' : '';
+        let text;
+        if (value >= 1000000) text = `${(value / 1000000).toFixed(1)}M`;
+        else if (value >= 10000) text = `${Math.round(value / 1000)}k`;
+        else if (value >= 1000) text = `${(value / 1000).toFixed(1)}k`;
+        else text = `${Math.round(value)}`;
+        const word = currencyWord(currency);
+        return word ? `${sign}${text} ${word}` : `${sign}${text}`;
     }
 
     function distance(meters) {
@@ -193,13 +205,27 @@
         (pins ? pinLayer : dotLayer).addTo(map);
     }
 
+    /** Taxminiy nuqta (mo'ljal, tuman yoki shahar markazi): bir joyga tushgan e'lonlar ustma-ust turmasin —
+     *  har biri o'z id'sidan 60–300 m ga, har safar bir xil tomonga suriladi. Aniq nuqta joyida qoladi. */
+    function placed(p) {
+        if (!p.approximate) return [p.lat, p.lon];
+        let hash = 0;
+        for (const ch of String(p.product_id || `${p.lat},${p.lon},${p.price}`)) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+        const angle = (hash % 360) * Math.PI / 180;
+        const meters = 60 + (Math.floor(hash / 360) % 240);
+        const dLat = meters * Math.cos(angle) / 111320;
+        const dLon = meters * Math.sin(angle) / (111320 * Math.cos(p.lat * Math.PI / 180));
+        return [p.lat + dLat, p.lon + dLon];
+    }
+
     function drawListings(points) {
         dotLayer.clearLayers();
         pinLayer.clearLayers();
         const located = points.filter(p => p.lat != null && p.lon != null);
         located.forEach(p => {
             const html = popup(p);
-            L.circleMarker([p.lat, p.lon], {
+            const at = placed(p);
+            L.circleMarker(at, {
                 radius: 6, color: '#ffffff', weight: 1.5,
                 fillColor: p.approximate ? '#64748b' : '#0f172a', fillOpacity: 0.9,
             }).bindTooltip(esc(shortMoney(p.price, p.currency)), { direction: 'top' })
@@ -210,7 +236,7 @@
                 html: `<span>${esc(shortMoney(p.price, p.currency))}</span>`,
                 iconSize: null,
             });
-            L.marker([p.lat, p.lon], { icon, riseOnHover: true, title: p.title || '' })
+            L.marker(at, { icon, riseOnHover: true, title: p.title || '' })
                 .bindPopup(html, { maxWidth: 280, minWidth: 220 })
                 .addTo(pinLayer);
         });
@@ -291,18 +317,22 @@
     }
 
     function fit(points, near, focus) {
+        // Hammasi taxminiy nuqta (mahalla, tuman yoki shahar markazi): ko'cha darajasiga emas, shahar darajasiga
+        const located = points.filter(p => p.lat != null);
+        const approximate = located.length > 0 && located.every(p => p.approximate);
+        const maxZoom = approximate ? 13 : 16;
         // The API's focus: the neighborhood's outline, or the listings without a stray far-away point
         const anchored = (near || []).some(item => item.anchor && item.anchor.lat != null);
         if (!anchored && Array.isArray(focus) && focus.length === 2) {
-            map.fitBounds(L.latLngBounds(focus), { padding: [40, 40], maxZoom: 16 });
+            map.fitBounds(L.latLngBounds(focus), { padding: [40, 40], maxZoom });
             return;
         }
-        const corners = points.filter(p => p.lat != null).map(p => [p.lat, p.lon]);
+        const corners = located.map(p => [p.lat, p.lon]);
         (near || []).forEach(item => {
             if (item.anchor && item.anchor.lat != null) corners.push([item.anchor.lat, item.anchor.lon]);
         });
-        if (corners.length === 1) map.setView(corners[0], 15);
-        else if (corners.length) map.fitBounds(L.latLngBounds(corners), { padding: [40, 40], maxZoom: 16 });
+        if (corners.length === 1) map.setView(corners[0], approximate ? 13 : 15);
+        else if (corners.length) map.fitBounds(L.latLngBounds(corners), { padding: [40, 40], maxZoom });
         else map.setView(HOME_CENTER, HOME_ZOOM);
     }
 
