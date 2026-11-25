@@ -1522,6 +1522,15 @@ body.auth-page {
     flex-direction: column;
 }
 
+@media (min-width: 769px) {
+    /* Desktop: a narrower search box, set lower so it sits with the tabs under it (owner, 2026-11-25). Only the
+       box moves: on the Alerts tab, where it is hidden, the header keeps its height. */
+    .topbar-search-container {
+        flex-basis: 600px;
+        margin-top: 14px;
+    }
+}
+
 /* Search Tabs Container (Sticky Navigation) */
 .topbar-search-tabs-container {
     position: relative;
@@ -2219,80 +2228,92 @@ input:checked+.slider:before {
 
 
 /* Dark Mode Overrides */
+/* Dark theme: neutral near-black surfaces instead of navy slate, so panels, cards and inputs read as one family
+   (owner: dark mode looked "xunuk va be o'xshov", 2026-11-25). Dark rules in every stylesheet use these tokens. */
 body.dark-mode {
-    --bg-color: #0f172a;
-    --sidebar-bg: #1e293b;
-    --card-bg: #1e293b;
-    --text-main: #f1f5f9;
-    --text-muted: #94a3b8;
-    --border-color: #334155;
-    --primary: #ffffff;
-    --primary-hover: #e2e8f0;
-    --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+    --bg-color: #111214;
+    --sidebar-bg: #16171a;
+    --card-bg: #1b1c1f;
+    --surface-2: #232428;
+    --surface-3: #2c2d32;
+    --border-soft: #222326;
+    --border-color: #2e3035;
+    --border-strong: #3e4047;
+    --text-main: #ececed;
+    --text-soft: #c7c8cc;
+    --text-muted: #9c9ea5;
+    --text-faint: #6e7078;
+    --primary: #f2f2f3;
+    --primary-hover: #d9dadd;
+    --on-primary: #111214;
+    --accent: #8ab4f8;
+    --accent-soft: rgba(138, 180, 248, 0.12);
+    --accent-border: rgba(138, 180, 248, 0.4);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 /* --- Topbar --- */
 body.dark-mode .app-header {
-    background: #0f172a;
+    background: var(--bg-color);
 }
 
+/* No line between the search box and the tabs: one header block, as in light mode */
 body.dark-mode .topbar {
-    background: #0f172a;
-    border-bottom: 1px solid #1e293b;
+    background: var(--bg-color);
 }
 
 /* --- Search Input Wrapper --- */
 body.dark-mode .search-input-wrapper {
-    background: #1e293b;
-    border-color: #334155;
+    background: var(--card-bg);
+    border-color: var(--border-color);
 }
 
 body.dark-mode .search-input-wrapper:focus-within,
 body.dark-mode .search-input-wrapper:hover {
-    background: #0f172a;
-    border-color: #475569;
+    background: var(--bg-color);
+    border-color: var(--border-strong);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 body.dark-mode .topbar-search-input {
-    color: #f1f5f9;
+    color: var(--text-main);
 }
 
 body.dark-mode .topbar-search-input::placeholder {
-    color: #64748b;
+    color: var(--text-faint);
 }
 
 body.dark-mode .search-plus-btn {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 body.dark-mode .search-plus-btn:hover {
     background: rgba(255, 255, 255, 0.08);
-    color: #f1f5f9;
+    color: var(--text-main);
 }
 
 body.dark-mode .search-icon-btn {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 body.dark-mode .search-icon-btn:hover {
     background: rgba(255, 255, 255, 0.08);
-    color: #f1f5f9;
+    color: var(--text-main);
 }
 
 /* --- Search Tags --- */
 body.dark-mode .search-tag {
-    background: #334155;
-    color: #f1f5f9;
+    background: var(--surface-2);
+    color: var(--text-main);
 }
 
 body.dark-mode .search-tag i {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 body.dark-mode .search-tag i:hover {
     background: rgba(255, 255, 255, 0.1);
-    color: #f1f5f9;
+    color: var(--text-main);
 }
 
 body.dark-mode .search-tags {
@@ -2301,16 +2322,16 @@ body.dark-mode .search-tags {
 
 /* --- Search Tabs --- */
 body.dark-mode .topbar-search-tabs-container {
-    background: #0f172a;
-    border-bottom-color: #1e293b;
+    background: var(--bg-color);
+    border-bottom-color: var(--border-soft);
 }
 
 body.dark-mode .search-tab {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 body.dark-mode .search-tab:hover {
-    color: #f1f5f9;
+    color: var(--text-main);
 }
 
 body.dark-mode .search-tab.active {
@@ -2320,22 +2341,22 @@ body.dark-mode .search-tab.active {
 
 /* --- Search Dropdown (Plus menu) --- */
 body.dark-mode .search-options-dropdown {
-    background: #1e293b;
-    border-color: #334155;
+    background: var(--card-bg);
+    border-color: var(--border-color);
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
 }
 
 body.dark-mode .search-options-dropdown hr {
-    border-top-color: #334155 !important;
+    border-top-color: var(--border-color) !important;
 }
 
 body.dark-mode .dropdown-option {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 body.dark-mode .dropdown-option:hover {
     background: rgba(255, 255, 255, 0.06);
-    color: #f1f5f9;
+    color: var(--text-main);
 }
 
 body.dark-mode .option-icon {
@@ -2344,27 +2365,27 @@ body.dark-mode .option-icon {
 
 body.dark-mode .dropdown-option.active {
     background: rgba(255, 255, 255, 0.1);
-    color: #f1f5f9;
-    border-color: rgba(148, 163, 184, 0.3);
+    color: var(--text-main);
+    border-color: rgba(156, 158, 165, 0.3);
 }
 
 /* --- Profile Dropdown --- */
 body.dark-mode .profile-dropdown {
-    background: #1e293b;
-    border-color: #334155;
+    background: var(--card-bg);
+    border-color: var(--border-color);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 body.dark-mode .profile-header {
-    background: #0f172a;
+    background: var(--bg-color);
 }
 
 body.dark-mode .profile-dropdown hr {
-    border-top-color: #334155;
+    border-top-color: var(--border-color);
 }
 
 body.dark-mode .profile-dropdown .dropdown-item {
-    color: #f1f5f9;
+    color: var(--text-main);
 }
 
 body.dark-mode .profile-dropdown .dropdown-item:hover {
@@ -2372,7 +2393,7 @@ body.dark-mode .profile-dropdown .dropdown-item:hover {
 }
 
 body.dark-mode .profile-dropdown .dropdown-item i {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 body.dark-mode .profile-dropdown .dropdown-item.logout {
@@ -2389,82 +2410,82 @@ body.dark-mode .profile-dropdown .dropdown-item.logout i {
 
 /* --- Modals (general) --- */
 body.dark-mode .modal-box {
-    background: #1e293b;
-    border-color: #334155;
+    background: var(--card-bg);
+    border-color: var(--border-color);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
 }
 
 body.dark-mode .modal-box h3 {
-    color: #f1f5f9;
+    color: var(--text-main);
 }
 
 body.dark-mode .modal-box p {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 body.dark-mode .btn-cancel {
-    background: #334155;
-    color: #f1f5f9;
+    background: var(--surface-2);
+    color: var(--text-main);
 }
 
 body.dark-mode .btn-cancel:hover {
-    background: #475569;
+    background: var(--surface-3);
 }
 
 body.dark-mode .btn-confirm {
-    background: #f1f5f9;
-    color: #0f172a;
+    background: var(--primary);
+    color: var(--on-primary);
 }
 
 body.dark-mode .btn-confirm:hover {
-    background: #e2e8f0;
+    background: var(--primary-hover);
 }
 
 body.dark-mode .modal-box input[type="text"],
 body.dark-mode .modal-box input[type="email"],
 body.dark-mode .modal-box input[type="number"] {
-    background: #0f172a;
-    border-color: #334155;
-    color: #f1f5f9;
+    background: var(--bg-color);
+    border-color: var(--border-color);
+    color: var(--text-main);
 }
 
 /* --- Auth Modal --- */
 body.dark-mode .auth-modal i.fa-lock {
-    color: #f1f5f9 !important;
+    color: var(--text-main) !important;
 }
 
 /* --- Filter Modal --- */
 body.dark-mode .filter-modal input,
 body.dark-mode .filter-modal select {
-    background: #0f172a;
-    border-color: #334155;
-    color: #f1f5f9;
+    background: var(--bg-color);
+    border-color: var(--border-color);
+    color: var(--text-main);
 }
 
 body.dark-mode .filter-modal input:focus,
 body.dark-mode .filter-modal select:focus {
-    border-color: #64748b;
-    background: #0f172a;
+    border-color: var(--border-strong);
+    background: var(--bg-color);
 }
 
 body.dark-mode .filter-modal select option {
-    background: #1e293b;
-    color: #f1f5f9;
+    background: var(--card-bg);
+    color: var(--text-main);
 }
 
 /* --- Settings Modal --- */
 body.dark-mode .settings-modal,
 body.dark-mode .settings-sidebar {
-    background: #1e293b;
-    border-color: #334155;
+    background: var(--sidebar-bg);
+    border-color: var(--border-color);
 }
 
 body.dark-mode .settings-footer {
-    border-top-color: #334155;
+    border-top-color: var(--border-color);
 }
 
 body.dark-mode .settings-nav-item.active {
-    background: #0f172a;
+    background: var(--bg-color);
     color: white;
     border-color: white;
 }
@@ -2474,28 +2495,28 @@ body.dark-mode .settings-nav-item:hover {
 }
 
 body.dark-mode .setting-item {
-    border-color: #334155;
+    border-color: var(--border-color);
 }
 
 body.dark-mode .settings-select,
 body.dark-mode .form-group input {
-    background: #0f172a;
-    border-color: #334155;
+    background: var(--bg-color);
+    border-color: var(--border-color);
     color: white;
 }
 
 
 body.dark-mode .slider {
-    background-color: #475569;
+    background-color: var(--surface-3);
 }
 
 /* --- Content Area & Chat --- */
 body.dark-mode .content-area {
-    background: #0f172a;
+    background: var(--bg-color);
 }
 
 body.dark-mode .chat-container {
-    background: #0f172a;
+    background: var(--bg-color);
 }
 
 body.dark-mode .message.assistant {
@@ -2516,29 +2537,29 @@ body.dark-mode .reasoning-block {
 }
 
 body.dark-mode .reasoning-container {
-    background: #1e293b !important;
-    border-color: #334155 !important;
-    color: #cbd5e1;
+    background: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-soft);
 }
 
 body.dark-mode .reasoning-step {
-    color: #cbd5e1;
+    color: var(--text-soft);
 }
 
 
 /* --- Product Cards --- */
 body.dark-mode .product-card {
-    background: #1e293b;
-    border-color: #334155;
+    background: var(--card-bg);
+    border-color: var(--border-color);
 }
 
 body.dark-mode .product-card:hover {
-    border-color: #475569;
+    border-color: var(--border-strong);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 body.dark-mode .product-title {
-    color: #f1f5f9;
+    color: var(--text-main);
 }
 
 body.dark-mode .product-price {
@@ -2551,36 +2572,36 @@ body.dark-mode .product-discount-tag {
 }
 
 body.dark-mode .product-img {
-    background: #0f172a;
-    color: #64748b;
+    background: var(--bg-color);
+    color: var(--text-faint);
 }
 
 /* --- Welcome Screen --- */
 body.dark-mode .welcome-screen h1 {
-    color: #f1f5f9;
+    color: var(--text-main);
 }
 
 /* --- Google Login Button --- */
 body.dark-mode .google-login-btn {
-    background: #1e293b;
-    border-color: #334155;
-    color: #f1f5f9;
+    background: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-main);
 }
 
 body.dark-mode .google-login-btn:hover {
-    background: #334155;
-    border-color: #475569;
+    background: var(--surface-2);
+    border-color: var(--border-strong);
 }
 
 /* --- Topbar Auth Buttons --- */
 body.dark-mode .topbar-signin-btn {
-    color: #f1f5f9;
-    border-color: #334155;
+    color: var(--text-main);
+    border-color: var(--border-color);
 }
 
 body.dark-mode .topbar-signin-btn:hover {
-    background: #1e293b;
-    border-color: #475569;
+    background: var(--card-bg);
+    border-color: var(--border-strong);
 }
 
 /* --- Right controls icon buttons --- */
@@ -2591,22 +2612,22 @@ body.dark-mode .icon-btn.active {
 
 /* --- Workbench Panel --- */
 body.dark-mode .workbench-panel {
-    background: #1e293b;
-    border-left-color: #334155;
+    background: var(--card-bg);
+    border-left-color: var(--border-color);
 }
 
 body.dark-mode .workbench-header {
-    border-bottom-color: #334155;
+    border-bottom-color: var(--border-color);
 }
 
 body.dark-mode .workbench-actions button:hover {
     background: rgba(255, 255, 255, 0.1);
-    color: #f1f5f9;
+    color: var(--text-main);
 }
 
 body.dark-mode .notification-item {
     background: rgba(255, 255, 255, 0.03);
-    border-color: #334155;
+    border-color: var(--border-color);
 }
 
 body.dark-mode .notification-item:hover {
@@ -2619,7 +2640,7 @@ body.dark-mode .notification-item.unread {
 
 body.dark-mode .notif-icon {
     background: rgba(255, 255, 255, 0.08);
-    color: #f1f5f9;
+    color: var(--text-main);
 }
 
 /* --- Scrollbar --- */
@@ -2634,33 +2655,33 @@ body.dark-mode ::-webkit-scrollbar-thumb:hover {
 /* --- Mobile search interface --- */
 @media (max-width: 768px) {
     body.dark-mode .search-interface {
-        background: #0f172a;
-        border-top-color: #1e293b;
+        background: var(--bg-color);
+        border-top-color: var(--border-soft);
         box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.3);
     }
 }
 
 /* --- Alert Delete Modal --- */
 body.dark-mode .alert-modal-box {
-    background: #1e293b;
+    background: var(--card-bg);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 
 body.dark-mode .alert-modal-title {
-    color: #f1f5f9;
+    color: var(--text-main);
 }
 
 body.dark-mode .alert-modal-text {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 body.dark-mode .alert-modal-btn-cancel {
-    background: #334155;
-    color: #f1f5f9;
+    background: var(--surface-2);
+    color: var(--text-main);
 }
 
 body.dark-mode .alert-modal-btn-cancel:hover {
-    background: #475569;
+    background: var(--surface-3);
 }
 
 /* =============================================
@@ -3321,10 +3342,20 @@ body.dark-mode .alert-modal-btn-cancel:hover {
         font-size: 0.82rem;
     }
 
+    /* One column that never wraps: with the base rule's wrap the answer was pushed into a second column beside
+       "Thoughts for" and ran off the screen */
     .sr-result-header {
         flex-direction: column;
+        flex-wrap: nowrap;
+        flex-shrink: 0;
         align-items: stretch;
         gap: 8px;
+    }
+
+    /* The answer's desktop basis (100% = a full row) means 100% of the height in a column: the header then
+       stopped short and the bullet list under the answer slid beneath the first cards */
+    .sr-result-header .sr-search-answer {
+        flex: 0 0 auto;
     }
 
     .search-results-sidebar {
@@ -3409,43 +3440,87 @@ body.dark-mode .sr-ai-summary {
 
 
 body.dark-mode .sr-ai-action-row {
-    border-bottom-color: #334155;
+    border-bottom-color: var(--border-color);
 }
 
 body.dark-mode .sr-result-header {
-    border-bottom-color: #334155;
+    border-bottom-color: var(--border-color);
 }
 
 body.dark-mode .sr-coverage-panel {
-    background: #1e293b;
-    border-color: #334155;
+    background: var(--card-bg);
+    border-color: var(--border-color);
 }
 
 body.dark-mode .sr-coverage-row {
-    background: rgba(15, 23, 42, 0.6);
+    background: rgba(17, 18, 20, 0.6);
 }
 
 body.dark-mode .sr-mode-chip {
-    background: rgba(129, 140, 248, 0.18);
-    color: #a5b4fc;
+    background: var(--surface-2);
+    color: var(--text-soft);
 }
 
 body.dark-mode .sr-grid-card {
-    background: #1e293b;
-    border-color: #334155;
+    background: var(--card-bg);
+    border-color: var(--border-color);
 }
 
 body.dark-mode .sr-grid-card:hover {
-    border-color: #475569;
+    border-color: var(--border-strong);
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
+/* Agent tab's welcome heading: its light-theme navy was invisible on the dark page */
+body.dark-mode .ai-chat-welcome i,
+body.dark-mode .ai-chat-welcome h2,
+body.dark-mode .ai-welcome-title {
+    color: var(--text-main);
+}
+
+/* Sign-in and sign-up: the light theme's pale fields would carry light text in dark mode */
+body.dark-mode .auth-form input {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-main);
+}
+
+body.dark-mode .auth-form input:focus {
+    border-color: var(--border-strong);
+}
+
+body.dark-mode .auth-message.error {
+    background: rgba(248, 113, 113, 0.1);
+    border-color: rgba(248, 113, 113, 0.35);
+    color: #fca5a5;
+}
+
+body.dark-mode .auth-message.success {
+    background: rgba(52, 211, 153, 0.1);
+    border-color: rgba(52, 211, 153, 0.35);
+    color: #6ee7b7;
+}
+
+body.dark-mode .auth-message.info,
+body.dark-mode .auth-message.warning,
+body.dark-mode .auth-message.debug {
+    background: var(--surface-2);
+    border-color: var(--border-color);
+}
+
+body.dark-mode .ai-response-msg .msg-content {
+    background: var(--card-bg);
+    color: var(--text-main);
+    border-color: var(--border-color);
+}
+
+/* The photo area is part of the card, not a hole in it: one shade lighter than the card */
 body.dark-mode .sr-grid-card-img {
-    background: #0f172a;
+    background: var(--surface-2);
 }
 
 body.dark-mode .sr-grid-card-noimg {
-    color: #475569;
+    color: var(--text-faint);
 }
 
 
@@ -3454,29 +3529,29 @@ body.dark-mode .sr-grid-card-price {
 }
 
 body.dark-mode .sr-grid-card-footer {
-    border-top-color: #334155;
+    border-top-color: var(--border-color);
 }
 
 body.dark-mode .sr-grid-card-site {
-    background: #0f172a;
+    background: var(--bg-color);
 }
 
 body.dark-mode .sr-price-viz {
-    background: #1e293b;
-    border-color: #334155;
+    background: var(--card-bg);
+    border-color: var(--border-color);
 }
 
 body.dark-mode .sr-price-bar-track {
-    background: #334155;
+    background: var(--surface-2);
 }
 
 body.dark-mode .sr-links-section {
-    background: #1e293b;
-    border-color: #334155;
+    background: var(--card-bg);
+    border-color: var(--border-color);
 }
 
 body.dark-mode .sr-link-item {
-    border-bottom-color: #475569;
+    border-bottom-color: var(--border-strong);
 }
 
 body.dark-mode .sr-link-item-url {
@@ -3484,15 +3559,15 @@ body.dark-mode .sr-link-item-url {
 }
 
 body.dark-mode .sr-links-show-all {
-    border-color: #334155;
+    border-color: var(--border-color);
 }
 
 body.dark-mode .sr-links-show-all:hover {
-    background: #334155;
+    background: var(--surface-2);
 }
 
 body.dark-mode .sr-skeleton {
-    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+    background: linear-gradient(90deg, var(--card-bg) 25%, var(--surface-2) 50%, var(--card-bg) 75%);
     background-size: 200% 100%;
 }
 
@@ -3529,7 +3604,7 @@ body.dark-mode .sr-skeleton {
 }
 
 .dark-mode .chat-input-wrapper {
-    background: rgba(15, 23, 42, 0.6);
+    background: rgba(17, 18, 20, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.05);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
 }
@@ -3682,7 +3757,7 @@ body.dark-mode .chat-clear-btn:hover {
 .ask-ai-mode.dark-mode .chat-input-wrapper {
     /* Light text on a dark field reads through more than the reverse, so this
        sits a little higher than the light-mode value. */
-    background: rgba(15, 23, 42, 0.98);
+    background: rgba(17, 18, 20, 0.98);
 }
 
 /* Chatbot Mode refinements */
@@ -3819,7 +3894,7 @@ body.ask-ai-mode .topbar {
 }
 
 body.dark-mode.ask-ai-mode .topbar-search-tabs-container {
-    background: #0f172a;
+    background: var(--bg-color);
     border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
@@ -3993,16 +4068,16 @@ body.chat-initial-state {
 }
 
 body.dark-mode .product-mention-popup {
-    background: #1e293b;
+    background: var(--card-bg);
     border-color: rgba(255,255,255,0.05);
 }
 
 body.dark-mode .mention-item:hover {
-    background: #334155;
+    background: var(--surface-2);
 }
 
 body.dark-mode .chat-reply-context {
-    background: #1e293b;
+    background: var(--card-bg);
     border-left-color: #3b82f6;
 }
 
@@ -4158,8 +4233,8 @@ body.dark-mode .chat-bottom-input .product-tag {
 }
 
 body.dark-mode .sr-price-currency-label {
-    background: rgba(99, 102, 241, 0.22);
-    color: #818cf8;
+    background: var(--surface-2);
+    color: var(--text-soft);
 }
 
 
@@ -4411,83 +4486,83 @@ body.dark-mode .sr-price-currency-label {
 body.dark-mode .sr-suggestion,
 body.dark-mode .sr-pager-btn,
 body.dark-mode .sr-pager-num {
-    border-color: #334155;
+    border-color: var(--border-color);
 }
 
 body.dark-mode .sr-pager-num.active {
-    background: #818cf8;
-    border-color: #818cf8;
-    color: #0f172a;
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--on-primary);
 }
 
 body.dark-mode .sr-cite {
-    background: rgba(129, 140, 248, 0.18);
-    border-color: rgba(129, 140, 248, 0.4);
-    color: #a5b4fc;
+    background: var(--surface-2);
+    border-color: var(--border-strong);
+    color: var(--text-soft);
 }
 
 body.dark-mode .sr-cite:hover {
-    background: #818cf8;
-    border-color: #818cf8;
-    color: #0f172a;
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--on-primary);
 }
 
 body.dark-mode .sr-suggestion:hover,
 body.dark-mode .sr-pager-btn:hover:not(:disabled),
 body.dark-mode .sr-pager-num:hover:not(.active) {
-    background: #334155;
-    color: #f1f5f9;
+    background: var(--surface-2);
+    color: var(--text-main);
 }
 
 body.dark-mode .sr-answer-badge {
-    background: rgba(129, 140, 248, 0.18);
-    color: #a5b4fc;
+    background: var(--surface-2);
+    color: var(--text-soft);
 }
 
 body.dark-mode .sr-answer-goal {
-    background: rgba(129, 140, 248, 0.1);
-    border-left-color: #818cf8;
+    background: var(--card-bg);
+    border-left-color: var(--border-strong);
 }
 
 body.dark-mode .sr-step-count {
-    background: #0f172a;
+    background: var(--bg-color);
 }
 
 body.dark-mode .sr-answer-link {
-    border-color: #334155;
+    border-color: var(--border-color);
 }
 
 body.dark-mode .sr-answer-link:hover {
-    background: #334155;
-    color: #f1f5f9;
+    background: var(--surface-2);
+    color: var(--text-main);
 }
 
 body.dark-mode .search-tab.has-unread::after {
-    box-shadow: 0 0 0 2px #0f172a;
+    box-shadow: 0 0 0 2px var(--bg-color);
 }
 
 /* --- Dark mode fixes --- */
 
 /* --primary is #ffffff in dark mode, so the signup button was white text on white */
 body.dark-mode .topbar-signup-btn {
-    background: #f1f5f9;
-    border-color: #f1f5f9;
-    color: #0f172a;
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--on-primary);
 }
 
 body.dark-mode .topbar-signup-btn:hover {
     background: #ffffff;
     border-color: #ffffff;
-    color: #0f172a;
+    color: var(--on-primary);
 }
 
 /* The price strip kept its light background, hiding the Min/Average/Max labels */
 body.dark-mode .sr-price-stats-inline {
-    background: rgba(15, 23, 42, 0.6);
+    background: rgba(17, 18, 20, 0.6);
 }
 
 body.dark-mode .sr-price-stat-divider {
-    color: #475569;
+    color: var(--text-faint);
 }
 
 /* =====================================================
@@ -4715,30 +4790,30 @@ body.dark-mode .sr-price-stat-divider {
 
 /* Dark mode */
 body.dark-mode .sr-ref {
-    background: #334155;
-    color: #e2e8f0;
+    background: var(--surface-2);
+    color: var(--text-main);
 }
 
 body.dark-mode .sr-ref:hover {
-    background: #f1f5f9;
-    color: #0f172a;
+    background: var(--primary);
+    color: var(--on-primary);
 }
 
 body.dark-mode .sr-source-list li a:hover {
-    background: #1e293b;
+    background: var(--card-bg);
 }
 
 body.dark-mode .sr-stage-count,
 body.dark-mode .sr-research-progress {
-    background: #1e293b;
+    background: var(--card-bg);
 }
 
 body.dark-mode .sr-research-loadbar {
-    background: #334155;
+    background: var(--surface-2);
 }
 
 body.dark-mode .sr-step-timeline li::after {
-    background: #334155;
+    background: var(--surface-2);
 }
 
 /* The Agent input's hint fades between "Ask to Task" and "Click @ to reply" */

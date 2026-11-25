@@ -663,58 +663,56 @@
    ====================================================================== */
 @media (max-width: 768px) {
     body.dark-mode {
-        background-color: #0f172a;
+        background-color: var(--bg-color);
     }
 
     body.dark-mode .app-header,
     body.dark-mode .topbar {
-        background: #0f172a;
+        background: var(--bg-color);
     }
 
-    body.dark-mode .topbar {
-        border-bottom: 1px solid #1e293b;
-    }
+    /* No line between the search box and the tabs, as in light mode */
 
     body.dark-mode .search-input-wrapper {
-        background: #1e293b;
-        border-color: #334155;
+        background: var(--card-bg);
+        border-color: var(--border-color);
     }
 
     body.dark-mode .topbar-search-tabs-container {
-        background: #0f172a;
-        border-bottom: 1px solid #1e293b;
+        background: var(--bg-color);
+        border-bottom: 1px solid var(--border-soft);
     }
 
     body.dark-mode .product-card {
-        background: #1e293b;
-        border-color: #334155;
+        background: var(--card-bg);
+        border-color: var(--border-color);
     }
 
     body.dark-mode .product-img {
-        background: #0f172a;
+        background: var(--bg-color);
     }
 
     body.dark-mode .product-info {
-        background: #1e293b;
+        background: var(--card-bg);
     }
 
     body.dark-mode .settings-sidebar {
-        background: #0f172a;
-        border-bottom-color: #1e293b;
+        background: var(--bg-color);
+        border-bottom-color: var(--border-soft);
     }
 
     body.dark-mode .mobile-actions-popover {
-        background: #1e293b;
-        border-color: #334155;
+        background: var(--card-bg);
+        border-color: var(--border-color);
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
     }
 
     body.dark-mode .popover-item {
-        color: #f1f5f9;
+        color: var(--text-main);
     }
 
     body.dark-mode .popover-item i {
-        color: #94a3b8;
+        color: var(--text-muted);
     }
 
     body.dark-mode .popover-item:active {
@@ -722,42 +720,42 @@
     }
 
     body.dark-mode .active-tag {
-        background: rgba(148, 163, 184, 0.15);
-        border-color: rgba(148, 163, 184, 0.3);
-        color: #f1f5f9;
+        background: rgba(156, 158, 165, 0.15);
+        border-color: rgba(156, 158, 165, 0.3);
+        color: var(--text-main);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     }
 
     body.dark-mode .active-tag i {
-        color: #94a3b8;
+        color: var(--text-muted);
     }
 
     body.dark-mode .active-tag i.fa-xmark {
-        color: #f1f5f9;
+        color: var(--text-main);
         opacity: 0.8;
     }
 
     body.dark-mode .mobile-plus-btn.active {
-        background: #f1f5f9;
-        color: #0f172a;
+        background: var(--primary);
+        color: var(--on-primary);
     }
 
     body.dark-mode .mobile-sticky-header {
-        background: #0f172a;
-        border-bottom-color: #1e293b;
+        background: var(--bg-color);
+        border-bottom-color: var(--border-soft);
     }
 
     body.dark-mode .mobile-back-btn {
-        color: #f1f5f9;
+        color: var(--text-main);
     }
 
     body.dark-mode .alert-detail-view {
-        background: #0f172a;
+        background: var(--bg-color);
     }
 
     body.dark-mode .search-plus-btn,
     body.dark-mode .search-icon-btn {
-        color: #94a3b8;
+        color: var(--text-muted);
     }
 
     body.dark-mode .search-plus-btn:active,

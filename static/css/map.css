@@ -229,13 +229,13 @@
 }
 
 body.dark-mode .map-price-pin span {
-    background: #f8fafc;
-    color: #0f172a;
-    border-color: #0f172a;
+    background: var(--primary);
+    color: var(--on-primary);
+    border-color: var(--bg-color);
 }
 
 body.dark-mode .map-price-pin.is-approx span {
-    background: #cbd5e1;
+    background: var(--text-soft);
 }
 
 @media (max-width: 768px) {

@@ -341,29 +341,29 @@ body.landing-page {
    DARK MODE — Landing Page
    ===================================================== */
 body.dark-mode.landing-page {
-    background: #0f172a;
+    background: var(--bg-color);
 }
 
 body.dark-mode .landing-container {
-    background: #0f172a;
+    background: var(--bg-color);
 }
 
 body.dark-mode .landing-title {
-    color: #f1f5f9;
+    color: var(--text-main);
 }
 
 /* Search wrapper on landing */
 body.dark-mode .landing-search-input-wrapper {
-    background: #1e293b !important;
-    border-color: #334155 !important;
+    background: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
 }
 
 body.dark-mode .landing-search-input-wrapper:hover,
 body.dark-mode .landing-search-input-wrapper:focus-within {
-    background: #0f172a !important;
+    background: var(--bg-color) !important;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
-    border-color: #475569 !important;
+    border-color: var(--border-strong) !important;
 }
 
 /* Landing logo shadow */
@@ -373,59 +373,59 @@ body.dark-mode .landing-logo-img {
 
 /* Suggestion Chips */
 body.dark-mode .landing-suggestion-chip {
-    background: #1e293b;
-    border-color: #334155;
-    color: #94a3b8;
+    background: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-muted);
 }
 
 body.dark-mode .landing-suggestion-chip:hover {
-    background: #334155;
-    border-color: #475569;
-    color: #f1f5f9;
+    background: var(--surface-2);
+    border-color: var(--border-strong);
+    color: var(--text-main);
 }
 
 body.dark-mode .landing-suggestion-chip i {
-    color: #94a3b8;
+    color: var(--text-muted);
     opacity: 1;
 }
 
 /* Auth Buttons on Landing */
 body.dark-mode .landing-signin-btn {
-    color: #f1f5f9;
-    border-color: #334155;
+    color: var(--text-main);
+    border-color: var(--border-color);
 }
 
 body.dark-mode .landing-signin-btn:hover {
-    background: #1e293b;
-    border-color: #475569;
+    background: var(--card-bg);
+    border-color: var(--border-strong);
 }
 
 body.dark-mode .landing-signup-btn {
-    background: #f1f5f9;
-    color: #0f172a;
-    border-color: #f1f5f9;
+    background: var(--primary);
+    color: var(--on-primary);
+    border-color: var(--primary);
 }
 
 body.dark-mode .landing-signup-btn:hover {
-    background: #e2e8f0;
+    background: var(--primary-hover);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* Profile avatar on landing */
 body.dark-mode .landing-profile .avatar-small {
-    background: #f1f5f9;
-    color: #0f172a;
+    background: var(--primary);
+    color: var(--on-primary);
 }
 
 /* Footer */
 body.dark-mode .landing-footer {
-    border-top-color: #1e293b;
+    border-top-color: var(--border-soft);
 }
 
 body.dark-mode .landing-footer-link {
-    color: #64748b;
+    color: var(--text-faint);
 }
 
 body.dark-mode .landing-footer-link:hover {
-    color: #f1f5f9;
+    color: var(--text-main);
 }

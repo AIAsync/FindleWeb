@@ -135,23 +135,23 @@
 
 /* Dark Mode Support */
 body.dark-mode .monitoring-popup {
-    background: #1e293b;
-    border-color: #334155;
+    background: var(--card-bg);
+    border-color: var(--border-color);
 }
 
 body.dark-mode .monitoring-header {
-    border-bottom-color: #334155;
-    color: #f1f5f9;
+    border-bottom-color: var(--border-color);
+    color: var(--text-main);
 }
 
 body.dark-mode .mon-stat-card {
-    background: #0f172a;
+    background: var(--bg-color);
 }
 
 body.dark-mode .mon-stat-value {
-    color: #f1f5f9;
+    color: var(--text-main);
 }
 
 body.dark-mode .mon-progress-bar-bg {
-    background: #334155;
+    background: var(--surface-2);
 }

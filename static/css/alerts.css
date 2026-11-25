@@ -409,13 +409,13 @@
 }
 
 body.dark-mode .rediscovery-input {
-    background: #0f172a;
-    border-color: #334155;
-    color: #f1f5f9;
+    background: var(--bg-color);
+    border-color: var(--border-color);
+    color: var(--text-main);
 }
 
 body.dark-mode .rediscovery-input:focus {
-    border-color: #475569;
+    border-color: var(--border-strong);
     box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.03);
 }
 
@@ -476,12 +476,12 @@ body.dark-mode .rediscovery-input:focus {
 
 /* Dark mode overrides for input wrapper buttons */
 body.dark-mode .rediscovery-input-wrapper .alert-edit-pencil-btn {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 body.dark-mode .rediscovery-input-wrapper .alert-edit-pencil-btn:hover {
-    color: #f1f5f9;
-    background: #1e293b;
+    color: var(--text-main);
+    background: var(--card-bg);
 }
 
 body.dark-mode .rediscovery-input-wrapper .alert-save-small-btn {
@@ -503,7 +503,7 @@ body.dark-mode .rediscovery-input-wrapper .alert-save-small-btn:hover {
 }
 
 body.dark-mode .alert-detail-actions {
-    border-color: #334155;
+    border-color: var(--border-color);
 }
 
 .alert-action-btn {
@@ -750,10 +750,18 @@ body.dark-mode .alert-detail-actions {
 }
 
 @media (max-width: 480px) {
+    /* Two cards across on a phone, as in the Search tab (style.css shrinks the card itself at this width) */
+    .alert-products-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+}
+
+/* Below ~360px two columns stop being legible — the Search tab falls back to one there too */
+@media (max-width: 359px) {
     .alert-products-grid {
         grid-template-columns: 1fr;
     }
-
 }
 
 /* =============================================
@@ -762,71 +770,71 @@ body.dark-mode .alert-detail-actions {
 
 /* Container */
 body.dark-mode .alerts-page-container {
-    background: #0f172a !important;
+    background: var(--bg-color) !important;
 }
 
 /* ---- Sidebar ---- */
 body.dark-mode .alerts-sidebar {
-    background: #1e293b;
-    border-right-color: #334155;
+    background: var(--sidebar-bg);
+    border-right-color: var(--border-color);
 }
 
 body.dark-mode .alerts-sidebar-title {
-    color: #f1f5f9;
+    color: var(--text-main);
 }
 
 body.dark-mode .alerts-sidebar-icon {
-    background: #334155;
-    color: #94a3b8;
+    background: var(--surface-2);
+    color: var(--text-muted);
 }
 
 body.dark-mode .alerts-count-badge {
-    background: #334155;
-    color: #94a3b8;
+    background: var(--surface-2);
+    color: var(--text-muted);
 }
 
 /* Search */
 body.dark-mode .alerts-search-input {
-    background: #0f172a;
-    border-color: #334155;
-    color: #f1f5f9;
+    background: var(--bg-color);
+    border-color: var(--border-color);
+    color: var(--text-main);
 }
 
 body.dark-mode .alerts-search-input::placeholder {
-    color: #64748b;
+    color: var(--text-faint);
 }
 
 body.dark-mode .alerts-search-input:focus {
-    border-color: #475569;
+    border-color: var(--border-strong);
     box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.03);
 }
 
 body.dark-mode .alerts-search-icon {
-    color: #64748b;
+    color: var(--text-faint);
 }
 
 /* List items */
 body.dark-mode .alert-item:hover {
-    background: #1e293b;
+    background: var(--card-bg);
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
 body.dark-mode .alert-item.active {
-    background: #1e293b;
-    border-color: #334155;
+    background: var(--card-bg);
+    border-color: var(--border-color);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 body.dark-mode .alert-item-prompt {
-    color: #f1f5f9;
+    color: var(--text-main);
 }
 
 body.dark-mode .alert-item-time {
-    color: #64748b;
+    color: var(--text-faint);
 }
 
 body.dark-mode .delete-alert-small {
-    color: #64748b;
+    color: var(--text-faint);
 }
 
 body.dark-mode .delete-alert-small:hover {
@@ -841,59 +849,59 @@ body.dark-mode .alerts-list-container::-webkit-scrollbar-thumb {
 
 /* ---- Detail View ---- */
 body.dark-mode .alert-detail-view {
-    background: #0f172a;
+    background: var(--bg-color);
 }
 
 body.dark-mode .alert-detail-empty {
-    color: #64748b;
+    color: var(--text-faint);
 }
 
 body.dark-mode .alert-detail-empty-icon {
-    background: #1e293b;
-    color: #475569;
+    background: var(--card-bg);
+    color: var(--text-faint);
 }
 
 body.dark-mode .alert-detail-empty h3 {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 body.dark-mode .alert-detail-empty p {
-    color: #64748b;
+    color: var(--text-faint);
 }
 
 body.dark-mode .alert-detail-title-input {
-    color: #f1f5f9;
-    background: #0f172a;
-    border-color: #334155;
+    color: var(--text-main);
+    background: var(--bg-color);
+    border-color: var(--border-color);
 }
 
 body.dark-mode .alert-detail-title-input.editing {
-    background: #1e293b;
-    border-color: #475569;
+    background: var(--card-bg);
+    border-color: var(--border-strong);
 }
 
 body.dark-mode .edit-prompt-btn:hover {
-    background: #334155;
+    background: var(--surface-2);
     color: #60a5fa;
 }
 
 body.dark-mode .alert-detail-header {
-    border-bottom-color: #1e293b;
+    border-bottom-color: var(--border-soft);
 }
 
 body.dark-mode .alert-detail-meta-item {
-    color: #64748b;
+    color: var(--text-faint);
 }
 
 /* Action buttons */
 body.dark-mode .alert-action-btn-search {
-    background: #1e293b;
-    color: #94a3b8;
+    background: var(--card-bg);
+    color: var(--text-muted);
 }
 
 body.dark-mode .alert-action-btn-search:hover {
-    background: #334155;
-    color: #f1f5f9;
+    background: var(--surface-2);
+    color: var(--text-main);
 }
 
 body.dark-mode .alert-action-btn-delete {
@@ -908,39 +916,39 @@ body.dark-mode .alert-action-btn-delete:hover {
 
 /* ---- Empty State ---- */
 body.dark-mode .alerts-empty-full {
-    background: #0f172a;
+    background: var(--bg-color);
 }
 
 body.dark-mode .alerts-empty-icon-wrapper {
-    background: #1e293b;
+    background: var(--card-bg);
 }
 
 body.dark-mode .alerts-empty-icon-wrapper i {
-    color: #475569;
+    color: var(--text-faint);
 }
 
 body.dark-mode .alerts-empty-full h3 {
-    color: #f1f5f9;
+    color: var(--text-main);
 }
 
 body.dark-mode .alerts-empty-full p {
-    color: #64748b;
+    color: var(--text-faint);
 }
 
 body.dark-mode .alerts-empty-hint {
-    background: #1e293b;
-    border-color: #334155;
-    color: #94a3b8;
+    background: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-muted);
 }
 
 body.dark-mode .alerts-empty-hint i {
-    color: #64748b;
+    color: var(--text-faint);
 }
 
 /* ---- Mobile ---- */
 @media (max-width: 768px) {
     body.dark-mode .alerts-sidebar {
-        border-bottom-color: #334155;
+        border-bottom-color: var(--border-color);
     }
 }
 
@@ -1222,34 +1230,53 @@ body.dark-mode .alerts-empty-hint i {
 
 body.dark-mode .alert-new-input,
 body.dark-mode .alert-load-more {
-    background: #1e293b;
-    border-color: #334155;
-    color: #e2e8f0;
+    background: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-main);
 }
 
 /* --primary turns white in dark mode, which made the label invisible */
 body.dark-mode .alert-new-btn {
-    background: #f1f5f9;
-    color: #0f172a;
+    background: var(--primary);
+    color: var(--on-primary);
 }
 
 body.dark-mode .alert-chip {
-    background: #312e81;
-    color: #e0e7ff;
+    background: var(--surface-2);
+    color: var(--text-main);
 }
 
 body.dark-mode .alert-chip-label {
-    color: #a5b4fc;
+    color: var(--text-muted);
+}
+
+body.dark-mode .alert-modal-icon {
+    background: rgba(248, 113, 113, 0.12);
+    color: #f87171;
+}
+
+/* A listing not seen yet: a quiet accent instead of the light theme's lilac frame */
+body.dark-mode .alert-card.unseen .sr-grid-card {
+    border-color: var(--accent-border);
+    box-shadow: none;
+}
+
+body.dark-mode .alert-new-dot {
+    color: var(--accent);
+}
+
+body.dark-mode .alert-card-meta {
+    color: var(--text-muted);
 }
 
 body.dark-mode .alert-products-title,
 body.dark-mode .alerts-list-empty p {
-    color: #e2e8f0;
+    color: var(--text-main);
 }
 
 body.dark-mode #alert-toggle-btn {
-    background: #334155;
-    color: #e2e8f0;
+    background: var(--surface-2);
+    color: var(--text-main);
 }
 
 body.dark-mode .alert-new-error,
