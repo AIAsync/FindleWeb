@@ -1179,6 +1179,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const isDeepResearch = hasActiveTag('deep-research');
+        // A reply (@) asks about a listing already on screen: the API answers from that listing's
+        // own data and runs no new search, so the Search tab and its list stay as they are.
+        const isReply = !isDeepResearch && !!selectedMentionProduct;
 
         // Add thinking indicator
         const thinkingDiv = document.createElement('div');
@@ -1188,7 +1191,9 @@ document.addEventListener('DOMContentLoaded', () => {
             : `<div class="msg-content"><i class="fa-solid fa-ellipsis fa-fade"></i> <span class="thinking-label">${escapeHTML(intentStatus(opts.intent))}</span></div>`;
         aiChatMessages.appendChild(thinkingDiv);
         scrollToBottom();
-        if (!isDeepResearch && !opts.intent) showChatIntent(prompt, thinkingDiv);
+        // The intent label comes from a side search of the message: a reply is about the
+        // listing, not a new search, so it keeps "Thinking…" and sends nothing extra.
+        if (!isDeepResearch && !opts.intent && !isReply) showChatIntent(prompt, thinkingDiv);
 
         const chatPayload = { prompt: prompt };
         if (!isDeepResearch) {
@@ -1265,7 +1270,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const answer = isDeepResearch ? ((data && data.report && data.report.summary) || '') : ((data && data.response) || '');
 
             if (response.ok && data && answer) {
-                rememberAnswerSet(data, (data && data.search_query) || prompt);
+                data.isReply = isReply;
+                // A reply's listing came from the list on the Search tab, so that list's query names it.
+                rememberAnswerSet(data, isReply ? (searchState.query || prompt) : ((data && data.search_query) || prompt));
 
                 const aiMsgDiv = document.createElement('div');
                 aiMsgDiv.className = 'ai-msg ai-response-msg';
@@ -1278,7 +1285,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 chatHistory = chatHistory.slice(-MAX_CHAT_HISTORY);
 
                 // Listings the agent found fill the Search tab, both as results and as citation targets.
-                if (chatContainer && data.products && data.products.length) {
+                // A reply found nothing new: its listing is already there, and the @ list keeps the same rows.
+                if (chatContainer && data.products && data.products.length && !isReply) {
                     // The model writes its own search text for the tool; that text, not the
                     // chat message, is what produced these listings, so Search shows and pages it.
                     const searchQuery = data.search_query || prompt;
@@ -1830,7 +1838,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         html += buildSourceList(citations);
         html += buildSuggestions(data.questions);
-        if (products.length) {
+        // A reply is about a listing the user picked from Search: "See listings (1)" would only lead back to it.
+        if (products.length && !data.isReply) {
             html += buildBackToSearchLink((data.sources && data.sources.total_count) || products.length, data.citeGroup);
         }
         return html;

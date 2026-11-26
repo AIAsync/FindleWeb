@@ -329,3 +329,39 @@ class UsRentalsTests(TestCase):
             data = self.client.get('/api/geo/search/abcdef123456/').json()
         self.assertEqual(data['focus'], api['focus'])
         self.assertEqual(data['area']['names'], ['Mission'])
+
+
+class AgentReplyTests(TestCase):
+    """A reply (@) asks about a listing already on screen: it is answered from that listing, never searched again."""
+
+    def test_a_reply_sends_the_listing_and_runs_no_search(self):
+        chat = {'reply': 'E\'londa konditsioner yo\'q deb yozilgan [1].', 'source': 'llm', 'intent': 'search',
+                'tool_calls': [{'name': 'listings', 'arguments': {'product_ids': ['42']}, 'ok': True, 'total': 1},
+                               {'name': 'statistics', 'arguments': {'query': 'Hayes Valley 1 bedroom'}, 'ok': True,
+                                'total': 30}],
+                'results': [_listing()], 'sources': [{'ref': 1, 'product_id': '42', 'title': '371 Waller St'}],
+                'meta': {'stop_reason': 'answer'}}
+        with mock.patch('chat.views.requests.post', return_value=_Response(200, chat)) as post:
+            data = self.client.post('/api/ai-chat/', json.dumps({
+                'prompt': 'konditsioner bormi?', 'context_product': {'product_id': '42', 'title': '371 Waller St'},
+                'session_id': 'w-test-session',
+            }), content_type='application/json').json()
+
+        self.assertEqual([c.args[0].rsplit('/', 1)[-1] for c in post.call_args_list], ['chat'])
+        self.assertEqual(post.call_args.kwargs['json']['product_ids'], ['42'])
+        self.assertEqual([p['product_id'] for p in data['products']], ['42'])
+        self.assertIsNone(data['page'])
+        self.assertEqual(data['search_query'], '')
+
+    def test_a_plain_follow_up_still_gets_its_full_list(self):
+        chat = {'reply': 'Topildi.', 'source': 'llm',
+                'tool_calls': [{'name': 'search', 'arguments': {'query': 'Mission 2 bedroom'}, 'ok': True, 'total': 5}],
+                'results': [_listing()], 'meta': {}}
+        listing = _Response(200, {'results': [_listing(product_id='7')], 'page': {'page': 1, 'search_id': 'abc'}})
+        with mock.patch('chat.views.requests.post', side_effect=[_Response(200, chat), listing]) as post:
+            data = self.client.post('/api/ai-chat/', json.dumps({'prompt': 'Missionda-chi?'}),
+                                    content_type='application/json').json()
+
+        self.assertEqual(post.call_args.kwargs['json']['query'], 'Mission 2 bedroom')
+        self.assertEqual(data['search_query'], 'Mission 2 bedroom')
+        self.assertEqual([p['product_id'] for p in data['products']], ['7'])

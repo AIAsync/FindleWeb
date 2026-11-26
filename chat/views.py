@@ -401,19 +401,22 @@ def _build_sources(cards, total_count, retrieval=None):
     }
 
 
-def _chat_listings(chat, prompt):
+def _chat_listings(chat, prompt, selected=False):
     """The listings an answer stands on, so the Agent tab can cite them and Search can show them.
 
     `statistics` and `compare` answer with numbers and no rows, and the `search` tool returns a
     short unpaged slice — so whenever a tool touched the data, re-run its resolved query through
     /search to get a full, pageable list. Small talk runs no tool and gets no listings.
+
+    `selected`: a reply about listings the user picked (@). The answer stands on those listings
+    alone, and nothing is searched again — the Search tab keeps the list they were picked from.
     """
     tool_calls = [c for c in (chat.get('tool_calls') or []) if isinstance(c, dict) and c.get('ok')]
     if not tool_calls:
         return [], None, ''
 
     # Separate searches and hand-picked listings have no single query to re-run.
-    if any((c.get('arguments') or {}).get('queries') or c.get('name') == 'listings' for c in tool_calls):
+    if selected or any((c.get('arguments') or {}).get('queries') or c.get('name') == 'listings' for c in tool_calls):
         return chat.get('results') or [], None, ''
 
     query = prompt
@@ -1131,7 +1134,7 @@ def ai_chat_api(request):
         return JsonResponse({'redirect': redirect, 'session_id': session_id})
 
     if chat and chat.get('reply'):
-        listings, page_info, search_query = _chat_listings(chat, prompt)
+        listings, page_info, search_query = _chat_listings(chat, prompt, selected=bool(product_ids))
         cards = _build_cards(listings)
         return JsonResponse({
             'response': chat['reply'],
