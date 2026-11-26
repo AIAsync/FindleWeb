@@ -673,11 +673,6 @@
 
     /* No line between the search box and the tabs, as in light mode */
 
-    body.dark-mode .search-input-wrapper {
-        background: var(--card-bg);
-        border-color: var(--border-color);
-    }
-
     body.dark-mode .topbar-search-tabs-container {
         background: var(--bg-color);
         border-bottom: 1px solid var(--border-soft);

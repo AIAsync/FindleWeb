@@ -155,15 +155,10 @@ body.landing-page {
     position: relative;
 }
 
+/* Fill, border and shadow come from .search-input-wrapper (--input-* tokens in style.css) */
 .landing-search-input-wrapper {
     border-radius: 28px !important;
     padding: 8px 16px !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.landing-search-input-wrapper:hover,
-.landing-search-input-wrapper:focus-within {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12) !important;
 }
 
 /* Dropdown positioned within landing search wrapper */
@@ -350,20 +345,6 @@ body.dark-mode .landing-container {
 
 body.dark-mode .landing-title {
     color: var(--text-main);
-}
-
-/* Search wrapper on landing */
-body.dark-mode .landing-search-input-wrapper {
-    background: var(--card-bg) !important;
-    border-color: var(--border-color) !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
-}
-
-body.dark-mode .landing-search-input-wrapper:hover,
-body.dark-mode .landing-search-input-wrapper:focus-within {
-    background: var(--bg-color) !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
-    border-color: var(--border-strong) !important;
 }
 
 /* Landing logo shadow */

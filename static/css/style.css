@@ -1,4 +1,13 @@
 :root {
+    /* Search and Agent inputs (owner, 2026-11-26): a white field with a clear edge and a soft lift on the
+       white page; dark mode redefines them as a lighter neutral field than the page */
+    --input-bg: #ffffff;
+    --input-border: #cfd5dd;
+    --input-border-hover: #b3bac5;
+    --input-border-focus: #8b94a3;
+    --input-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 4px 16px rgba(16, 24, 40, 0.07);
+    --input-shadow-focus: 0 0 0 3px rgba(15, 23, 42, 0.07), 0 6px 20px rgba(16, 24, 40, 0.09);
+    --input-placeholder: #8a94a6;
     --bg-color: #ffffff;
     --sidebar-bg: #f8fafc;
     --card-bg: #ffffff;
@@ -1587,21 +1596,22 @@ body.auth-page {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    background: #f1f5f9;
-    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
     border-radius: 24px;
     padding: 6px 12px;
-    transition: all 0.3s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    /* Subtle shadow */
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: var(--input-shadow);
     gap: 2px 5px;
 }
 
-.search-input-wrapper:focus-within,
 .search-input-wrapper:hover {
-    background: #ffffff;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    border-color: rgba(0, 0, 0, 0.1);
+    border-color: var(--input-border-hover);
+}
+
+.search-input-wrapper:focus-within {
+    border-color: var(--input-border-focus);
+    box-shadow: var(--input-shadow-focus);
 }
 
 /* Plus Button */
@@ -1698,7 +1708,7 @@ body.auth-page {
 }
 
 .topbar-search-input::placeholder {
-    color: var(--text-muted);
+    color: var(--input-placeholder);
     font-weight: 300;
 }
 
@@ -2250,6 +2260,14 @@ body.dark-mode {
     --accent-soft: rgba(138, 180, 248, 0.12);
     --accent-border: rgba(138, 180, 248, 0.4);
     --glass-border: 1px solid rgba(255, 255, 255, 0.06);
+    /* Inputs: a lighter neutral grey than the page, so the box reads at a glance */
+    --input-bg: #27282c;
+    --input-border: #3c3d42;
+    --input-border-hover: #4c4e54;
+    --input-border-focus: #63656c;
+    --input-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.35);
+    --input-shadow-focus: 0 0 0 3px rgba(255, 255, 255, 0.06), 0 8px 24px rgba(0, 0, 0, 0.4);
+    --input-placeholder: #8f9198;
 }
 
 /* --- Topbar --- */
@@ -2262,25 +2280,9 @@ body.dark-mode .topbar {
     background: var(--bg-color);
 }
 
-/* --- Search Input Wrapper --- */
-body.dark-mode .search-input-wrapper {
-    background: var(--card-bg);
-    border-color: var(--border-color);
-}
-
-body.dark-mode .search-input-wrapper:focus-within,
-body.dark-mode .search-input-wrapper:hover {
-    background: var(--bg-color);
-    border-color: var(--border-strong);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-}
-
+/* --- Search Input Wrapper: the --input-* tokens above (no dark-only rules, so hover never darkens it) --- */
 body.dark-mode .topbar-search-input {
     color: var(--text-main);
-}
-
-body.dark-mode .topbar-search-input::placeholder {
-    color: var(--text-faint);
 }
 
 body.dark-mode .search-plus-btn {
@@ -3590,23 +3592,32 @@ body.dark-mode .sr-skeleton {
     display: flex;
 }
 
+/* Agent input: the same field as the search box (--input-* tokens), opaque so the messages scrolling
+   behind it do not read through */
 .chat-input-wrapper {
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
     border-radius: 20px;
     padding: 8px 15px;
     display: flex;
     align-items: center;
     gap: 12px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--input-shadow);
     width: 100%;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.dark-mode .chat-input-wrapper {
-    background: rgba(17, 18, 20, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+.chat-input-wrapper:hover {
+    border-color: var(--input-border-hover);
+}
+
+.chat-input-wrapper:focus-within {
+    border-color: var(--input-border-focus);
+    box-shadow: var(--input-shadow-focus);
+}
+
+#chat-bottom-input::placeholder {
+    color: var(--input-placeholder);
 }
 
 .chat-plus-btn, .chat-send-btn, .chat-clear-btn {
@@ -3745,20 +3756,7 @@ body.dark-mode .chat-clear-btn:hover {
     box-shadow: none;
 }
 
-/* The fill the container used to provide, moved onto the pill so it masks the
-   messages passing behind it while keeping the rounded shape. Nearly opaque:
-   at 0.8 the text underneath still read through the blur. */
-.ask-ai-mode .chat-input-wrapper {
-    background: rgba(255, 255, 255, 0.97);
-}
-
-/* Higher specificity than `.dark-mode .chat-input-wrapper`, which would
-   otherwise be overridden by the light rule above purely on source order. */
-.ask-ai-mode.dark-mode .chat-input-wrapper {
-    /* Light text on a dark field reads through more than the reverse, so this
-       sits a little higher than the light-mode value. */
-    background: rgba(17, 18, 20, 0.98);
-}
+/* The pill itself masks the messages passing behind it: --input-bg is opaque in both themes. */
 
 /* Chatbot Mode refinements */
 .chatbot-mode {
@@ -3908,7 +3906,11 @@ body.dark-mode.ask-ai-mode .topbar-search-tabs-container {
 }
 
 .bottom-chat-container.centered .chat-input-wrapper {
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--input-shadow);
+}
+
+.bottom-chat-container.centered .chat-input-wrapper:focus-within {
+    box-shadow: var(--input-shadow-focus);
 }
 
 .bottom-chat-container {
