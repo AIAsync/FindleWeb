@@ -135,26 +135,10 @@
         margin: 0;
     }
 
+    /* The field's shape, its text (16px, so iOS does not zoom in on focus) and its 40px buttons come from
+       style.css, the same as on the home page and in the Agent tab */
     .search-input-wrapper {
         width: 100%;
-        border-radius: 14px;
-        padding: 2px 8px;
-    }
-
-    .topbar-search-input {
-        /* 16px keeps iOS from zooming the page when the field takes focus. */
-        font-size: 16px;
-        min-height: 44px;
-        padding: 8px 0;
-        min-width: 0;
-    }
-
-    /* 44px is the smallest reliably tappable target. */
-    .search-plus-btn,
-    .search-icon-btn {
-        width: 36px;
-        height: 36px;
-        flex-shrink: 0;
     }
 
     .search-options-dropdown {
@@ -224,25 +208,6 @@
         bottom: 10px;
         /* Clear the home indicator on gesture-nav phones. */
         bottom: calc(10px + env(safe-area-inset-bottom));
-    }
-
-    .chat-input-wrapper {
-        padding: 6px 10px;
-        gap: 8px;
-        border-radius: 16px;
-    }
-
-    #chat-bottom-input {
-        font-size: 16px;
-        max-height: 120px;
-    }
-
-    .chat-plus-btn,
-    .chat-send-btn,
-    .chat-clear-btn {
-        width: 38px;
-        height: 38px;
-        flex-shrink: 0;
     }
 
     .ai-welcome-title {
@@ -748,13 +713,10 @@
         background: var(--bg-color);
     }
 
-    body.dark-mode .search-plus-btn,
-    body.dark-mode .search-icon-btn {
-        color: var(--text-muted);
-    }
-
-    body.dark-mode .search-plus-btn:active,
-    body.dark-mode .search-icon-btn:active {
-        background: rgba(255, 255, 255, 0.1);
+    /* A tap has no hover: the press shows instead */
+    .search-plus-btn:active,
+    .search-icon-btn:active,
+    .chat-plus-btn:active {
+        background: var(--input-icon-hover-bg);
     }
 }

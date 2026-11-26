@@ -6,6 +6,7 @@ from django.http import JsonResponse, StreamingHttpResponse
 from django.contrib.auth.decorators import login_required
 from django.utils.translation import get_language
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.gzip import gzip_page
 from .models import Conversation, Message
 from .region import DEFAULT_REGION, is_us_region
 import os
@@ -738,6 +739,7 @@ _STATIONS_TTL = 3600
 def _map_point(point):
     """One listing on the map: the popup shows the same facts as the result card."""
     region = point.get('region') or DEFAULT_REGION
+    us = is_us_region(region)
     rooms = point.get('rooms')
     area = _to_float(point.get('total_area'))
     site_name = point.get('site_name') or ''
@@ -756,7 +758,10 @@ def _map_point(point):
         'monthly': point.get('transaction_type') == 'Rent',
         'rooms': rooms,
         'bathrooms': point.get('bathrooms'),
-        'area_sqft': round(area * _SQFT_PER_M2) if area else None,
+        # Like the result card: square feet in the US, square metres elsewhere (a Tashkent flat is not "861 sq ft")
+        'units': 'us' if us else 'metric',
+        'area_sqft': round(area * _SQFT_PER_M2) if us and area else None,
+        'total_area': round(area) if not us and area else None,
         'district': point.get('district') or '',
         'neighborhood': point.get('neighborhood') or '',
         'address': point.get('address') or '',
@@ -769,6 +774,7 @@ def _map_point(point):
     }
 
 
+@gzip_page  # 200 points are about 100 KB of JSON, a sixth of that compressed
 def geo_search_api(request, search_id):
     """Map tab: every located listing of a search (by search_id), its distance conditions and bounds."""
     if request.method != 'GET':
@@ -776,6 +782,15 @@ def geo_search_api(request, search_id):
     if not _SEARCH_ID_OK.match(search_id or ''):
         return JsonResponse({'error': 'Invalid search id'}, status=400)
     data, status = _findle_get(f'/geo/search/{search_id}', MAP_TIMEOUT, {'limit': MAP_POINTS})
+    query = (request.GET.get('q') or '').strip()[:500]
+    if data is None and status == 404 and query:
+        # The API keeps a ranked list for a few minutes (SEARCH_CACHE_TTL). A map opened later than that came up
+        # empty for Uzbek listings, whose cards carry no point. The query runs again (no written answer) and
+        # the map takes that list.
+        fresh = _findle_post('/search', {'query': query, 'assist': 'off', 'page': 1, 'per_page': 1}, SEARCH_TIMEOUT)
+        fresh_id = str(((fresh or {}).get('page') or {}).get('search_id') or '')
+        if _SEARCH_ID_OK.match(fresh_id):
+            data, status = _findle_get(f'/geo/search/{fresh_id}', MAP_TIMEOUT, {'limit': MAP_POINTS})
     if data is None:
         # 404: the API keeps a search for a few minutes; the map then falls back to the cards on screen.
         return JsonResponse({'error': 'expired' if status == 404 else 'unavailable'},

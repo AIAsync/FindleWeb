@@ -116,25 +116,17 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
-    const searchInput = document.querySelector('.topbar-search-input');
-    if (searchInput) {
+    // Both search boxes (home page and results header) grow with their text the way the Agent box does: the CSS
+    // caps them at six lines and the text scrolls past that. Like the Agent box, they keep their height on blur.
+    document.querySelectorAll('.topbar-search-input').forEach(field => {
         const autoResize = function () {
             this.style.height = 'auto';
             const newHeight = this.scrollHeight;
             this.style.height = newHeight + 'px';
-
-            // max-height is approx 140px (5 lines)
-            if (newHeight > 140) {
-                this.style.overflowY = 'auto';
-            } else {
-                this.style.overflowY = 'hidden';
-            }
+            const max = parseFloat(getComputedStyle(this).maxHeight) || Infinity;
+            this.style.overflowY = newHeight > max ? 'auto' : 'hidden';
         };
-
-        searchInput.addEventListener('input', autoResize);
-        searchInput.addEventListener('focus', autoResize);
-        searchInput.addEventListener('blur', function () {
-            this.style.height = '48px';
-        });
-    }
+        field.addEventListener('input', autoResize);
+        field.addEventListener('focus', autoResize);
+    });
 });

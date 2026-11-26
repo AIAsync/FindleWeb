@@ -146,19 +146,13 @@ body.landing-page {
     line-height: 1.2;
 }
 
-/* Search Input Wrapper — uses same classes as base.html topbar,
-   just wider on the landing page */
+/* The search box is the results header's own field (.search-input-wrapper in style.css), as wide as it is there
+   (owner, 2026-11-26: "search input bosh sahifada qanday bo'lsa, response sahifada ham shunday bo'lsin") */
 .landing-search-wrapper {
     width: 100%;
-    max-width: 720px;
+    max-width: 600px;
     margin-bottom: 28px;
     position: relative;
-}
-
-/* Fill, border and shadow come from .search-input-wrapper (--input-* tokens in style.css) */
-.landing-search-input-wrapper {
-    border-radius: 28px !important;
-    padding: 8px 16px !important;
 }
 
 /* Dropdown positioned within landing search wrapper */
@@ -255,11 +249,8 @@ body.landing-page {
     /* Every pixel the gutter gives back goes to the input, which otherwise
        gets squeezed narrow enough to wrap its own placeholder. */
     .landing-center {
-        padding: 0 16px;
-    }
-
-    .landing-search-input-wrapper {
-        padding: 6px 12px !important;
+        /* The results header's gutter, so the search box is as wide on both pages */
+        padding: 0 12px;
     }
 
     .landing-footer {
@@ -301,21 +292,7 @@ body.landing-page {
     }
 
     .landing-center {
-        padding: 0 12px;
-    }
-
-    .landing-search-input-wrapper {
-        padding: 5px 10px !important;
-    }
-
-    .landing-search-input-wrapper .search-plus-btn,
-    .landing-search-input-wrapper .search-icon-btn {
-        width: 32px;
-        height: 32px;
-    }
-
-    .landing-search-input-wrapper .search-icon-btn#landing-alert-btn {
-        margin-right: 2px !important;
+        padding: 0 10px;
     }
 
     .landing-footer-links {

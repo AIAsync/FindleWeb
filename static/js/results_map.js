@@ -28,14 +28,18 @@
     // only while the map shows that area, not over Tashkent or New York
     const TRANSIT_AREA = [[36.9, -122.75], [38.1, -121.5]];
 
-    // Many listings: dots until the user zooms in, price pins from this zoom on
-    const PIN_ZOOM = 15;
-    const MAX_PINS_ALWAYS = 40;
+    // Price pins that would overlap on screen join one numbered circle. Clicking it zooms in until they come
+    // apart; pins that stay together even at CLUSTER_MAX_ZOOM (one building, or one approximate centre) open
+    // as a list instead (owner, 2026-11-26: "uylar manzilda ko'rinmayapti ... zoom bo'ladigan qil")
+    const CLUSTER_DX = 58;
+    const CLUSTER_DY = 30;
+    const CLUSTER_MAX_ZOOM = 18;
+    const LIST_LIMIT = 40;
 
     let map = null;
-    let dotLayer = null;
     let pinLayer = null;
-    let manyListings = false;
+    // The listings on the map in ranking order: { p, at, html }
+    let listings = [];
     let nearLayer = null;
     // The neighborhood the search asked for, outlined (San Francisco has its boundaries)
     let areaLayer = null;
@@ -122,9 +126,8 @@
         stationLayer = L.layerGroup();
         areaLayer = L.featureGroup().addTo(map);
         nearLayer = L.featureGroup().addTo(map);
-        dotLayer = L.featureGroup();
-        pinLayer = L.featureGroup();
-        map.on('zoomend', applyZoomMode);
+        pinLayer = L.featureGroup().addTo(map);
+        map.on('zoomend', drawClusters);
         map.on('moveend', updateLegend);
 
         const toggle = element('map-stations-toggle');
@@ -179,6 +182,12 @@
 
     function specs(p) {
         const parts = [];
+        if (p.units === 'metric') {
+            // Uzbekistan: rooms and square metres, as on the result card
+            if (p.rooms) parts.push(`${p.rooms} ${tr('rooms_short', 'xona')}`);
+            if (p.total_area) parts.push(`${p.total_area} m²`);
+            return parts.join(' · ');
+        }
         if (p.rooms === 0) parts.push(tr('studio', 'Studio'));
         else if (p.rooms) parts.push(`${p.rooms} ${tr('bd_short', 'bd')}`);
         if (p.bathrooms) parts.push(`${p.bathrooms} ${tr('ba_short', 'ba')}`);
@@ -211,13 +220,6 @@
             </div>`;
     }
 
-    function applyZoomMode() {
-        if (!map) return;
-        const pins = !manyListings || map.getZoom() >= PIN_ZOOM;
-        map.removeLayer(pins ? dotLayer : pinLayer);
-        (pins ? pinLayer : dotLayer).addTo(map);
-    }
-
     /** Taxminiy nuqta (mo'ljal, tuman yoki shahar markazi): bir joyga tushgan e'lonlar ustma-ust turmasin —
      *  har biri o'z id'sidan 60–300 m ga, har safar bir xil tomonga suriladi. Aniq nuqta joyida qoladi. */
     function placed(p) {
@@ -232,29 +234,107 @@
     }
 
     function drawListings(points) {
-        dotLayer.clearLayers();
+        map.closePopup();
+        listings = points.filter(p => p.lat != null && p.lon != null)
+            .map(p => ({ p, at: L.latLng(placed(p)), html: popup(p) }));
+        drawClusters();
+    }
+
+    /** The pins at this zoom. Pins that would overlap on screen become one numbered circle: greedy in ranking
+     *  order, so the best match anchors its group. Runs again on every zoom. */
+    function drawClusters() {
+        if (!map || !pinLayer) return;
         pinLayer.clearLayers();
-        const located = points.filter(p => p.lat != null && p.lon != null);
-        located.forEach(p => {
-            const html = popup(p);
-            const at = placed(p);
-            L.circleMarker(at, {
-                radius: 6, color: '#ffffff', weight: 1.5,
-                fillColor: p.approximate ? '#64748b' : '#0f172a', fillOpacity: 0.9,
-            }).bindTooltip(esc(shortMoney(p.price, p.currency)), { direction: 'top' })
-              .bindPopup(html, { maxWidth: 280, minWidth: 220 })
-              .addTo(dotLayer);
-            const icon = L.divIcon({
-                className: 'map-price-pin' + (p.approximate ? ' is-approx' : ''),
-                html: `<span>${esc(shortMoney(p.price, p.currency))}</span>`,
-                iconSize: null,
-            });
-            L.marker(at, { icon, riseOnHover: true, title: p.title || '' })
-                .bindPopup(html, { maxWidth: 280, minWidth: 220 })
-                .addTo(pinLayer);
+        const zoom = map.getZoom();
+        const groups = [];
+        listings.forEach(item => {
+            const pt = map.project(item.at, zoom);
+            const group = groups.find(g => Math.abs(g.x - pt.x) < CLUSTER_DX && Math.abs(g.y - pt.y) < CLUSTER_DY);
+            if (group) group.items.push(item);
+            else groups.push({ x: pt.x, y: pt.y, items: [item] });
         });
-        manyListings = located.length > MAX_PINS_ALWAYS;
-        applyZoomMode();
+        groups.forEach(g => (g.items.length === 1 ? pricePin(g.items[0]) : clusterPin(g.items)).addTo(pinLayer));
+    }
+
+    function pricePin(item) {
+        const p = item.p;
+        const icon = L.divIcon({
+            className: 'map-price-pin' + (p.approximate ? ' is-approx' : ''),
+            html: `<span>${esc(shortMoney(p.price, p.currency))}</span>`,
+            iconSize: null,
+        });
+        return L.marker(item.at, { icon, riseOnHover: true, title: p.title || '' })
+            .bindPopup(item.html, { maxWidth: 280, minWidth: 220 });
+    }
+
+    /** "$650 – $1.2k" for a circle's tooltip; nothing when its listings are priced in different currencies */
+    function priceRange(items) {
+        const priced = items.map(item => item.p).filter(p => p.price != null);
+        if (!priced.length || new Set(priced.map(p => p.currency || '')).size !== 1) return '';
+        const values = priced.map(p => p.price);
+        const low = Math.min(...values);
+        const high = Math.max(...values);
+        const currency = priced[0].currency;
+        return low === high ? shortMoney(low, currency) : `${shortMoney(low, currency)} – ${shortMoney(high, currency)}`;
+    }
+
+    function clusterPin(items) {
+        const bounds = L.latLngBounds(items.map(item => item.at));
+        const size = items.length < 10 ? 36 : items.length < 100 ? 42 : 48;
+        const icon = L.divIcon({
+            className: 'map-cluster' + (items.every(item => item.p.approximate) ? ' is-approx' : ''),
+            html: `<span>${items.length}</span>`,
+            iconSize: [size, size],
+        });
+        const marker = L.marker(bounds.getCenter(), { icon, riseOnHover: true, zIndexOffset: 500 });
+        const range = priceRange(items);
+        if (range) marker.bindTooltip(esc(range), { direction: 'top', offset: [0, -size / 2] });
+        marker.on('click', () => openCluster(items, bounds));
+        return marker;
+    }
+
+    /** Can zooming in pull these pins apart? Not when they still share one spot at CLUSTER_MAX_ZOOM. */
+    function separable(items) {
+        const first = map.project(items[0].at, CLUSTER_MAX_ZOOM);
+        return items.some(item => {
+            const pt = map.project(item.at, CLUSTER_MAX_ZOOM);
+            return Math.abs(pt.x - first.x) >= CLUSTER_DX || Math.abs(pt.y - first.y) >= CLUSTER_DY;
+        });
+    }
+
+    function openCluster(items, bounds) {
+        if (map.getZoom() < CLUSTER_MAX_ZOOM && separable(items)) {
+            const target = Math.min(map.getBoundsZoom(bounds, false, L.point(120, 120)), CLUSTER_MAX_ZOOM);
+            if (target > map.getZoom()) map.fitBounds(bounds, { padding: [60, 60], maxZoom: CLUSTER_MAX_ZOOM });
+            else map.setView(bounds.getCenter(), Math.min(map.getZoom() + 2, CLUSTER_MAX_ZOOM));
+            return;
+        }
+        L.popup({ maxWidth: 300, minWidth: 240, className: 'map-list-popup' })
+            .setLatLng(bounds.getCenter())
+            .setContent(listPopup(items))
+            .openOn(map);
+    }
+
+    /** Listings that zooming cannot separate: a list, each row opening the listing on its site */
+    function listPopup(items) {
+        const places = new Set(items.map(item => item.p.neighborhood || item.p.district).filter(Boolean));
+        const place = places.size === 1 ? [...places][0] : '';
+        const approx = items.every(item => item.p.approximate)
+            ? ` <span class="map-pop-approx">${esc(tr('map_approx', 'approximate location'))}</span>` : '';
+        const rows = items.slice(0, LIST_LIMIT).map(({ p }) => {
+            const url = safeUrl(p.product_url);
+            const image = safeUrl(p.image_url);
+            const price = p.price != null
+                ? `${esc(money(p.price, p.currency))}${p.monthly ? esc(tr('per_month', '/mo')) : ''}` : '';
+            const body = `${image ? `<img class="map-list-img" src="${esc(image)}" alt="" loading="lazy">` : '<span class="map-list-img"></span>'}`
+                + `<span class="map-list-text"><b>${price}</b><span>${esc([specs(p), p.title].filter(Boolean).join(' · '))}</span></span>`;
+            return url
+                ? `<a class="map-list-row" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${body}</a>`
+                : `<div class="map-list-row">${body}</div>`;
+        }).join('');
+        const more = items.length > LIST_LIMIT ? `<div class="map-list-more">+${items.length - LIST_LIMIT}</div>` : '';
+        return `<div class="map-list"><div class="map-list-head"><b>${items.length}</b>${place ? ` · ${esc(place)}` : ''}${approx}</div>`
+            + `<div class="map-list-rows">${rows}</div>${more}</div>`;
     }
 
     async function drawNear(near) {
@@ -365,6 +445,31 @@
         return parts.concat(notes).join(' ');
     }
 
+    function setLoading(on) {
+        const box = element('results-map');
+        if (box) box.classList.toggle('is-loading', on);
+    }
+
+    /** A search started on the Map tab. The last search's houses leave now, so the map never offers them as the
+     *  answer to the new one; the next `show` draws the new houses and fits the map to them. */
+    function loading() {
+        drawnKey = null;
+        pending++;      // a `show` still waiting for the previous search does not draw over this one
+        if (!map) return;
+        map.closePopup();
+        listings = [];
+        pinLayer.clearLayers();
+        nearLayer.clearLayers();
+        areaLayer.clearLayers();
+        setLoading(true);
+        setStatus(`<span class="map-muted"><i class="fa-solid fa-spinner fa-spin"></i> ${esc(tr('map_loading', 'Loading the map…'))}</span>`);
+    }
+
+    function failed(message) {
+        setLoading(false);
+        setStatus(`<span class="map-status-error">${esc(message || tr('map_unavailable', 'The map could not be loaded.'))}</span>`);
+    }
+
     async function show(ctx) {
         const view = element('map-view');
         if (!view) return;
@@ -378,7 +483,8 @@
         const key = ctx.searchId || ctx.query || '';
         if (!key && !products.length) {
             drawnKey = null;
-            dotLayer.clearLayers();
+            setLoading(false);
+            listings = [];
             pinLayer.clearLayers();
             nearLayer.clearLayers();
             areaLayer.clearLayers();
@@ -390,12 +496,15 @@
         if (key === drawnKey) return;
 
         const ticket = ++pending;
+        setLoading(true);
         setStatus(`<span class="map-muted"><i class="fa-solid fa-spinner fa-spin"></i> ${esc(tr('map_loading', 'Loading the map…'))}</span>`);
         let data = null;
         let expired = false;
         if (ctx.searchId) {
             try {
-                const res = await fetch(`/api/geo/search/${encodeURIComponent(ctx.searchId)}/`);
+                // The query lets the server run the search again when its ranked list has expired
+                const again = ctx.query ? `?q=${encodeURIComponent(ctx.query)}` : '';
+                const res = await fetch(`/api/geo/search/${encodeURIComponent(ctx.searchId)}/${again}`);
                 if (res.ok) data = await res.json();
                 else expired = res.status === 404;
             } catch (e) {
@@ -411,6 +520,7 @@
         drawArea(data.area);
         const notes = await drawNear(data.near || ctx.near || []);
         fit(data.points || [], data.near || ctx.near || [], data.focus);
+        setLoading(false);
         setStatus(summary(data, notes, expired));
         drawnKey = key;
     }
@@ -423,6 +533,8 @@
     window.FindleMap = {
         show,
         hide,
+        loading,
+        failed,
         /** A new search started: the next `show` draws it even under the same key. */
         reset() { drawnKey = null; },
     };

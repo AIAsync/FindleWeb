@@ -917,6 +917,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // A search typed on the Map tab stays on the map: it redraws when the results are in
         const mapTab = document.getElementById('tab-map');
         const onMap = Boolean(mapTab && mapTab.classList.contains('active'));
+        // The last search's houses leave the map at once, not when the new ones arrive (owner, 2026-11-26)
+        if (onMap && window.FindleMap && window.FindleMap.loading) window.FindleMap.loading();
         const tabAll = document.getElementById('tab-all');
         if (!onMap && tabAll && !tabAll.classList.contains('active')) tabAll.click();
         const previousHTML = chatContainer.innerHTML;
@@ -1013,6 +1015,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Search error:', error);
             chatContainer.innerHTML = `<div class="sr-error"><i class="fa-solid fa-triangle-exclamation"></i> ${escapeHTML(error.message || t('something_went_wrong', 'Sorry, something went wrong.'))}</div>`;
+            if (onMap && window.FindleMap && window.FindleMap.failed) window.FindleMap.failed(error.message);
         }
 
         restoreSearchControls();

@@ -1,13 +1,16 @@
 :root {
-    /* Search and Agent inputs (owner, 2026-11-26): a white field with a clear edge and a soft lift on the
-       white page; dark mode redefines them as a lighter neutral field than the page */
+    /* Search and Agent inputs (owner, 2026-11-26: "google ga o'xshagan"): Google's white pill, lifted by a soft
+       shadow instead of a border, with a stronger shadow on hover and while typing. body.dark-mode redefines them. */
     --input-bg: #ffffff;
-    --input-border: #cfd5dd;
-    --input-border-hover: #b3bac5;
-    --input-border-focus: #8b94a3;
-    --input-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 4px 16px rgba(16, 24, 40, 0.07);
-    --input-shadow-focus: 0 0 0 3px rgba(15, 23, 42, 0.07), 0 6px 20px rgba(16, 24, 40, 0.09);
-    --input-placeholder: #8a94a6;
+    --input-bg-hover: #ffffff;
+    --input-border: transparent;
+    --input-shadow: 0 2px 5px 1px rgba(64, 60, 67, 0.16);
+    --input-shadow-hover: 0 2px 8px 1px rgba(64, 60, 67, 0.24);
+    --input-text: #202124;
+    --input-placeholder: #70757a;
+    --input-icon: #5f6368;
+    --input-icon-hover: #202124;
+    --input-icon-hover-bg: rgba(60, 64, 67, 0.08);
     --bg-color: #ffffff;
     --sidebar-bg: #f8fafc;
     --card-bg: #ffffff;
@@ -1592,49 +1595,58 @@ body.auth-page {
     font-size: 0.85rem;
 }
 
-.search-input-wrapper {
+/* The Search box (home page and results header) and the Agent box are one Google-style field (owner,
+   2026-11-26): a 48px pill, 16px text on 24px lines between 40px round icon buttons. Typed text wraps onto new
+   lines the same way in both and the field grows up to six lines. The home page adds no size of its own. */
+.search-input-wrapper,
+.chat-input-wrapper {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
+    gap: 0 2px;
+    min-height: 48px;
+    padding: 0 6px;
     background: var(--input-bg);
     border: 1px solid var(--input-border);
     border-radius: 24px;
-    padding: 6px 12px;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
     box-shadow: var(--input-shadow);
-    gap: 2px 5px;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.search-input-wrapper:hover {
-    border-color: var(--input-border-hover);
+.search-input-wrapper:hover,
+.search-input-wrapper:focus-within,
+.chat-input-wrapper:hover,
+.chat-input-wrapper:focus-within {
+    background: var(--input-bg-hover);
+    box-shadow: var(--input-shadow-hover);
 }
 
-.search-input-wrapper:focus-within {
-    border-color: var(--input-border-focus);
-    box-shadow: var(--input-shadow-focus);
-}
-
-/* Plus Button */
-.search-plus-btn {
+/* Icon buttons of both fields: plus, alert bell and search; the Agent's plus, clear and send */
+.search-plus-btn,
+.search-icon-btn,
+.chat-plus-btn,
+.chat-clear-btn,
+.chat-send-btn {
     background: transparent;
     border: none;
-    color: var(--text-muted);
-    width: 32px;
-    height: 32px;
+    color: var(--input-icon);
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 1rem;
-    margin-right: 8px;
-    transition: background 0.2s, color 0.2s;
+    font-size: 17px;
+    transition: background-color 0.2s, color 0.2s;
     flex-shrink: 0;
 }
 
-.search-plus-btn:hover {
-    background: rgba(0, 0, 0, 0.05);
-    color: var(--text-main);
+.search-plus-btn:hover,
+.search-icon-btn:hover,
+.chat-plus-btn:hover {
+    background: var(--input-icon-hover-bg);
+    color: var(--input-icon-hover);
     transform: none;
     box-shadow: none;
 }
@@ -1650,6 +1662,11 @@ body.auth-page {
     padding-top: 4px;
     border-top: 1px solid rgba(0, 0, 0, 0.05);
     /* Optional: clear separation */
+}
+
+/* Inside the pill: off its rounded corners */
+.search-input-wrapper .search-tags {
+    padding: 4px 10px 10px;
 }
 
 .search-tags:empty {
@@ -1687,50 +1704,30 @@ body.auth-page {
     color: var(--text-main);
 }
 
-/* Search Input */
-.topbar-search-input {
+/* The text of both fields: one line is 46px (a 24px line and 11px above and below), six lines at most, then it
+   scrolls. The auto-grow scripts set the height; these limits keep both fields growing alike. */
+.topbar-search-input,
+#chat-bottom-input {
     flex: 1;
-    background: transparent;
-    border: none;
-    color: var(--text-main);
-    font-size: 1.05rem;
-    outline: none;
-    padding: 10px 0 0 0;
     min-width: 0;
-    /* Multiline Support */
-    resize: none;
-    /* Hide scrollbar initially, let it grow */
-    font-family: inherit;
-    line-height: 1.5;
-    max-height: 140px;
-    min-height: 48px;
-    /* Allow more growth */
-}
-
-.topbar-search-input::placeholder {
-    color: var(--input-placeholder);
-    font-weight: 300;
-}
-
-/* Search Icon Button */
-.search-icon-btn {
+    min-height: 46px;
+    max-height: 166px;
+    padding: 11px 4px;
     background: transparent;
     border: none;
-    color: var(--text-muted);
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: all 0.2s;
-    flex-shrink: 0;
+    outline: none;
+    color: var(--input-text);
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+    resize: none;
 }
 
-.search-icon-btn:hover {
-    background: rgba(0, 0, 0, 0.05);
-    color: var(--text-main);
+.topbar-search-input::placeholder,
+#chat-bottom-input::placeholder {
+    color: var(--input-placeholder);
+    font-weight: 400;
 }
 
 /* Dropdown Options */
@@ -2260,14 +2257,17 @@ body.dark-mode {
     --accent-soft: rgba(138, 180, 248, 0.12);
     --accent-border: rgba(138, 180, 248, 0.4);
     --glass-border: 1px solid rgba(255, 255, 255, 0.06);
-    /* Inputs: a lighter neutral grey than the page, so the box reads at a glance */
-    --input-bg: #27282c;
-    --input-border: #3c3d42;
-    --input-border-hover: #4c4e54;
-    --input-border-focus: #63656c;
-    --input-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.35);
-    --input-shadow-focus: 0 0 0 3px rgba(255, 255, 255, 0.06), 0 8px 24px rgba(0, 0, 0, 0.4);
-    --input-placeholder: #8f9198;
+    /* Inputs: Google's dark field, a neutral grey well above the page, a shade lighter on hover and while typing */
+    --input-bg: #303134;
+    --input-bg-hover: #37383b;
+    --input-border: transparent;
+    --input-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+    --input-shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.6);
+    --input-text: #e8eaed;
+    --input-placeholder: #9aa0a6;
+    --input-icon: #9aa0a6;
+    --input-icon-hover: #e8eaed;
+    --input-icon-hover-bg: rgba(232, 234, 237, 0.08);
 }
 
 /* --- Topbar --- */
@@ -2280,28 +2280,7 @@ body.dark-mode .topbar {
     background: var(--bg-color);
 }
 
-/* --- Search Input Wrapper: the --input-* tokens above (no dark-only rules, so hover never darkens it) --- */
-body.dark-mode .topbar-search-input {
-    color: var(--text-main);
-}
-
-body.dark-mode .search-plus-btn {
-    color: var(--text-muted);
-}
-
-body.dark-mode .search-plus-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--text-main);
-}
-
-body.dark-mode .search-icon-btn {
-    color: var(--text-muted);
-}
-
-body.dark-mode .search-icon-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--text-main);
-}
+/* --- Search and Agent fields: the --input-* tokens above, no dark-only rules --- */
 
 /* --- Search Tags --- */
 body.dark-mode .search-tag {
@@ -3592,47 +3571,10 @@ body.dark-mode .sr-skeleton {
     display: flex;
 }
 
-/* Agent input: the same field as the search box (--input-* tokens), opaque so the messages scrolling
-   behind it do not read through */
+/* Agent input: the Search box's field (see .search-input-wrapper) across its container. --input-bg is opaque,
+   so the messages scrolling behind it do not read through. */
 .chat-input-wrapper {
-    background: var(--input-bg);
-    border: 1px solid var(--input-border);
-    border-radius: 20px;
-    padding: 8px 15px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    box-shadow: var(--input-shadow);
     width: 100%;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.chat-input-wrapper:hover {
-    border-color: var(--input-border-hover);
-}
-
-.chat-input-wrapper:focus-within {
-    border-color: var(--input-border-focus);
-    box-shadow: var(--input-shadow-focus);
-}
-
-#chat-bottom-input::placeholder {
-    color: var(--input-placeholder);
-}
-
-.chat-plus-btn, .chat-send-btn, .chat-clear-btn {
-    background: transparent;
-    border: none;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    color: var(--text-muted);
-    flex-shrink: 0;
 }
 
 /* Sits beside send, and only appears once there is a conversation to clear.
@@ -3656,30 +3598,14 @@ body.dark-mode .chat-clear-btn:hover {
     color: #f87171;
 }
 
-.chat-plus-btn:hover {
-    background: rgba(0, 0, 0, 0.05);
-    color: var(--primary);
-}
-
 .chat-send-btn {
     color: var(--primary);
 }
 
+/* --on-primary exists only in dark mode, where white on the light --primary would vanish */
 .chat-send-btn:hover {
     background: var(--primary);
-    color: white;
-}
-
-#chat-bottom-input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    outline: none;
-    padding: 10px 0;
-    font-size: 1rem;
-    color: var(--text-main);
-    resize: none;
-    max-height: 200px;
+    color: var(--on-primary, #ffffff);
 }
 
 /* Visibility Toggles */
@@ -3903,14 +3829,6 @@ body.dark-mode.ask-ai-mode .topbar-search-tabs-container {
     transform: translate(-50%, -50%);
     max-width: 650px;
     transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.bottom-chat-container.centered .chat-input-wrapper {
-    box-shadow: var(--input-shadow);
-}
-
-.bottom-chat-container.centered .chat-input-wrapper:focus-within {
-    box-shadow: var(--input-shadow-focus);
 }
 
 .bottom-chat-container {

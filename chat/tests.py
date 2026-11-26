@@ -287,6 +287,39 @@ class UsRentalsTests(TestCase):
         self.assertEqual(views._build_card(_listing(site_name='padmapper_us'))['site_label'], 'PadMapper')
         self.assertEqual(views._build_card(_listing(site_name='craigslist_us'))['site_label'], 'Craigslist')
 
+    def test_map_points_use_the_units_of_their_country(self):
+        tashkent = views._map_point({'region': 'Tashkent', 'rooms': 3, 'total_area': 80.4})
+        self.assertEqual((tashkent['units'], tashkent['total_area'], tashkent['area_sqft']), ('metric', 80, None))
+        sf = views._map_point({'region': 'San Francisco', 'rooms': 1, 'total_area': 60})
+        self.assertEqual((sf['units'], sf['total_area'], sf['area_sqft']), ('us', None, 646))
+
+    def test_map_points_are_sent_compressed(self):
+        api = {'points': [{'product_id': str(i), 'lat': 41.3, 'lon': 69.2, 'region': 'Tashkent', 'title': 'Kvartira'}
+                          for i in range(50)], 'near': [], 'total': 50, 'shown': 50, 'located': 50}
+        with mock.patch('chat.views.requests.get', return_value=_Response(200, api)):
+            response = self.client.get('/api/geo/search/abcdef123456/', HTTP_ACCEPT_ENCODING='gzip')
+        self.assertEqual(response['Content-Encoding'], 'gzip')
+
+    def test_an_expired_map_runs_the_query_again(self):
+        api = {'points': [{'product_id': '7', 'lat': 41.36, 'lon': 69.29, 'approximate': True, 'region': 'Tashkent'}],
+               'near': [], 'total': 1, 'shown': 1, 'located': 1}
+        gets = [_Response(404, {'detail': 'expired'}), _Response(200, api)]
+        fresh = _Response(200, {'results': [], 'page': {'search_id': 'fedcba654321'}})
+        with mock.patch('chat.views.requests.get', side_effect=gets) as get, \
+                mock.patch('chat.views.requests.post', return_value=fresh) as post:
+            data = self.client.get('/api/geo/search/abcdef123456/', {'q': 'Yunusobodda kvartira'}).json()
+        self.assertEqual([p['product_id'] for p in data['points']], ['7'])
+        self.assertEqual(post.call_args.kwargs['json']['query'], 'Yunusobodda kvartira')
+        self.assertEqual(post.call_args.kwargs['json']['assist'], 'off')
+        self.assertTrue(get.call_args_list[1].args[0].endswith('/geo/search/fedcba654321'))
+
+    def test_an_expired_map_without_its_query_stays_expired(self):
+        with mock.patch('chat.views.requests.get', return_value=_Response(404, {'detail': 'expired'})), \
+                mock.patch('chat.views.requests.post') as post:
+            response = self.client.get('/api/geo/search/abcdef123456/')
+        self.assertEqual(response.status_code, 404)
+        post.assert_not_called()
+
     def test_the_map_gets_the_neighborhood_outline_and_what_to_fit(self):
         api = {'points': [{'product_id': '1', 'lat': 37.76, 'lon': -122.415, 'region': 'San Francisco'}],
                'near': [], 'total': 1, 'shown': 1, 'located': 1, 'bounds': [[37.76, -122.415], [37.76, -122.415]],
