@@ -1078,3 +1078,292 @@ msgstr "Nima qidirayotganingizni yozing."
 #: chat/alerts.py
 msgid "Invalid request."
 msgstr "Noto'g'ri so'rov."
+
+#: chat/card_tags.py
+msgid "Apartment"
+msgstr "Kvartira"
+
+#: chat/card_tags.py
+msgid "House"
+msgstr "Hovli uy"
+
+#: chat/card_tags.py
+msgid "Cottage"
+msgstr "Kottej"
+
+#: chat/card_tags.py
+msgid "Townhouse"
+msgstr "Taunhaus"
+
+#: chat/card_tags.py
+msgid "Room"
+msgstr "Xona"
+
+#: chat/card_tags.py
+msgid "Hostel"
+msgstr "Hostel"
+
+#: chat/card_tags.py
+msgid "Hotel"
+msgstr "Mehmonxona"
+
+#: chat/card_tags.py
+msgid "Office"
+msgstr "Ofis"
+
+#: chat/card_tags.py
+msgid "Retail space"
+msgstr "Savdo maydoni"
+
+#: chat/card_tags.py
+msgid "Shop"
+msgstr "Do'kon"
+
+#: chat/card_tags.py
+msgid "Restaurant or cafe"
+msgstr "Kafe yoki restoran"
+
+#: chat/card_tags.py
+msgid "Salon"
+msgstr "Salon"
+
+#: chat/card_tags.py
+msgid "Warehouse"
+msgstr "Ombor"
+
+#: chat/card_tags.py
+msgid "Production building"
+msgstr "Ishlab chiqarish binosi"
+
+#: chat/card_tags.py
+msgid "Logistics center"
+msgstr "Logistika markazi"
+
+#: chat/card_tags.py
+msgid "Garage"
+msgstr "Garaj"
+
+#: chat/card_tags.py
+msgid "Parking space"
+msgstr "Avtoturargoh joyi"
+
+#: chat/card_tags.py
+msgid "Parking lot"
+msgstr "Avtoturargoh maydoni"
+
+#: chat/card_tags.py
+msgid "Land plot"
+msgstr "Yer uchastkasi"
+
+#: chat/card_tags.py
+msgid "Residential land"
+msgstr "Turar joy uchun yer"
+
+#: chat/card_tags.py
+msgid "Commercial land"
+msgstr "Tijorat yeri"
+
+#: chat/card_tags.py
+msgid "Farmland"
+msgstr "Qishloq xo'jaligi yeri"
+
+#: chat/card_tags.py
+msgid "Medical center"
+msgstr "Tibbiyot markazi"
+
+#: chat/card_tags.py
+msgid "School building"
+msgstr "Ta'lim muassasasi binosi"
+
+#: chat/card_tags.py
+msgid "Sports complex"
+msgstr "Sport majmuasi"
+
+#: chat/card_tags.py
+msgid "Daily rent"
+msgstr "Kunlik ijara"
+
+#: chat/card_tags.py
+msgid "Yearly rent"
+msgstr "Yillik ijara"
+
+#: chat/card_tags.py
+msgid "Rent"
+msgstr "Ijara"
+
+#: chat/card_tags.py
+msgid "Sale"
+msgstr "Sotuv"
+
+#: chat/card_tags.py
+msgid "Exchange"
+msgstr "Ayirboshlash"
+
+#: chat/card_tags.py
+msgid "Euro renovation"
+msgstr "Evroremont"
+
+#: chat/card_tags.py
+msgid "Designer renovation"
+msgstr "Dizayner ta'mir"
+
+#: chat/card_tags.py
+msgid "Cosmetic renovation"
+msgstr "Kosmetik ta'mir"
+
+#: chat/card_tags.py
+msgid "Needs renovation"
+msgstr "Ta'mir talab"
+
+#: chat/card_tags.py
+msgid "Rough finish"
+msgstr "Qora suvoq"
+
+#: chat/card_tags.py
+msgid "White box"
+msgstr "Oq suvoq"
+
+#: chat/card_tags.py
+msgid "Brick building"
+msgstr "G'isht bino"
+
+#: chat/card_tags.py
+msgid "Panel building"
+msgstr "Panel bino"
+
+#: chat/card_tags.py
+msgid "Monolithic building"
+msgstr "Monolit bino"
+
+#: chat/card_tags.py
+msgid "Block building"
+msgstr "Blok bino"
+
+#: chat/card_tags.py
+msgid "Wooden building"
+msgstr "Yog'och bino"
+
+#: chat/card_tags.py
+msgid "Central heating"
+msgstr "Markaziy isitish"
+
+#: chat/card_tags.py
+msgid "Own heating"
+msgstr "Avtonom isitish"
+
+#: chat/card_tags.py
+msgid "Gas heating"
+msgstr "Gazli isitish"
+
+#: chat/card_tags.py
+msgid "Electric heating"
+msgstr "Elektr isitish"
+
+#: chat/card_tags.py
+msgid "Installments"
+msgstr "Bo'lib to'lash"
+
+#: chat/card_tags.py
+msgid "Mortgage"
+msgstr "Ipoteka"
+
+#: chat/card_tags.py
+msgid "Internet"
+msgstr "Internet"
+
+#: chat/card_tags.py
+msgid "Parking"
+msgstr "Avtoturargoh"
+
+#: chat/card_tags.py
+msgid "Gas"
+msgstr "Gaz"
+
+#: chat/card_tags.py
+msgid "Water"
+msgstr "Suv"
+
+#: chat/card_tags.py
+msgid "Electricity"
+msgstr "Elektr"
+
+#: chat/card_tags.py
+msgid "Sewer"
+msgstr "Kanalizatsiya"
+
+#: chat/card_tags.py
+msgid "Kitchen"
+msgstr "Oshxona"
+
+#: chat/card_tags.py
+msgid "Security"
+msgstr "Qo'riqlash"
+
+#: chat/card_tags.py
+msgid "Pool"
+msgstr "Basseyn"
+
+#: chat/card_tags.py
+msgid "Gym"
+msgstr "Sport zal"
+
+#: chat/card_tags.py
+msgid "Ventilation"
+msgstr "Ventilyatsiya"
+
+#: chat/card_tags.py
+#, python-format
+msgid "%(count)s bd"
+msgstr "%(count)s yotoq"
+
+#: chat/card_tags.py
+#, python-format
+msgid "%(count)s-room"
+msgstr "%(count)s xonali"
+
+#: chat/card_tags.py
+#, python-format
+msgid "%(count)s ba"
+msgstr "%(count)s hammom"
+
+#: chat/card_tags.py
+#, python-format
+msgid "%(count)s bath"
+msgstr "%(count)s sanuzel"
+
+#: chat/card_tags.py
+#, python-format
+msgid "%(area)s m² land"
+msgstr "%(area)s m² yer"
+
+#: chat/card_tags.py
+#, python-format
+msgid "Floor %(floor)s/%(total)s"
+msgstr "%(floor)s/%(total)s qavat"
+
+#: chat/card_tags.py
+#, python-format
+msgid "Floor %(floor)s"
+msgstr "%(floor)s-qavat"
+
+#: chat/card_tags.py
+#, python-format
+msgid "%(total)s floors"
+msgstr "%(total)s qavatli"
+
+#: chat/card_tags.py
+msgid "Furnished"
+msgstr "Mebelli"
+
+#: chat/card_tags.py
+msgid "Unfurnished"
+msgstr "Mebelsiz"
+
+#: chat/card_tags.py
+msgid "From owner"
+msgstr "Egasidan"
+
+#: chat/card_tags.py
+#, python-format
+msgid "Built %(year)s"
+msgstr "%(year)s-yilda qurilgan"

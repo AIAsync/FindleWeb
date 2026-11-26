@@ -1670,22 +1670,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const priceText = p.price ? formatPrice(p.price) : '';
         const imgSrc = p.image_url || '';
         const url = p.product_url || '';
-        const title = p.title || '';
-
-        // Compact spec line: rooms · area · floor. US listings (San Francisco): beds · baths · sq ft
-        const specs = [];
         const us = p.units === 'us';
-        if (us) {
-            if (p.rooms === 0) specs.push(t('studio', 'Studio'));
-            else if (p.rooms) specs.push(`${p.rooms} ${t('bd_short', 'bd')}`);
-            if (p.bathrooms) specs.push(`${p.bathrooms} ${t('ba_short', 'ba')}`);
-            if (p.area_sqft) specs.push(`${formatPrice(p.area_sqft)} ${t('sqft', 'sq ft')}`);
-        } else {
-            if (p.rooms) specs.push(`${p.rooms} ${t('rooms_short', 'xona')}`);
-            if (p.total_area) specs.push(`${p.total_area} m²`);
-            if (p.floor) specs.push(p.total_floors ? `${p.floor}/${p.total_floors} ${t('floor_short', 'qavat')}` : `${p.floor} ${t('floor_short', 'qavat')}`);
-        }
-        const specsHtml = specs.length ? `<div class="sr-grid-card-specs">${specs.map(s => escapeHTML(s)).join(' · ')}</div>` : '';
+
+        // No title: a source's title is often a post's first line or a code. The listing's own
+        // fields (type, deal, rooms, area, floor, state, amenities) stand in its place as tags,
+        // already worded in the page's language by the server (chat/card_tags.py).
+        const tags = Array.isArray(p.tags) ? p.tags.filter(Boolean) : [];
+        const tagsHtml = tags.length
+            ? `<div class="sr-grid-card-tags">${tags.map(tag => `<span class="sr-card-tag">${escapeHTML(tag)}</span>`).join('')}</div>`
+            : '';
+        const altText = tags.join(', ') || p.title || '';
         // Measured on the map: the distance the search asked about, otherwise the nearest metro
         const measured = (p.geo_match || []).find(m => m.distance_m != null);
         const metroText = measured
@@ -1700,12 +1694,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const inner = `
             <div class="sr-grid-card-img">
                 ${imgSrc
-                    ? `<img src="${escapeHTML(imgSrc)}" alt="${escapeHTML(title)}" loading="lazy">`
+                    ? `<img src="${escapeHTML(imgSrc)}" alt="${escapeHTML(altText)}" loading="lazy">`
                     : `<span class="sr-grid-card-noimg"><i class="fa-regular fa-image"></i></span>`}
             </div>
             <div class="sr-grid-card-body">
-                <div class="sr-grid-card-title">${escapeHTML(title)}</div>
-                ${specsHtml}
+                ${tagsHtml}
                 ${metroHtml}
                 <div class="sr-grid-card-price-row">
                     ${priceText

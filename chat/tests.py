@@ -365,3 +365,44 @@ class AgentReplyTests(TestCase):
         self.assertEqual(post.call_args.kwargs['json']['query'], 'Mission 2 bedroom')
         self.assertEqual(data['search_query'], 'Mission 2 bedroom')
         self.assertEqual([p['product_id'] for p in data['products']], ['7'])
+
+
+class CardTagTests(TestCase):
+    """Cards show the listing's fields as tags in place of the source's title."""
+
+    def test_a_tashkent_listing_gets_uzbek_tags_most_telling_first(self):
+        row = {'product_id': 'tg1', 'title': '🏠 IJARA | TOSHKENT7️⃣', 'region': 'Tashkent', 'district': 'Chilanzar',
+               'category_title': 'apartments', 'transaction_type': 'Rent', 'total_area': 65, 'realtor_is': False,
+               'structured': {'rooms': 2, 'floor': 3, 'total_floors': 9, 'condition': 'Euro repair',
+                              'furnished': True, 'gas': True, 'water': True, 'parking': False}}
+        from django.utils import translation
+        with translation.override('uz'):
+            card = views._build_card(row)
+        # Eight at most: "Suv" is cut, and a "no" amenity (parking) is never a tag
+        self.assertEqual(card['tags'], ['Kvartira · Ijara', '2 xonali', '65 m²', '3/9 qavat', 'Evroremont',
+                                        'Mebelli', 'Egasidan', 'Gaz'])
+        self.assertEqual(card['title'], '🏠 IJARA | TOSHKENT7️⃣')     # kept for the @ list and the map
+
+    def test_a_us_listing_gets_us_units_in_english(self):
+        row = _listing(category_title='apartments', total_area=78.97,
+                       structured={'rooms': 0, 'bathrooms': 1, 'rent_period': 'monthly', 'kitchen': True})
+        from django.utils import translation
+        with translation.override('en'):
+            self.assertEqual(views._build_card(row)['tags'], ['Apartment · Rent', 'Studio', '1 ba', '850 sq ft',
+                                                             'Kitchen'])
+        with translation.override('uz'):
+            self.assertEqual(views._build_card(row)['tags'][:3], ['Kvartira · Ijara', 'Studiya', '1 hammom'])
+
+    def test_daily_rent_and_a_floor_without_the_building_height(self):
+        row = {'product_id': '9', 'region': 'Tashkent', 'category_title': 'rooms', 'transaction_type': 'Rent',
+               'structured': {'rent_period': 'daily', 'floor': 2, 'year_built': 2015}}
+        self.assertEqual(views._build_card(row)['tags'], ['Room · Daily rent', 'Floor 2', 'Built 2015'])
+
+    def test_alert_cards_carry_the_same_tags(self):
+        user = User.objects.create_user('vali', password='pass-1234-word')
+        self.client.force_login(user)
+        body = {'items': [{'id': 1, 'alert_id': 2, 'matched_at': '2026-11-26T10:00:00Z', 'seen_at': None,
+                           'listing': _listing(category_title='apartments', structured={'rooms': 2})}]}
+        with mock.patch('chat.alerts.requests.request', return_value=_Response(200, body)):
+            data = self.client.get('/api/alerts/notifications/', {'alert_id': 2}).json()
+        self.assertEqual(data['items'][0]['card']['tags'][:2], ['Apartment · Rent', '2 bd'])

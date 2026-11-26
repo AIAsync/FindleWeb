@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.translation import get_language
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.gzip import gzip_page
+from .card_tags import card_tags
 from .models import Conversation, Message
 from .region import DEFAULT_REGION, is_us_region
 import os
@@ -302,7 +303,10 @@ def _build_card(res):
 
     return {
         'product_id': str(res.get('product_id') or ''),
+        # The card shows `tags`, not the title: a source's title is often a post's first line or a code.
+        # The title stays for the @ list, the map and image alt text.
         'title': _build_title(res),
+        'tags': card_tags(res),
         'image_url': res.get('image_url') or None,
         'product_url': res.get('product_url') or None,
         'site_name': res.get('site_name') or '',
