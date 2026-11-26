@@ -241,11 +241,18 @@
     function renderEmptyDetail() {
         const detail = state.container.querySelector('#alert-detail');
         if (!detail) return;
+        // Alerts exist but none is open yet: say how to open one, not how to make one.
+        const title = state.alerts.length
+            ? t('alerts_pick_title', 'Choose an alert')
+            : t('alerts_empty_title', 'Get told about new listings');
+        const text = state.alerts.length
+            ? t('alerts_pick_text', 'Open an alert to see the new listings that match it.')
+            : t('alerts_empty_text', 'Write what you are looking for. When a newly found listing matches it, it appears here and the Alerts tab shows a number.');
         detail.innerHTML = `
             <div class="alert-detail-empty">
                 <div class="alert-detail-empty-icon"><i class="fa-regular fa-bell"></i></div>
-                <h3>${escapeHTML(t('alerts_empty_title', 'Get told about new listings'))}</h3>
-                <p>${escapeHTML(t('alerts_empty_text', 'Write what you are looking for. When a newly found listing matches it, it appears here and the Alerts tab shows a number.'))}</p>
+                <h3>${escapeHTML(title)}</h3>
+                <p>${escapeHTML(text)}</p>
             </div>`;
     }
 
@@ -261,11 +268,13 @@
         }
         state.alerts = res.data.alerts || [];
         setBadge(res.data.unread || 0);
-        const keep = state.alerts.find(alert => alert.id === (selectId || state.selectedId));
-        const first = keep || state.alerts.find(alert => alert.unread) || state.alerts[0];
-        state.selectedId = first ? first.id : null;
+        // Only an alert the user chose stays open: the one just created, or the one already open.
+        // Nothing opens by itself — opening an alert also marks its new listings as seen, and the
+        // tab's number must stay until the user has looked at them.
+        const keep = state.alerts.find(alert => alert.id === (selectId || state.selectedId)) || null;
+        state.selectedId = keep ? keep.id : null;
         renderList();
-        if (first) selectAlert(first.id, preview);
+        if (keep) selectAlert(keep.id, preview);
         else renderEmptyDetail();
     }
 
@@ -377,6 +386,9 @@
                 return;
             }
             state.selectedId = null;
+            // A phone shows one pane: the alert is gone, so go back to the list.
+            const page = state.container.querySelector('.alerts-page-container');
+            if (page) page.classList.remove('mobile-detail-active');
             await loadAlerts(null);
         });
     }
@@ -514,6 +526,8 @@
             return;
         }
         layout(container, prefill);
+        // Coming to the tab opens no alert: the list shows, and the user picks one.
+        state.selectedId = null;
         await loadAlerts(null);
     }
 

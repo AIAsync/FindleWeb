@@ -995,6 +995,14 @@ msgstr "Yangi e'lonlardan xabardor bo'ling"
 msgid "Write what you are looking for. When a newly found listing matches it, it appears here and the Alerts tab shows a number."
 msgstr "Nima qidirayotganingizni yozing. Yangi topilgan e'lon unga mos kelsa, shu yerda chiqadi va Bildirishnomalar bo'limida son paydo bo'ladi."
 
+#: templates/base.html templates/chat/home.html
+msgid "Choose an alert"
+msgstr "Bildirishnomani tanlang"
+
+#: templates/base.html templates/chat/home.html
+msgid "Open an alert to see the new listings that match it."
+msgstr "Unga mos yangi e'lonlarni ko'rish uchun bildirishnomani oching."
+
 #: templates/base.html templates/chat/home.html chat/alerts.py
 msgid "Alerts are unavailable right now. Try again later."
 msgstr "Bildirishnomalar hozir ishlamayapti. Keyinroq urinib ko'ring."
