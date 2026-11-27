@@ -399,8 +399,25 @@ class CardTagTests(TestCase):
             card = views._build_card(row)
         # Eight at most: "Suv" is cut, and a "no" amenity (parking) is never a tag
         self.assertEqual(card['tags'], ['Kvartira · Ijara', '2 xonali', '65 m²', '3/9 qavat', 'Evroremont',
-                                        'Mebelli', 'Egasidan', 'Gaz'])
+                                        'Mebelli', 'Gaz', 'Suv'])
         self.assertEqual(card['title'], '🏠 IJARA | TOSHKENT7️⃣')     # kept for the @ list and the map
+        # Who posted it: next to the price, not a tag
+        self.assertEqual((card['advertiser'], card['advertiser_label']), ('owner', 'Egasidan'))
+
+    def test_who_posted_it_sits_next_to_the_price_with_the_reason(self):
+        from django.utils import translation
+        rows = [
+            ({'advertiser': 'broker', 'advertiser_by': 'phone', 'advertiser_count': 37}, ('broker', 'Broker'), '37'),
+            ({'advertiser': 'realtor', 'advertiser_by': 'text'}, ('realtor', 'Rieltor'), "E'londa"),
+            ({'advertiser': 'agent', 'advertiser_by': 'site'}, ('agent', 'Agent'), 'Saytda'),
+            ({'advertiser': 'owner', 'advertiser_by': 'profile', 'advertiser_count': 1}, ('owner', 'Egasidan'), '1'),
+            ({}, ('', ''), ''),
+        ]
+        for extra, expected, note in rows:
+            with translation.override('uz'):
+                card = views._build_card(_listing(region='Tashkent', **extra))
+            self.assertEqual((card['advertiser'], card['advertiser_label']), expected)
+            self.assertIn(note, card['advertiser_note'])
 
     def test_a_us_listing_gets_us_units_in_english(self):
         row = _listing(category_title='apartments', total_area=78.97,

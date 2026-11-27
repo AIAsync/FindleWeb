@@ -2896,6 +2896,29 @@ body.dark-mode .alert-modal-btn-cancel:hover {
     color: #10b981;
 }
 
+/* Who posted it, next to the price (chat/views.py _advertiser): owner green, broker amber, realtor violet,
+   agency blue. The reason is the tooltip. */
+.sr-card-advertiser {
+    align-self: center;
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    line-height: 18px;
+    white-space: nowrap;
+    cursor: default;
+}
+
+.sr-card-advertiser--owner { background: #ecfdf5; color: #047857; }
+.sr-card-advertiser--broker { background: #fffbeb; color: #b45309; }
+.sr-card-advertiser--realtor { background: #f5f3ff; color: #6d28d9; }
+.sr-card-advertiser--agent { background: #eff6ff; color: #1d4ed8; }
+
+body.dark-mode .sr-card-advertiser--owner { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; }
+body.dark-mode .sr-card-advertiser--broker { background: rgba(245, 158, 11, 0.15); color: #fcd34d; }
+body.dark-mode .sr-card-advertiser--realtor { background: rgba(139, 92, 246, 0.18); color: #c4b5fd; }
+body.dark-mode .sr-card-advertiser--agent { background: rgba(59, 130, 246, 0.18); color: #93c5fd; }
+
 .sr-grid-card-price.muted {
     font-size: 0.85rem;
     font-weight: 600;

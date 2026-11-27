@@ -1367,3 +1367,34 @@ msgstr "Egasidan"
 #, python-format
 msgid "Built %(year)s"
 msgstr "%(year)s-yilda qurilgan"
+
+#: chat/views.py
+msgid "Broker"
+msgstr "Broker"
+
+#: chat/views.py
+msgid "Realtor"
+msgstr "Rieltor"
+
+#: chat/views.py
+msgid "Said in the listing"
+msgstr "E'londa o'zi aytgan"
+
+#: chat/views.py
+msgid "Marked on the site"
+msgstr "Saytda shunday belgilangan"
+
+#: chat/views.py
+#, python-format
+msgid "This phone number is in %(count)s listings"
+msgstr "Bu telefon raqami %(count)s ta e'londa bor"
+
+#: chat/views.py
+#, python-format
+msgid "This Telegram contact is in %(count)s listings"
+msgstr "Bu Telegram kontakti %(count)s ta e'londa bor"
+
+#: chat/views.py
+#, python-format
+msgid "This site profile has %(count)s listings"
+msgstr "Saytdagi bu profilda %(count)s ta e'lon bor"

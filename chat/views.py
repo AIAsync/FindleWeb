@@ -4,7 +4,7 @@ import re
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse, StreamingHttpResponse
 from django.contrib.auth.decorators import login_required
-from django.utils.translation import get_language
+from django.utils.translation import get_language, gettext
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.gzip import gzip_page
 from .card_tags import card_tags
@@ -270,6 +270,34 @@ _SITE_LABELS = {
 _SITE_LOGOS = frozenset({'olx_uz', 'uybor_uz', 'joymee_uz', 'birbir_uz', 'telegram'})
 
 
+def _advertiser(res):
+    """
+    Who posted the listing (FindleAI service/advertisers.py): the badge next to the card's price, its label and
+    why it is believed (the tooltip). Owner, broker (makler), realtor or agency; none when nothing tells.
+    """
+    code = res.get('advertiser')
+    if not code and res.get('realtor_is') is False:
+        code = 'owner'
+    labels = {'owner': gettext('From owner'), 'broker': gettext('Broker'), 'realtor': gettext('Realtor'),
+              'agent': gettext('Agent')}
+    if code not in labels:
+        return {'advertiser': '', 'advertiser_label': '', 'advertiser_note': ''}
+    by, count = res.get('advertiser_by'), res.get('advertiser_count')
+    if by == 'text':
+        note = gettext('Said in the listing')
+    elif by == 'site':
+        note = gettext('Marked on the site')
+    elif by == 'phone' and count:
+        note = gettext('This phone number is in %(count)s listings') % {'count': count}
+    elif by == 'telegram' and count:
+        note = gettext('This Telegram contact is in %(count)s listings') % {'count': count}
+    elif by == 'profile' and count:
+        note = gettext('This site profile has %(count)s listings') % {'count': count}
+    else:
+        note = ''
+    return {'advertiser': code, 'advertiser_label': str(labels[code]), 'advertiser_note': str(note)}
+
+
 def _build_title(res):
     """Rows carry their own title; describe the listing from its fields when they don't."""
     if res.get('title'):
@@ -337,6 +365,7 @@ def _build_card(res):
         'monthly': res.get('transaction_type') == 'Rent' and (structured.get('rent_period') or 'monthly') == 'monthly',
         'site_label': _SITE_LABELS.get(site_name, site_name),
         'site_logo': site_name if site_name in _SITE_LOGOS else '',
+        **_advertiser(res),
         'rooms': structured.get('rooms'),
         'floor': structured.get('floor'),
         'total_floors': structured.get('total_floors'),

@@ -1703,6 +1703,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const location = p.who_by || p.district || p.region || '';
         // The source's small logo before its name (Uzbekistan sites and Telegram, chat/views.py _SITE_LOGOS):
         // a site's own favicon drawn by style.css, Telegram's brand icon from Font Awesome
+        // Who posted it, next to the price: owner, broker, realtor or agency (chat/views.py _advertiser), and why
+        // it is believed as the tooltip ("This phone number is in 37 listings")
+        const advertiser = /^[a-z]+$/.test(p.advertiser || '') && p.advertiser_label
+            ? `<span class="sr-card-advertiser sr-card-advertiser--${p.advertiser}"${p.advertiser_note ? ` title="${escapeHTML(p.advertiser_note)}"` : ''}>${escapeHTML(p.advertiser_label)}</span>`
+            : '';
         const logo = /^[a-z0-9_]+$/.test(p.site_logo || '')
             ? `<i class="sr-site-logo sr-site-logo--${p.site_logo}${p.site_logo === 'telegram' ? ' fa-brands fa-telegram' : ''}" aria-hidden="true"></i>`
             : '';
@@ -1722,6 +1727,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             ? `<span class="sr-grid-card-price">$${priceText}${p.monthly ? `<span class="sr-price-currency">${escapeHTML(t('per_month', '/mo'))}</span>` : ''}</span>`
                             : `<span class="sr-grid-card-price">${priceText} <span class="sr-price-currency">${escapeHTML(p.currency || t('som', "so'm"))}</span></span>`)
                         : `<span class="sr-grid-card-price muted">${t('price_not_listed', 'Price on request')}</span>`}
+                    ${advertiser}
                 </div>
                 <div class="sr-grid-card-footer">
                     <span class="sr-grid-card-seller">${escapeHTML(location)}</span>

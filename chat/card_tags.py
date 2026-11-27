@@ -142,8 +142,7 @@ def card_tags(res):
         add(_('Unfurnished'))
     add(values['building_type'].get(structured.get('building_type')))
     add(values['heating'].get(structured.get('heating')))
-    if res.get('realtor_is') is False:
-        add(_('From owner'))
+    # Who posted it is not a tag: the card shows it next to the price (chat/views.py _advertiser)
     add(values['payment_terms'].get(res.get('payment_terms')))
 
     for name, label in _amenities():

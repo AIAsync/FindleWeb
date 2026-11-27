@@ -846,3 +846,34 @@ msgstr "Ranking matches"
 #: templates/base.html templates/chat/home.html
 msgid "Writing the answer"
 msgstr "Writing the answer"
+
+#: chat/views.py
+msgid "Broker"
+msgstr "Broker"
+
+#: chat/views.py
+msgid "Realtor"
+msgstr "Realtor"
+
+#: chat/views.py
+msgid "Said in the listing"
+msgstr "Said in the listing"
+
+#: chat/views.py
+msgid "Marked on the site"
+msgstr "Marked on the site"
+
+#: chat/views.py
+#, python-format
+msgid "This phone number is in %(count)s listings"
+msgstr "This phone number is in %(count)s listings"
+
+#: chat/views.py
+#, python-format
+msgid "This Telegram contact is in %(count)s listings"
+msgstr "This Telegram contact is in %(count)s listings"
+
+#: chat/views.py
+#, python-format
+msgid "This site profile has %(count)s listings"
+msgstr "This site profile has %(count)s listings"
