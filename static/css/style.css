@@ -2896,9 +2896,10 @@ body.dark-mode .alert-modal-btn-cancel:hover {
     color: #10b981;
 }
 
-/* Who posted it, next to the price (chat/views.py _advertiser): owner green, broker amber, realtor violet,
-   agency blue. The reason is the tooltip. */
+/* Who posted it, on the right of the price row (chat/views.py _advertiser): owner green, broker amber, realtor
+   violet, agency blue. The reason is the tooltip. */
 .sr-card-advertiser {
+    margin-left: auto;
     align-self: center;
     padding: 1px 8px;
     border-radius: 999px;
