@@ -1118,10 +1118,6 @@ body.dark-mode .alerts-empty-hint i {
     font-size: 0.82rem;
 }
 
-.alert-chip-label {
-    color: #6366f1;
-}
-
 .alert-ignored,
 .alert-preview-note {
     font-size: 0.8rem;
@@ -1281,10 +1277,6 @@ body.dark-mode .alert-new-btn {
 body.dark-mode .alert-chip {
     background: var(--surface-2);
     color: var(--text-main);
-}
-
-body.dark-mode .alert-chip-label {
-    color: var(--text-muted);
 }
 
 body.dark-mode .alert-modal-icon {

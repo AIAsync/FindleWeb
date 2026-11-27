@@ -125,13 +125,11 @@
 
     /* ── The tab ───────────────────────────────────────────────────────── */
 
+    // Values only, no labels: "Chilonzor", "2 xonali", "≤ 600 USD", "metro ≤ 800 m". The API words each value
+    // to stand alone (`value`); `text` is the older answer. The label stays as the tooltip.
     function conditionChips(alert, limit) {
         const chips = (alert.conditions || []).slice(0, limit || 99);
-        return chips.map(chip => `
-            <span class="alert-chip" title="${escapeHTML(chip.label)}">
-                ${chip.field === 'near' ? '<i class="fa-solid fa-location-dot"></i>' : ''}
-                <span class="alert-chip-label">${escapeHTML(chip.label)}:</span> ${escapeHTML(chip.text)}
-            </span>`).join('');
+        return chips.map(chip => `<span class="alert-chip" title="${escapeHTML(chip.label)}">${escapeHTML(chip.value || chip.text)}</span>`).join('');
     }
 
     function layout(container, prefill) {
