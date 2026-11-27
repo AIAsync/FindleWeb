@@ -154,26 +154,58 @@
     border-radius: 2px;
 }
 
-/* Individual alert item */
+/* Individual alert item: each saved alert stands apart, like a chat in Telegram — a round bell on the
+   left, its own card. Phones draw the list as full-width rows instead (mobile_responsive.css, section 10). */
 .alert-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
     padding: 12px 14px;
-    border-radius: 10px;
+    border-radius: 12px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    margin-bottom: 2px;
-    border: 1px solid transparent;
-    background: transparent;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+    margin-bottom: 8px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    /* A tap shows the hover colour, not the browser's translucent tap box */
+    -webkit-tap-highlight-color: transparent;
 }
 
 .alert-item:hover {
-    background: #ffffff;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
 }
 
 .alert-item.active {
+    background: #eef2ff;
+    border-color: #a5b4fc;
+    box-shadow: inset 3px 0 0 #6366f1;
+}
+
+/* The chips are the same tint as the open alert: white there, so each condition still stands out */
+.alert-item.active .alert-chip {
     background: #ffffff;
-    border-color: #e2e8f0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.alert-item-avatar {
+    flex: 0 0 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #818cf8, #4f46e5);
+    color: #ffffff;
+    font-size: 0.95rem;
+}
+
+.alert-item.paused .alert-item-avatar {
+    background: #cbd5e1;
+}
+
+.alert-item-body {
+    flex: 1;
+    min-width: 0;
 }
 
 .alert-item-header {
@@ -814,15 +846,25 @@ body.dark-mode .alerts-search-icon {
 }
 
 /* List items */
-body.dark-mode .alert-item:hover {
+body.dark-mode .alert-item {
     background: var(--card-bg);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    border-color: var(--border-color);
+}
+
+body.dark-mode .alert-item:hover {
+    border-color: var(--border-strong);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 body.dark-mode .alert-item.active {
-    background: var(--card-bg);
-    border-color: var(--border-color);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    background: rgba(99, 102, 241, 0.14);
+    border-color: rgba(129, 140, 248, 0.5);
+    box-shadow: inset 3px 0 0 #818cf8;
+}
+
+body.dark-mode .alert-item.paused .alert-item-avatar {
+    background: var(--surface-2);
+    color: var(--text-faint);
 }
 
 body.dark-mode .alert-item-prompt {

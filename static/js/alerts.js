@@ -222,13 +222,17 @@
                 : (alert.last_match_at
                     ? `<i class="fa-regular fa-clock"></i> ${escapeHTML(formatDate(alert.last_match_at))}`
                     : `<i class="fa-regular fa-clock"></i> ${escapeHTML(t('alert_waiting', 'Waiting for new listings'))}`);
+            // A row like a Telegram chat: a round bell on the left, then the alert (alerts.css .alert-item)
             item.innerHTML = `
-                <div class="alert-item-header">
-                    <div class="alert-item-prompt">${escapeHTML(alert.name || alert.query)}</div>
-                    ${alert.unread ? `<span class="alert-unread-badge">${alert.unread > 99 ? '99+' : alert.unread}</span>` : ''}
-                </div>
-                <div class="alert-item-chips">${conditionChips(alert, 3)}</div>
-                <div class="alert-item-time">${status}</div>`;
+                <div class="alert-item-avatar" aria-hidden="true"><i class="fa-solid ${alert.active ? 'fa-bell' : 'fa-bell-slash'}"></i></div>
+                <div class="alert-item-body">
+                    <div class="alert-item-header">
+                        <div class="alert-item-prompt">${escapeHTML(alert.name || alert.query)}</div>
+                        ${alert.unread ? `<span class="alert-unread-badge">${alert.unread > 99 ? '99+' : alert.unread}</span>` : ''}
+                    </div>
+                    <div class="alert-item-chips">${conditionChips(alert, 3)}</div>
+                    <div class="alert-item-time">${status}</div>
+                </div>`;
             item.addEventListener('click', () => {
                 selectAlert(alert.id);
                 const page = state.container.querySelector('.alerts-page-container');
