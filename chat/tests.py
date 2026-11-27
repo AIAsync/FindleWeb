@@ -293,7 +293,11 @@ class UsRentalsTests(TestCase):
             built = views._build_card(_listing(site_name=site, region='Tashkent'))
             return built['site_label'], built['site_logo']
         self.assertEqual(card('birbir_uz'), ('Birbir', 'birbir_uz'))
-        self.assertEqual(card('uybor_uz'), ('Uybor.uz', 'uybor_uz'))
+        # A site's name only, never its domain
+        self.assertEqual(card('uybor_uz'), ('Uybor', 'uybor_uz'))
+        self.assertEqual(card('joymee_uz'), ('Joymee', 'joymee_uz'))
+        self.assertEqual(card('olx_uz'), ('OLX', 'olx_uz'))
+        self.assertFalse([label for label in views._SITE_LABELS.values() if label.lower().endswith(('.uz', '.com'))])
         self.assertEqual(card('telegram'), ('Telegram', 'telegram'))
         self.assertEqual(card('zillow_rentals'), ('Zillow', ''))
         # Every logo the card can name is drawn by the stylesheet (a site's favicon, kept in static)
