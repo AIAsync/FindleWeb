@@ -1666,6 +1666,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return meters >= 1000 ? `${(meters / 1000).toFixed(1)} km` : `${Math.round(meters)} m`;
     }
 
+    // A listing photo that no longer loads (a Telegram CDN address that expired, a photo the site removed)
+    // gives way to the placeholder a card without a photo shows. `error` does not bubble: listen while capturing.
+    document.addEventListener('error', (event) => {
+        const img = event.target;
+        if (!(img instanceof HTMLImageElement) || !img.closest('.sr-grid-card-img')) return;
+        const holder = document.createElement('span');
+        holder.className = 'sr-grid-card-noimg';
+        holder.innerHTML = '<i class="fa-regular fa-image"></i>';
+        img.replaceWith(holder);
+    }, true);
+
     function buildGridCard(p) {
         const priceText = p.price ? formatPrice(p.price) : '';
         const imgSrc = p.image_url || '';
