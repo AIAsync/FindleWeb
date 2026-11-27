@@ -249,6 +249,8 @@ _SITE_LABELS = {
     'apartmentadvisor': 'ApartmentAdvisor', 'homefinder': 'HomeFinder', 'rentsfnow': 'RentSFNow',
     'avalon': 'AvalonBay', 'vanguard': 'Vanguard Properties', 'coldwell': 'Coldwell Banker', 'udr': 'UDR',
     'corcoran_icon': 'Corcoran', 'olx': 'OLX', 'birbir': 'Birbir',
+    # Uzbekistan sites (FindleBot config/sites/*_uz.yaml)
+    'olx_uz': 'OLX.uz', 'uybor_uz': 'Uybor.uz', 'joymee_uz': 'Joymee.uz', 'birbir_uz': 'Birbir.uz',
     'rentable': 'Rentable', 'dahlia': 'DAHLIA (SF affordable housing)',
     # San Francisco property managers whose listings are on AppFolio
     'appfolio_amore': 'Amore Real Estate', 'appfolio_apg': 'APG', 'appfolio_ggproperties': 'Golden Gate Properties',
