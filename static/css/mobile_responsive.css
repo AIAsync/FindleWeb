@@ -515,43 +515,18 @@
         display: none;
     }
 
-    /* The list as Telegram draws chats on a phone: full-width rows on white, split by a thin line that
-       starts after the bell, no cards (a computer shows cards, alerts.css). A tap shows only the hover
-       colour: no translucent tap box (alerts.css), no border or shadow. */
-    .alerts-list-container {
-        padding: 0 0 10px;
-        background: #ffffff;
-    }
-
-    .alert-item {
-        position: relative;
-        margin: 0;
-        padding: 12px 16px;
-        border: none;
-        border-radius: 0;
-        box-shadow: none;
-        background: transparent;
-    }
-
-    .alert-item + .alert-item::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 68px;
-        right: 0;
-        height: 1px;
-        background: #e8ecf1;
-    }
-
-    .alert-item:hover,
-    .alert-item:active,
+    /* The list rows are the same as on a computer (alerts.css), but a phone keeps no selection: the open
+       alert is a screen of its own, and a tap shows only the press colour. */
     .alert-item.active {
-        background: #f1f5f9;
-        box-shadow: none;
+        background: transparent;
     }
 
     .alert-item.active .alert-chip {
         background: #eef2ff;
+    }
+
+    .alert-item:active {
+        background: #f1f5f9;
     }
 
     .alerts-page-container.mobile-detail-active .alert-detail-view {
@@ -752,21 +727,16 @@
         background: var(--bg-color);
     }
 
-    body.dark-mode .alerts-list-container,
-    body.dark-mode .alert-item {
+    body.dark-mode .alert-item.active {
         background: transparent;
     }
 
-    body.dark-mode .alert-item + .alert-item::before {
-        background: var(--border-soft);
+    body.dark-mode .alert-item.active .alert-chip {
+        background: var(--surface-2);
     }
 
-    /* Lighter than the list, darker than the chips (--surface-2), so the conditions stay visible */
-    body.dark-mode .alert-item:hover,
-    body.dark-mode .alert-item:active,
-    body.dark-mode .alert-item.active {
+    body.dark-mode .alert-item:active {
         background: var(--card-bg);
-        box-shadow: none;
     }
 
     /* A tap has no hover: the press shows instead */

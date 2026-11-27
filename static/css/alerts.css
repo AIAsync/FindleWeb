@@ -134,11 +134,12 @@
     pointer-events: none;
 }
 
-/* Alerts list */
+/* Alerts list: rows on white, edge to edge */
 .alerts-list-container {
     flex: 1;
     overflow-y: auto;
-    padding: 4px 10px 10px;
+    padding: 0 0 10px;
+    background: #ffffff;
 }
 
 .alerts-list-container::-webkit-scrollbar {
@@ -154,58 +155,47 @@
     border-radius: 2px;
 }
 
-/* Individual alert item: each saved alert stands apart, like a chat in Telegram — a round bell on the
-   left, its own card. Phones draw the list as full-width rows instead (mobile_responsive.css, section 10). */
+/* Individual alert item: a row like a chat in Telegram, the same on a computer and a phone — full width on
+   white, split from the next by a thin line, no icons. A click keeps the open alert tinted (translucent);
+   a phone keeps no selection, only the press colour (mobile_responsive.css, section 10). */
 .alert-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 12px 14px;
-    border-radius: 12px;
+    position: relative;
+    padding: 12px 16px;
     cursor: pointer;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
-    margin-bottom: 8px;
-    border: 1px solid #e2e8f0;
-    background: #ffffff;
-    /* A tap shows the hover colour, not the browser's translucent tap box */
+    background: transparent;
+    transition: background-color 0.15s ease;
+    /* No translucent tap box from the browser */
     -webkit-tap-highlight-color: transparent;
 }
 
-.alert-item:hover {
-    border-color: #cbd5e1;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+.alert-item + .alert-item::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 16px;
+    right: 0;
+    height: 1px;
+    background: #e8ecf1;
+}
+
+/* Only a real pointer hovers: a finger would leave the colour stuck on the row it tapped */
+@media (hover: hover) {
+    .alert-item:hover {
+        background: #f1f5f9;
+    }
+}
+
+.alert-item:active {
+    background: #f1f5f9;
 }
 
 .alert-item.active {
-    background: #eef2ff;
-    border-color: #a5b4fc;
-    box-shadow: inset 3px 0 0 #6366f1;
+    background: rgba(99, 102, 241, 0.1);
 }
 
-/* The chips are the same tint as the open alert: white there, so each condition still stands out */
+/* The chips share the open alert's tint: white there, so each condition still stands out */
 .alert-item.active .alert-chip {
     background: #ffffff;
-}
-
-.alert-item-avatar {
-    flex: 0 0 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #818cf8, #4f46e5);
-    color: #ffffff;
-    font-size: 0.95rem;
-}
-
-.alert-item.paused .alert-item-avatar {
-    background: #cbd5e1;
-}
-
-.alert-item-body {
-    flex: 1;
-    min-width: 0;
 }
 
 .alert-item-header {
@@ -846,25 +836,30 @@ body.dark-mode .alerts-search-icon {
 }
 
 /* List items */
-body.dark-mode .alert-item {
-    background: var(--card-bg);
-    border-color: var(--border-color);
+body.dark-mode .alerts-list-container {
+    background: transparent;
 }
 
-body.dark-mode .alert-item:hover {
-    border-color: var(--border-strong);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+body.dark-mode .alert-item + .alert-item::before {
+    background: var(--border-soft);
+}
+
+@media (hover: hover) {
+    body.dark-mode .alert-item:hover {
+        background: var(--card-bg);
+    }
+}
+
+body.dark-mode .alert-item:active {
+    background: var(--card-bg);
 }
 
 body.dark-mode .alert-item.active {
-    background: rgba(99, 102, 241, 0.14);
-    border-color: rgba(129, 140, 248, 0.5);
-    box-shadow: inset 3px 0 0 #818cf8;
+    background: rgba(129, 140, 248, 0.12);
 }
 
-body.dark-mode .alert-item.paused .alert-item-avatar {
-    background: var(--surface-2);
-    color: var(--text-faint);
+body.dark-mode .alert-item.active .alert-chip {
+    background: var(--surface-3);
 }
 
 body.dark-mode .alert-item-prompt {
