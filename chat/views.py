@@ -249,8 +249,9 @@ _SITE_LABELS = {
     'apartmentadvisor': 'ApartmentAdvisor', 'homefinder': 'HomeFinder', 'rentsfnow': 'RentSFNow',
     'avalon': 'AvalonBay', 'vanguard': 'Vanguard Properties', 'coldwell': 'Coldwell Banker', 'udr': 'UDR',
     'corcoran_icon': 'Corcoran', 'olx': 'OLX', 'birbir': 'Birbir',
-    # Uzbekistan sites (FindleBot config/sites/*_uz.yaml)
-    'olx_uz': 'OLX.uz', 'uybor_uz': 'Uybor.uz', 'joymee_uz': 'Joymee.uz', 'birbir_uz': 'Birbir.uz',
+    # Uzbekistan sites (FindleBot config/sites/*_uz.yaml) and Telegram channels (FindleAI names them 'telegram')
+    'olx_uz': 'OLX.uz', 'uybor_uz': 'Uybor.uz', 'joymee_uz': 'Joymee.uz', 'birbir_uz': 'Birbir',
+    'telegram': 'Telegram',
     'rentable': 'Rentable', 'dahlia': 'DAHLIA (SF affordable housing)',
     # San Francisco property managers whose listings are on AppFolio
     'appfolio_amore': 'Amore Real Estate', 'appfolio_apg': 'APG', 'appfolio_ggproperties': 'Golden Gate Properties',
@@ -262,6 +263,11 @@ _SITE_LABELS = {
     # ... and on Buildium
     'buildium_skybox': 'Skybox Realty',
 }
+
+# The source's small logo before its name on the card: Uzbekistan sites and Telegram. A site's logo is its own
+# favicon kept in static/images/sites/ (style.css .sr-site-logo--<site>), so a results page asks no other site
+# for it; Telegram's is the Font Awesome brand icon the page already loads.
+_SITE_LOGOS = frozenset({'olx_uz', 'uybor_uz', 'joymee_uz', 'birbir_uz', 'telegram'})
 
 
 def _build_title(res):
@@ -330,6 +336,7 @@ def _build_card(res):
         'bathrooms': structured.get('bathrooms'),
         'monthly': res.get('transaction_type') == 'Rent' and (structured.get('rent_period') or 'monthly') == 'monthly',
         'site_label': _SITE_LABELS.get(site_name, site_name),
+        'site_logo': site_name if site_name in _SITE_LOGOS else '',
         'rooms': structured.get('rooms'),
         'floor': structured.get('floor'),
         'total_floors': structured.get('total_floors'),

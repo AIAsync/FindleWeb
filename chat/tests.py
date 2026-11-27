@@ -1,6 +1,7 @@
 import json
 from unittest import mock
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -286,6 +287,20 @@ class UsRentalsTests(TestCase):
     def test_nationwide_sources_have_their_site_names(self):
         self.assertEqual(views._build_card(_listing(site_name='padmapper_us'))['site_label'], 'PadMapper')
         self.assertEqual(views._build_card(_listing(site_name='craigslist_us'))['site_label'], 'Craigslist')
+
+    def test_uzbek_sources_and_telegram_have_a_logo_before_their_name(self):
+        def card(site):
+            built = views._build_card(_listing(site_name=site, region='Tashkent'))
+            return built['site_label'], built['site_logo']
+        self.assertEqual(card('birbir_uz'), ('Birbir', 'birbir_uz'))
+        self.assertEqual(card('uybor_uz'), ('Uybor.uz', 'uybor_uz'))
+        self.assertEqual(card('telegram'), ('Telegram', 'telegram'))
+        self.assertEqual(card('zillow_rentals'), ('Zillow', ''))
+        # Every logo the card can name is drawn by the stylesheet (a site's favicon, kept in static)
+        css = (settings.BASE_DIR / 'static' / 'css' / 'style.css').read_text(encoding='utf-8')
+        for site in views._SITE_LOGOS - {'telegram'}:
+            self.assertIn(f".sr-site-logo--{site} {{ background-image: url('../images/sites/{site}.png'); }}", css)
+            self.assertTrue((settings.BASE_DIR / 'static' / 'images' / 'sites' / f'{site}.png').is_file(), site)
 
     def test_map_points_use_the_units_of_their_country(self):
         tashkent = views._map_point({'region': 'Tashkent', 'rooms': 3, 'total_area': 80.4})

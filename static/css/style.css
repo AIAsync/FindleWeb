@@ -2927,6 +2927,9 @@ body.dark-mode .alert-modal-btn-cancel:hover {
 }
 
 .sr-grid-card-site {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     font-size: 0.68rem;
     font-weight: 600;
     color: var(--text-muted);
@@ -2934,6 +2937,31 @@ body.dark-mode .alert-modal-btn-cancel:hover {
     padding: 2px 8px;
     border-radius: 999px;
     flex-shrink: 0;
+}
+
+/* The source's small logo before its name (Uzbekistan sites and Telegram, chat/views.py _SITE_LOGOS):
+   each site's own favicon, kept here so a results page asks no other site for it; Telegram's brand icon. */
+.sr-site-logo {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    border-radius: 3px;
+    background: center / contain no-repeat;
+}
+
+.sr-site-logo--olx_uz { background-image: url('../images/sites/olx_uz.png'); }
+.sr-site-logo--uybor_uz { background-image: url('../images/sites/uybor_uz.png'); }
+.sr-site-logo--joymee_uz { background-image: url('../images/sites/joymee_uz.png'); }
+.sr-site-logo--birbir_uz { background-image: url('../images/sites/birbir_uz.png'); }
+
+.sr-site-logo--telegram {
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    font-size: 13px;
+    line-height: 1;
+    color: #229ed9;
 }
 
 /* --- Grid skeleton --- */

@@ -1701,6 +1701,11 @@ document.addEventListener('DOMContentLoaded', () => {
             : '';
 
         const location = p.who_by || p.district || p.region || '';
+        // The source's small logo before its name (Uzbekistan sites and Telegram, chat/views.py _SITE_LOGOS):
+        // a site's own favicon drawn by style.css, Telegram's brand icon from Font Awesome
+        const logo = /^[a-z0-9_]+$/.test(p.site_logo || '')
+            ? `<i class="sr-site-logo sr-site-logo--${p.site_logo}${p.site_logo === 'telegram' ? ' fa-brands fa-telegram' : ''}" aria-hidden="true"></i>`
+            : '';
 
         const inner = `
             <div class="sr-grid-card-img">
@@ -1720,7 +1725,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="sr-grid-card-footer">
                     <span class="sr-grid-card-seller">${escapeHTML(location)}</span>
-                    ${p.site_name ? `<span class="sr-grid-card-site">${escapeHTML(p.site_label || p.site_name)}</span>` : ''}
+                    ${p.site_name ? `<span class="sr-grid-card-site">${logo}${escapeHTML(p.site_label || p.site_name)}</span>` : ''}
                 </div>
             </div>
         `;
