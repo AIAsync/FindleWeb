@@ -446,3 +446,33 @@ class CardTagTests(TestCase):
         with mock.patch('chat.alerts.requests.request', return_value=_Response(200, body)):
             data = self.client.get('/api/alerts/notifications/', {'alert_id': 2}).json()
         self.assertEqual(data['items'][0]['card']['tags'][:2], ['Apartment · Rent', '2 bd'])
+
+
+class PlaceChoiceRedirectTests(TestCase):
+    """/search found several places for a name ("boburdan ijara"): the Agent tab gets them as buttons."""
+
+    def test_place_options_pass_with_only_the_fields_the_page_uses(self):
+        raw = {
+            'to': 'chat', 'auto': True, 'reason': 'place_choice', 'query': "Toshkent do'stlikdan ijara",
+            'options_text': "«Do'stlik» nomli bir nechta joy bor. Qaysi birini nazarda tutyapsiz?",
+            'options': [
+                {'id': 'metro:0', 'title': "Do'stlik — metro bekati", 'detail': "Yashnabad, Tashkent · atrofida 30 ta e'lon",
+                 'listings': 30, 'kinds': ['metro'], 'names': ["Do'stlik"],
+                 'zone': {'kind': 'metro', 'name': "Do'stlik", 'region': 'Tashkent', 'district': 'Yashnabad',
+                          'lat': 41.33, 'lon': 69.31, 'key': 'uz:station:1', 'secret': 'x'}},
+                {'id': 'broken', 'zone': {'name': 'no kind'}},
+                'not a dict',
+            ],
+        }
+        redirect = views._build_redirect(raw)
+        self.assertEqual(redirect['reason'], 'place_choice')
+        self.assertEqual(redirect['options_text'], raw['options_text'])
+        self.assertEqual(len(redirect['options']), 1)
+        option = redirect['options'][0]
+        self.assertEqual(option['title'], "Do'stlik — metro bekati")
+        self.assertEqual(option['zone'], {'kind': 'metro', 'name': "Do'stlik", 'region': 'Tashkent',
+                                          'district': 'Yashnabad', 'lat': 41.33, 'lon': 69.31, 'key': 'uz:station:1'})
+
+    def test_a_plain_redirect_has_no_options(self):
+        redirect = views._build_redirect({'to': 'chat', 'auto': True, 'reason': 'question', 'query': 'qancha?'})
+        self.assertEqual((redirect['options'], redirect['options_text']), ([], ''))

@@ -618,7 +618,34 @@ def _build_redirect(raw):
         'query': raw.get('query') or '',
         'filters': raw.get('filters') if isinstance(raw.get('filters'), dict) else None,
         'notice': raw.get('notice') or '',
+        # Place name with several places ("boburdan ijara"): the Agent tab shows them as buttons, the chosen one
+        # goes back to /search as filters.place_pick
+        'options': _place_options(raw.get('options')),
+        'options_text': str(raw.get('options_text') or '')[:300],
     }
+
+
+_PLACE_ZONE_KEYS = ('kind', 'name', 'region', 'district', 'lat', 'lon', 'key')
+
+
+def _place_options(raw):
+    """The API's place choices, only the fields the page shows and sends back."""
+    if not isinstance(raw, list):
+        return []
+    options = []
+    for item in raw[:8]:
+        if not isinstance(item, dict) or not isinstance(item.get('zone'), dict):
+            continue
+        zone = {key: item['zone'][key] for key in _PLACE_ZONE_KEYS if item['zone'].get(key) is not None}
+        if not zone.get('kind') or not zone.get('name'):
+            continue
+        options.append({
+            'id': str(item.get('id') or ''),
+            'title': str(item.get('title') or zone['name'])[:160],
+            'detail': str(item.get('detail') or '')[:160],
+            'zone': zone,
+        })
+    return options
 
 
 def _apply_route(payload, data, allowed):

@@ -912,7 +912,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const previousState = searchState;
         const isNewQuery = page === 1 || prompt !== searchState.query;
-        if (isNewQuery) searchState = { query: prompt, page: 1, searchId: '' };
+        // A place picked in the Agent tab (filters.place_pick) stays with this search's next pages
+        if (isNewQuery) searchState = { query: prompt, page: 1, searchId: '', filters: opts.filters || null };
 
         // A search typed on the Map tab stays on the map: it redraws when the results are in
         const mapTab = document.getElementById('tab-map');
@@ -939,7 +940,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const body = { prompt: prompt, page: page };
             if (page > 1 && searchState.searchId) body.search_id = searchState.searchId;
             if (opts.route) body.route = opts.route;
-            if (opts.filters) body.filters = opts.filters;
+            const filters = opts.filters || (page > 1 ? searchState.filters : null);
+            if (filters) body.filters = filters;
 
             const response = await fetch('/api/search/stream/', {
                 method: 'POST',
@@ -987,7 +989,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 chatContainer.innerHTML = previousHTML;
                 searchState = previousState;
                 restoreSearchControls();
-                handoffToAgent(redirect, prompt);
+                if (redirect.reason === 'place_choice' && Array.isArray(redirect.options) && redirect.options.length) {
+                    showPlaceChoice(redirect, prompt);
+                } else {
+                    handoffToAgent(redirect, prompt);
+                }
                 return;
             }
 
@@ -995,7 +1001,8 @@ document.addEventListener('DOMContentLoaded', () => {
             searchState = {
                 query: prompt,
                 page: pageInfo.page || page,
-                searchId: pageInfo.search_id || searchState.searchId
+                searchId: pageInfo.search_id || searchState.searchId,
+                filters: searchState.filters || null
             };
 
             lastResponseData = data;
@@ -1049,6 +1056,56 @@ document.addEventListener('DOMContentLoaded', () => {
         // The Search tab already read the intent (reason "statistics_intent", ...).
         const intent = String(redirect.reason || '').replace(/_intent$/, '');
         sendAgentMessage(redirect.query || prompt, { route: 'chat', intent });
+    }
+
+    /** Place choices shown in the Agent tab, keyed for the click handler. */
+    const placeChoices = new Map();
+    let placeChoiceSeq = 0;
+
+    /** Search → Agent for a place name with several places ("boburdan ijara", "Toshkent do'stlikdan ijara"):
+     *  /search ran nothing and sent the places it found in its own data. They become buttons in the Agent tab;
+     *  the one picked runs the same search with `filters.place_pick` (the rest of the query is read as usual). */
+    function showPlaceChoice(redirect, prompt) {
+        resetSearchInput(searchState.query);
+        switchTab('tab-fast-answer');
+        if (!aiChatMessages) return;
+        if (bottomChatContainer) bottomChatContainer.classList.remove('centered');
+        document.body.classList.remove('chat-initial-state');
+        const welcome = aiChatMessages.querySelector('.ai-chat-welcome');
+        if (welcome) welcome.remove();
+
+        const userMsgDiv = document.createElement('div');
+        userMsgDiv.className = 'ai-msg user-msg';
+        userMsgDiv.innerHTML = `<div class="msg-content"><div class="msg-text">${escapeHTML(prompt)}</div></div>`;
+        aiChatMessages.appendChild(userMsgDiv);
+
+        const key = `place${++placeChoiceSeq}`;
+        placeChoices.set(key, { prompt, options: redirect.options });
+        const buttons = redirect.options.map((option, index) => `
+            <button type="button" class="place-choice" data-place-choice="${key}" data-index="${index}">
+                <span class="place-choice-title">${escapeHTML(option.title || '')}</span>
+                ${option.detail ? `<span class="place-choice-detail">${escapeHTML(option.detail)}</span>` : ''}
+            </button>`).join('');
+        const replyDiv = document.createElement('div');
+        replyDiv.className = 'ai-msg ai-response-msg place-choice-msg';
+        replyDiv.innerHTML = `
+            <div class="msg-content">
+                <div class="msg-text">${escapeHTML(redirect.options_text || '')}</div>
+                <div class="place-choices">${buttons}</div>
+            </div>`;
+        aiChatMessages.appendChild(replyDiv);
+        scrollToBottom();
+    }
+
+    /** A place button: the search runs again, now with that place. */
+    function pickPlace(button) {
+        const entry = placeChoices.get(button.dataset.placeChoice);
+        const option = entry && entry.options[Number(button.dataset.index)];
+        if (!option || !option.zone) return;
+        const group = button.closest('.place-choices');
+        if (group) group.querySelectorAll('.place-choice').forEach(b => b.classList.toggle('selected', b === button));
+        if (userInput) userInput.value = entry.prompt;
+        runSearch(entry.prompt, 1, { route: 'search', filters: { place_pick: option.zone } });
     }
 
     /** Put `text` in the Search box, saved draft included — a reload restores the draft. */
@@ -2026,6 +2083,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (openSearch) {
                 const offered = offeredRedirects.get(openSearch.dataset.openSearch);
                 if (offered) handoffToSearch(offered.redirect, offered.prompt, offered.searched);
+                return;
+            }
+
+            const placeButton = e.target.closest('.place-choice');
+            if (placeButton) {
+                pickPlace(placeButton);
                 return;
             }
 

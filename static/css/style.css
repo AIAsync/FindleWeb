@@ -4472,6 +4472,52 @@ body.dark-mode .sr-price-currency-label {
     color: var(--text-main);
 }
 
+/* Place choice in the Agent tab ("boburdan ijara"): one button per place the search found in its own data */
+.place-choices {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.place-choice {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    width: 100%;
+    max-width: 460px;
+    padding: 10px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--text-main);
+    font-family: 'Outfit', sans-serif;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.place-choice:hover {
+    background: #f1f5f9;
+    border-color: var(--primary);
+}
+
+.place-choice.selected {
+    border-color: var(--primary);
+    background: rgba(99, 102, 241, 0.08);
+}
+
+.place-choice-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.place-choice-detail {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
 /* Search tab pager — the ranked list is paged server-side */
 .sr-pager {
     display: flex;
@@ -4527,8 +4573,15 @@ body.dark-mode .sr-price-currency-label {
 
 body.dark-mode .sr-suggestion,
 body.dark-mode .sr-pager-btn,
-body.dark-mode .sr-pager-num {
+body.dark-mode .sr-pager-num,
+body.dark-mode .place-choice {
     border-color: var(--border-color);
+}
+
+body.dark-mode .place-choice:hover,
+body.dark-mode .place-choice.selected {
+    background: var(--surface-2);
+    border-color: var(--primary);
 }
 
 body.dark-mode .sr-pager-num.active {
