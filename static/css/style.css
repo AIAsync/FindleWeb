@@ -2978,6 +2978,10 @@ body.dark-mode .sr-card-advertiser--agent { background: rgba(59, 130, 246, 0.18)
 .sr-site-logo--uybor_uz { background-image: url('../images/sites/uybor_uz.png'); }
 .sr-site-logo--joymee_uz { background-image: url('../images/sites/joymee_uz.png'); }
 .sr-site-logo--birbir_uz { background-image: url('../images/sites/birbir_uz.png'); }
+.sr-site-logo--realt24_uz { background-image: url('../images/sites/realt24_uz.png'); }
+.sr-site-logo--realting_uz { background-image: url('../images/sites/realting_uz.png'); }
+.sr-site-logo--mybooking_uz { background-image: url('../images/sites/mybooking_uz.png'); }
+.sr-site-logo--turar_uz { background-image: url('../images/sites/turar_uz.png'); }
 
 .sr-site-logo--telegram {
     width: auto;
@@ -3627,6 +3631,12 @@ body.dark-mode .sr-grid-card-footer {
 
 body.dark-mode .sr-grid-card-site {
     background: var(--bg-color);
+}
+
+/* A favicon drawn for a light page (Turar's black pin, Realt24's black R) would vanish on the dark badge:
+   it sits on a small white tile, as browsers show favicons */
+body.dark-mode .sr-site-logo:not(.sr-site-logo--telegram) {
+    background-color: #fff;
 }
 
 body.dark-mode .sr-price-viz {

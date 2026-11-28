@@ -268,7 +268,8 @@ _SITE_LABELS = {
 # The source's small logo before its name on the card: Uzbekistan sites and Telegram. A site's logo is its own
 # favicon kept in static/images/sites/ (style.css .sr-site-logo--<site>), so a results page asks no other site
 # for it; Telegram's is the Font Awesome brand icon the page already loads.
-_SITE_LOGOS = frozenset({'olx_uz', 'uybor_uz', 'joymee_uz', 'birbir_uz', 'telegram'})
+_SITE_LOGOS = frozenset({'olx_uz', 'uybor_uz', 'joymee_uz', 'birbir_uz', 'realt24_uz', 'realting_uz', 'mybooking_uz',
+                         'turar_uz', 'telegram'})
 
 
 def _advertiser(res):
