@@ -251,6 +251,7 @@ _SITE_LABELS = {
     'corcoran_icon': 'Corcoran', 'olx': 'OLX', 'birbir': 'Birbir',
     # Uzbekistan sites (FindleBot config/sites/*_uz.yaml) and Telegram channels (FindleAI names them 'telegram')
     'olx_uz': 'OLX', 'uybor_uz': 'Uybor', 'joymee_uz': 'Joymee', 'birbir_uz': 'Birbir', 'realt24_uz': 'Realt24',
+    'turar_uz': 'Turar', 'mybooking_uz': 'MyBooking', 'realting_uz': 'Realting',
     'telegram': 'Telegram',
     'rentable': 'Rentable', 'dahlia': 'DAHLIA (SF affordable housing)',
     # San Francisco property managers whose listings are on AppFolio
